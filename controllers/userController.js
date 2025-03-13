@@ -1,4 +1,4 @@
-const User = require('../models/user');
+const User = require('../models/usaurios');
 const argon2 = require('argon2');
 
 // Hash a password
