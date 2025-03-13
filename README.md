@@ -50,9 +50,6 @@ The Pathway Connect Backend Admin is a backend system built with **Node.js** and
 | GET    | `/api/dashboard/stats`  | Retrieve system statistics    |
 | GET    | `/api/logs`             | Get system logs               |
 
-### License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
 
 ### Support
 
