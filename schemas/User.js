@@ -1,4 +1,3 @@
-// schemas/user.js
 module.exports = {
     User: {
       type: 'object',
