@@ -44,7 +44,7 @@ The Pathway Connect Backend Admin is a backend system built with **Node.js** and
 | PUT    | `/api/users/:id`    | Update user details          |
 | DELETE | `/api/users/:id`    | Delete a user                |
 
-### Additional Endpoints (if needed)
+### Additional Endpoints
 | Method | Endpoint                | Description                   |
 |--------|-------------------------|-------------------------------|
 | GET    | `/api/dashboard/stats`  | Retrieve system statistics    |
