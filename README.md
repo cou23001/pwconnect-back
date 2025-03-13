@@ -26,3 +26,27 @@ The Pathway Connect Backend Admin is a backend system built with **Node.js** and
 5. Start the server
     ```bash
     npm start
+
+## API Endpoints
+
+### Authentication
+| Method | Endpoint            | Description             |
+|--------|---------------------|-------------------------|
+| POST   | `/api/auth/login`   | Admin login            |
+| POST   | `/api/auth/register` | Register a new admin  |
+
+### User Management
+| Method | Endpoint            | Description                  |
+|--------|---------------------|------------------------------|
+| GET    | `/api/users`        | Retrieve all users           |
+| GET    | `/api/users/:id`    | Get a single user by ID      |
+| POST   | `/api/users`        | Create a new user            |
+| PUT    | `/api/users/:id`    | Update user details          |
+| DELETE | `/api/users/:id`    | Delete a user                |
+
+### Additional Endpoints (if needed)
+| Method | Endpoint                | Description                   |
+|--------|-------------------------|-------------------------------|
+| GET    | `/api/dashboard/stats`  | Retrieve system statistics    |
+| GET    | `/api/logs`             | Get system logs               |
+
