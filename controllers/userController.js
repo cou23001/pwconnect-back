@@ -1,4 +1,17 @@
-const User = require('../models/User');
+const User = require('../models/user');
+const argon2 = require('argon2');
+
+// Hash a password
+const hashPassword = async (password) => {
+  const hash = await argon2.hash(password);
+  return hash;
+};
+
+// Compare a password with its hash
+const comparePassword = async (password, hash) => {
+  const match = await argon2.verify(hash, password);
+  return match;
+};
 
 /**
  * @swagger
@@ -9,7 +22,7 @@ const User = require('../models/User');
 
 /**
  * @swagger
- * /users:
+ * /api/users:
  *   get:
  *     summary: Get a list of users
  *     tags: [Users]
@@ -25,7 +38,7 @@ const User = require('../models/User');
  */
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find();
+    const users = await User.find().select('-hashedPassword');
     res.json(users);
   } catch (error) {
     console.error(error);
@@ -35,7 +48,7 @@ const getUsers = async (req, res) => {
 
 /**
  * @swagger
- * /users:
+ * /api/users:
  *   post:
  *     summary: Create a new user
  *     tags: [Users]
@@ -53,6 +66,9 @@ const getUsers = async (req, res) => {
  *               name:
  *                 type: string
  *                 description: The user's name
+ *               lastName:
+ *                 type: string
+ *                 description: The user's last name
  *               email:
  *                 type: string
  *                 format: email
@@ -73,8 +89,9 @@ const getUsers = async (req, res) => {
  */
 const createUser = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-    const user = new User({ name, email, password });
+    const { name, lastName, email, password } = req.body;
+    const hashedPassword = await hashPassword(password);
+    const user = new User({ name, lastName, email, hashedPassword });
     await user.save();
     res.status(201).json(user);
   } catch (error) {
