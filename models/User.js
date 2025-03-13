@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
 });
-
+ 
 // Add a toJSON transformation to exclude hashedPassword
 userSchema.set('toJSON', {
     transform: (doc, ret) => {
