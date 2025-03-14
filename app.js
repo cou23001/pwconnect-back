@@ -2,8 +2,8 @@ const express = require('express');
 const userRoutes = require('./routes/userRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const userSchema = require('./schemas/userio');
-const userResponseSchema = require('./schemas/userioResponse');
+const userSchema = require('./schemas/user');
+const userResponseSchema = require('./schemas/userResponse');
 const dotenv = require('dotenv');
 
 // Load environment variables
