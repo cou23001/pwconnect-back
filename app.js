@@ -3,7 +3,14 @@ const userRoutes = require('./routes/userRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/User');
+const dotenv = require('dotenv');
 
+// Load environment variables
+if (process.env.NODE_ENV === 'production') {
+    dotenv.config({ path: '.env.production' });
+  } else {
+    dotenv.config({ path: '.env' });
+}
 
 const app = express();
 
@@ -18,8 +25,8 @@ const swaggerOptions = {
       },
       servers: [
         {
-          url: 'http://localhost:3000/',
-          description: 'Local server',
+          url: process.env.SWAGGER_SERVER_URL,
+          description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Local server',
         },
       ],
       components: {
