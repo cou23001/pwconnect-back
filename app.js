@@ -2,7 +2,7 @@ const express = require('express');
 const userRoutes = require('./routes/userRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const userSchema = require('./schemas/User');
+const userSchema = require('./schemas/userio');
 const userResponseSchema = require('./schemas/userioResponse');
 const dotenv = require('dotenv');
 
