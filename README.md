@@ -16,7 +16,7 @@ Production server: https://pwconnect-back.onrender.com/api-docs
    git clone https://github.com/yourusername/pwconnect-back.git
 2. Navigate to the project folder:
    ```bash
-    cd pathway-connect-backend-admin
+    cd pwconnect-back
 3. Install dependencies:
     ```bash
     npm install
