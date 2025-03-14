@@ -91,7 +91,7 @@ const createUser = async (req, res) => {
   try {
     const { name, lastName, email, password } = req.body;
     const hashedPassword = await hashPassword(password);
-    const user = new User({ name, lastName, email, hashedPassword });
+    const user = new User({ name, lastName, email, password: hashedPassword });
     await user.save();
     res.status(201).json(user);
   } catch (error) {
@@ -100,4 +100,43 @@ const createUser = async (req, res) => {
   }
 };
 
-module.exports = { getUsers, createUser };
+/**
+ * @swagger
+ * /api/users/{id}:
+ *    get:
+ *      summary: Get a user by ID
+ *      description: Retrieve a user by ID
+ *      tags: [Users]
+ *      parameters:
+ *        - in: path
+ *          name: id
+ *          schema:
+ *            type: string
+ *          required: true
+ *          description: User ID
+ *      responses:
+ *        200:
+ *          description: User found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                $ref: '#/components/schemas/User'
+ *        404:
+ *          description: User not found
+ *        500:
+ *          description: Internal Server Error
+ */
+const getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-hashedPassword');
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+module.exports = { getUsers, createUser, getUserById };

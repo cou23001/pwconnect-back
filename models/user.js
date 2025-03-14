@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  hashedPassword: {
+  password: {
     type: String,
     required: true,
   },
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
 // Add a toJSON transformation to exclude hashedPassword
 userSchema.set('toJSON', {
     transform: (doc, ret) => {
-      delete ret.hashedPassword;
+      delete ret.password;
       return ret;
     },
 });

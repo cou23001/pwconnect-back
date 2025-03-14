@@ -10,7 +10,7 @@ module.exports = {
         },
         name: {
           type: 'string',
-          description: 'The user\'s name',
+          description: 'The user\'s first name',
           example: 'John',
         },
         lastName: {
@@ -24,7 +24,7 @@ module.exports = {
           description: 'The user\'s email address',
           example: 'john.doe@example.com',
         },
-        hashedPassword: {
+        password: {
           type: 'string',
           format: 'password',
           description: 'The user\'s password',
