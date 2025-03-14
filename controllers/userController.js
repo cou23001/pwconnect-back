@@ -142,34 +142,55 @@ const getUserById = async (req, res) => {
 /**
  * @swagger
  * /api/users/{id}:
- *    put:
- *      summary: Update a user by ID
- *      description: Update a user by ID
- *      tags: [Users]
- *      parameters:
- *        - in: path
- *          name: id
- *          schema:
- *            type: string
- *          required: true
- *          description: User ID
- *      requestBody:
- *        required: true
- *        content:
- *          application/json:
- *            schema:
- *              $ref: '#/components/schemas/User'
- *      responses:
- *        200:
- *          description: User updated
- *          content:
- *            application/json:
- *              schema:
- *                $ref: '#/components/schemas/User'
- *        404:
- *          description: User not found
- *        500:
- *          description: Internal Server Error
+ *   put:
+ *     summary: Update a user by ID
+ *     description: Update a user's details. To change the password, the current password must be provided.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the user to update.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The user's first name.
+ *               lastName:
+ *                 type: string
+ *                 description: The user's last name.
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The user's email address.
+ *               password:
+ *                 type: string
+ *                 description: The new password.
+ *               currentPassword:
+ *                 type: string
+ *                 description: The current password (required if updating the password).
+ *     responses:
+ *       200:
+ *         description: The updated user object (password excluded).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       400:
+ *         description: Bad request (e.g., current password is required but not provided).
+ *       401:
+ *         description: Unauthorized (e.g., invalid current password).
+ *       404:
+ *         description: User not found.
+ *       500:
+ *         description: Internal Server Error.
  */
 const updateUser = async (req, res) => {
   try {

@@ -3,6 +3,7 @@ const userRoutes = require('./routes/userRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/User');
+const userResponseSchema = require('./schemas/userResponse');
 const dotenv = require('dotenv');
 
 // Load environment variables
@@ -32,6 +33,7 @@ const swaggerOptions = {
       components: {
         schemas: {
           User: userSchema.User,
+          UserResponse: userResponseSchema.UserResponse,
         },
       },
     },
