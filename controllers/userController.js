@@ -173,15 +173,47 @@ const getUserById = async (req, res) => {
  */
 const updateUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id
-      , req.body
-      , { new: true });
+    const { name, lastName, email, password, currentPassword } = req.body;
+    const userId = req.params.id;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
     if (!user) {
       return res.status(404).send('User not found');
     }
-    res.json(user);
-  }
-  catch (error) {
+
+    // If the user wants to change the password, verify the current password
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).send('Current password is required to update the password');
+      }
+
+      // Compare the provided current password with the stored hashed password
+      const isPasswordValid = await comparePassword(currentPassword, user.password);
+      //const isPasswordValid = await bcrypt.compare(currentPassword, user.hashedPassword);
+      if (!isPasswordValid) {
+        return res.status(401).send('Invalid current password');
+      }
+
+      // Hash the new password
+      const hashedPassword = await hashPassword(password);
+      user.password = hashedPassword;
+    }
+
+    // Update other fields
+    if (name) user.name = name;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+
+    // Save the updated user
+    const updatedUser = await user.save();
+
+    // Exclude the hashedPassword from the response
+    const userResponse = updatedUser.toObject();
+    delete userResponse.password;
+
+    res.json(userResponse);
+  } catch (error) {
     console.error(error);
     res.status(500).send('Internal Server Error');
   }
