@@ -142,6 +142,107 @@ const getUserById = async (req, res) => {
 /**
  * @swagger
  * /api/users/{id}:
+ *   put:
+ *     summary: Update a user by ID
+ *     description: Update a user's details. To change the password, the current password must be provided.
+ *     tags: [Users]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The ID of the user to update.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The user's first name.
+ *               lastName:
+ *                 type: string
+ *                 description: The user's last name.
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The user's email address.
+ *               password:
+ *                 type: string
+ *                 description: The new password.
+ *               currentPassword:
+ *                 type: string
+ *                 description: The current password (required if updating the password).
+ *     responses:
+ *       200:
+ *         description: The updated user object (password excluded).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       400:
+ *         description: Bad request (e.g., current password is required but not provided).
+ *       401:
+ *         description: Unauthorized (e.g., invalid current password).
+ *       404:
+ *         description: User not found.
+ *       500:
+ *         description: Internal Server Error.
+ */
+const updateUser = async (req, res) => {
+  try {
+    const { name, lastName, email, password, currentPassword } = req.body;
+    const userId = req.params.id;
+
+    // Find the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+
+    // If the user wants to change the password, verify the current password
+    if (password) {
+      if (!currentPassword) {
+        return res.status(400).send('Current password is required to update the password');
+      }
+
+      // Compare the provided current password with the stored hashed password
+      const isPasswordValid = await comparePassword(currentPassword, user.password);
+      //const isPasswordValid = await bcrypt.compare(currentPassword, user.hashedPassword);
+      if (!isPasswordValid) {
+        return res.status(401).send('Invalid current password');
+      }
+
+      // Hash the new password
+      const hashedPassword = await hashPassword(password);
+      user.password = hashedPassword;
+    }
+
+    // Update other fields
+    if (name) user.name = name;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
+
+    // Save the updated user
+    const updatedUser = await user.save();
+
+    // Exclude the hashedPassword from the response
+    const userResponse = updatedUser.toObject();
+    delete userResponse.password;
+
+    res.json(userResponse);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+/**
+ * @swagger
+ * /api/users/{id}:
  *    delete:
  *      summary: Delete a user by ID
  *      description: Delete a user by ID
@@ -178,4 +279,4 @@ const deleteUser = async (req, res) => {
   }
 }
 
-module.exports = { getUsers, createUser, getUserById, deleteUser };
+module.exports = { getUsers, createUser, getUserById, deleteUser, updateUser };
