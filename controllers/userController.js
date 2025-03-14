@@ -142,6 +142,54 @@ const getUserById = async (req, res) => {
 /**
  * @swagger
  * /api/users/{id}:
+ *    put:
+ *      summary: Update a user by ID
+ *      description: Update a user by ID
+ *      tags: [Users]
+ *      parameters:
+ *        - in: path
+ *          name: id
+ *          schema:
+ *            type: string
+ *          required: true
+ *          description: User ID
+ *      requestBody:
+ *        required: true
+ *        content:
+ *          application/json:
+ *            schema:
+ *              $ref: '#/components/schemas/User'
+ *      responses:
+ *        200:
+ *          description: User updated
+ *          content:
+ *            application/json:
+ *              schema:
+ *                $ref: '#/components/schemas/User'
+ *        404:
+ *          description: User not found
+ *        500:
+ *          description: Internal Server Error
+ */
+const updateUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id
+      , req.body
+      , { new: true });
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+    res.json(user);
+  }
+  catch (error) {
+    console.error(error);
+    res.status(500).send('Internal Server Error');
+  }
+}
+
+/**
+ * @swagger
+ * /api/users/{id}:
  *    delete:
  *      summary: Delete a user by ID
  *      description: Delete a user by ID
@@ -178,4 +226,4 @@ const deleteUser = async (req, res) => {
   }
 }
 
-module.exports = { getUsers, createUser, getUserById, deleteUser };
+module.exports = { getUsers, createUser, getUserById, deleteUser, updateUser };
