@@ -1,5 +1,5 @@
 // middleware/authenticate.js
-const { verifyToken } = require('../config/jwt');
+const { verifyAccessToken } = require('../config/jwt');
 
 const authenticate = (req, res, next) => {
   // Get the token from the Authorization header
@@ -13,7 +13,7 @@ const authenticate = (req, res, next) => {
 
   // Verify the token
   try {
-    const decoded = verifyToken(token);
+    const decoded = verifyAccessToken(token);
     req.user = decoded; // Attach the user payload to the request
     next(); // Proceed to the next middleware or route handler
   } catch (error) {
