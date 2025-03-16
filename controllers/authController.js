@@ -1,8 +1,6 @@
 // controllers/authController.js
 const User = require('../models/user');
-const argon2 = require('argon2');
 const { generateAccessToken, generateRefreshToken } = require('../config/jwt');
-const { createTokenMetadata } = require('../models/tokenMetadata');
 const TokenMetadata = require('../models/tokenMetadata');
 
 // Register a new user
