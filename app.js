@@ -1,5 +1,6 @@
 const express = require('express');
 const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/authRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/user');
@@ -50,5 +51,6 @@ app.use(express.json()); // Parse JSON request bodies
 
 // Routes
 app.use('/api', userRoutes);
+app.use('/api/auth', authRoutes);
 
 module.exports = app;
