@@ -1,9 +1,18 @@
 // controllers/authController.js
 const User = require('../models/user');
 const argon2 = require('argon2');
-const { generateToken } = require('../config/jwt');
+const { generateAccessToken, generateRefreshToken } = require('../config/jwt');
+const { createTokenMetadata } = require('../models/tokenMetadata');
+const TokenMetadata = require('../models/tokenMetadata');
 
 // Register a new user
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: Authentication management
+ */
+
 /** 
  * @swagger
  * /api/auth/register:
@@ -56,6 +65,8 @@ const { generateToken } = require('../config/jwt');
  *         description: Internal Server Error
 */
 const register = async (req, res) => {
+  const session = await User.startSession(); // Start transaction session
+  session.startTransaction(); // Start transaction
   try {
     const { name, lastName, email, password } = req.body;
 
@@ -67,12 +78,31 @@ const register = async (req, res) => {
 
     // Create a new user
     const user = new User({ name, lastName, email, password });
-    await user.save();
+    await user.save({ session });
 
     // Generate JWT
-    const token = generateToken(user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    res.status(201).json({ message: 'User registered successfully', token });
+    // Save the refresh token in the database (associated with TokenMetadata)
+    // Save the refresh token in the database
+    const tokenRecord = await TokenMetadata.create(
+      [
+        {
+          userId: user._id,
+          refreshToken,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+        },
+      ],
+      { session }
+    );
+    // Commit transaction
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(201).json({ message: 'User registered successfully', accessToken, refreshToken });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -140,9 +170,14 @@ const login = async (req, res) => {
     }
 
     // Generate JWT
-    const token = generateToken(user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
 
-    res.json({ message: 'Login successful', token });
+    // Save the refresh token in the database (associated with the user)
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.json({ message: 'Login successful', accessToken, refreshToken });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });

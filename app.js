@@ -5,7 +5,9 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/user');
 const userResponseSchema = require('./schemas/userResponse');
+const tokenMetadataSchema = require('./schemas/tokenMetadata');
 const dotenv = require('dotenv');
+const TokenMetadata = require('./models/tokenMetadata');
 
 // Load environment variables
 if (process.env.NODE_ENV === 'production') {
@@ -35,6 +37,7 @@ const swaggerOptions = {
         schemas: {
           User: userSchema.User,
           UserResponse: userResponseSchema.UserResponse,
+          TokenMetadata: tokenMetadataSchema.TokenMetadata,
         },
       },
     },

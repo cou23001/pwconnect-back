@@ -29,6 +29,23 @@ module.exports = {
           format: 'password',
           description: 'The user\'s password',
         },
+        role: {
+          type: 'string',
+          description: 'The user\'s role',
+          example: 'user',
+        },
+        createdAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'The timestamp when the user was created',
+          example: '2023-10-15T12:00:00Z',
+        },
+        updatedAt: {
+          type: 'string',
+          format: 'date-time',
+          description: 'The timestamp when the user was last updated',
+          example: '2023-10-15T12:00:00Z',
+        },
       },
     },
   };
