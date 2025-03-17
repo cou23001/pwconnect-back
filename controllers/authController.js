@@ -44,6 +44,10 @@ const UserRole = require('../models/userRole');
  *                 type: string
  *                 format: password
  *                 description: The user's password
+ *               role:
+ *                 type: string
+ *                 description: The user's role
+ *                 example: student
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -55,9 +59,12 @@ const UserRole = require('../models/userRole');
  *                 message:
  *                   type: string
  *                   description: User registered successfully message
- *                 token:
+ *                 accessToken:
  *                   type: string
- *                   description: JWT token
+ *                   description: Access token
+ *                 refreshToken:
+ *                   type: string
+ *                   description: Refresh token
  *       400:
  *         description: User already exists
  *       500:
