@@ -1,15 +1,10 @@
 // routes/tokenMetadataRoutes.js
 const express = require('express');
 const router = express.Router();
-const { createRefreshToken, getRefreshTokenByEmail } = require('../controllers/tokenMetadataController');
-const authenticate = require('../middleware/authenticate');
-
-// Public routes
-router.post('/refresh-token', createRefreshToken);
+const { createTokenMetadata, getTokenMetadataByEmail } = require('../controllers/tokenMetadataController');
 
 // Refresh token route
-//router.post('/refresh-token', refreshToken);
-
-router.get('/token-metadata/:email', getRefreshTokenByEmail);
+router.post('/refresh-tokens', createTokenMetadata);
+router.get('/token-metadata/:email', getTokenMetadataByEmail);
 
 module.exports = router;

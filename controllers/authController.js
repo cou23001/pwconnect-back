@@ -1,8 +1,6 @@
 // controllers/authController.js
 const User = require('../models/user');
-const argon2 = require('argon2');
 const { generateAccessToken, generateRefreshToken } = require('../config/jwt');
-const { createTokenMetadata } = require('../models/tokenMetadata');
 const TokenMetadata = require('../models/tokenMetadata');
 
 // Register a new user
@@ -26,12 +24,12 @@ const TokenMetadata = require('../models/tokenMetadata');
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - firstName
  *               - lastName
  *               - email
  *               - password
  *             properties:
- *               name:
+ *               firstName:
  *                 type: string
  *                 description: The user's name
  *               lastName:
@@ -68,7 +66,7 @@ const register = async (req, res) => {
   const session = await User.startSession(); // Start transaction session
   session.startTransaction(); // Start transaction
   try {
-    const { name, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -77,7 +75,7 @@ const register = async (req, res) => {
     }
 
     // Create a new user
-    const user = new User({ name, lastName, email, password });
+    const user = new User({ firstName, lastName, email, password });
     await user.save({ session });
 
     // Generate JWT
@@ -85,7 +83,6 @@ const register = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     // Save the refresh token in the database (associated with TokenMetadata)
-    // Save the refresh token in the database
     const tokenRecord = await TokenMetadata.create(
       [
         {
@@ -174,8 +171,23 @@ const login = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     // Save the refresh token in the database (associated with the user)
-    user.refreshToken = refreshToken;
-    await user.save();
+    const token = await TokenMetadata.findOne({ userId: user._id });
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    if (!token) {
+      await TokenMetadata.create({
+        userId: user._id,
+        refreshToken,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        expiresAt: expiresAt,
+      });
+    }
+    else {
+      token.refreshToken = refreshToken;
+      token.expiresAt = expiresAt;
+      token.updatedAt = new Date();
+      await token.save();
+    }
 
     res.json({ message: 'Login successful', accessToken, refreshToken });
   } catch (error) {
