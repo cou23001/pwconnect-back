@@ -2,7 +2,6 @@
 const User = require('../models/user');
 const { generateAccessToken, generateRefreshToken } = require('../config/jwt');
 const TokenMetadata = require('../models/tokenMetadata');
-//const e = require('express');
 
 // Register a new user
 /**
