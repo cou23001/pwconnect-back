@@ -2,6 +2,7 @@
 const User = require('../models/user');
 const { generateAccessToken, generateRefreshToken } = require('../config/jwt');
 const TokenMetadata = require('../models/tokenMetadata');
+//const e = require('express');
 
 // Register a new user
 /**
@@ -83,7 +84,6 @@ const register = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     // Save the refresh token in the database (associated with TokenMetadata)
-    // Save the refresh token in the database
     const tokenRecord = await TokenMetadata.create(
       [
         {
@@ -172,8 +172,23 @@ const login = async (req, res) => {
     const refreshToken = generateRefreshToken(user);
 
     // Save the refresh token in the database (associated with the user)
-    user.refreshToken = refreshToken;
-    await user.save();
+    const token = await TokenMetadata.findOne({ userId: user._id });
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    if (!token) {
+      await TokenMetadata.create({
+        userId: user._id,
+        refreshToken,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+        expiresAt: expiresAt,
+      });
+    }
+    else {
+      token.refreshToken = refreshToken;
+      token.expiresAt = expiresAt;
+      token.updatedAt = new Date();
+      await token.save();
+    }
 
     res.json({ message: 'Login successful', accessToken, refreshToken });
   } catch (error) {
