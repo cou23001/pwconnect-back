@@ -1,6 +1,6 @@
 //controllers/userRoleController.js
 const UserRole = require('../models/userRole');
-const UserPermission = require('../models/userPermission');
+//const UserPermission = require('../models/userPermission');
 
 /**
  * @swagger

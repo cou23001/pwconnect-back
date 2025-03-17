@@ -2,6 +2,7 @@
 const User = require('../models/user');
 const { generateAccessToken, generateRefreshToken } = require('../config/jwt');
 const TokenMetadata = require('../models/tokenMetadata');
+const UserRole = require('../models/userRole');
 
 // Register a new user
 /**
@@ -66,7 +67,14 @@ const register = async (req, res) => {
   const session = await User.startSession(); // Start transaction session
   session.startTransaction(); // Start transaction
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password, role } = req.body;
+
+    // Fetch the role (specific or default)
+    const roleName = role || 'student'; // Use the provided role or fall back to 'student'
+    const userRole = await UserRole.findOne({ name: roleName });
+    if (!userRole) {
+      return res.status(400).json({ error: `Role '${roleName}' not found` });
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -75,7 +83,13 @@ const register = async (req, res) => {
     }
 
     // Create a new user
-    const user = new User({ firstName, lastName, email, password });
+    const user = new User({ 
+      firstName, 
+      lastName, 
+      email, 
+      password,
+      role: userRole._id,
+    });
     await user.save({ session });
 
     // Generate JWT
