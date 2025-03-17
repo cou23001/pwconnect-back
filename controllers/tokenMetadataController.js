@@ -114,7 +114,7 @@ const createTokenMetadata = async (req, res) => {
     await tokenRecord.save();
 
     // Return the new tokens
-    res.json({ accessToken: accessToken, refreshToken: newRefreshToken });
+    res.json({ message: 'Tokens updated successfully', accessToken, refreshToken: newRefreshToken });
   } catch (error) {
     return res.status(500).json({ error: 'Failed to create refresh token', details: error });
   }

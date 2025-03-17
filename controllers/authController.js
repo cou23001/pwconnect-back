@@ -25,12 +25,12 @@ const TokenMetadata = require('../models/tokenMetadata');
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - firstName
  *               - lastName
  *               - email
  *               - password
  *             properties:
- *               name:
+ *               firstName:
  *                 type: string
  *                 description: The user's name
  *               lastName:
@@ -67,7 +67,7 @@ const register = async (req, res) => {
   const session = await User.startSession(); // Start transaction session
   session.startTransaction(); // Start transaction
   try {
-    const { name, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -76,7 +76,7 @@ const register = async (req, res) => {
     }
 
     // Create a new user
-    const user = new User({ name, lastName, email, password });
+    const user = new User({ firstName, lastName, email, password });
     await user.save({ session });
 
     // Generate JWT

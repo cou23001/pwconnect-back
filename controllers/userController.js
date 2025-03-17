@@ -59,11 +59,11 @@ const getUsers = async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - name
+ *               - firstName
  *               - email
  *               - password
  *             properties:
- *               name:
+ *               firstName:
  *                 type: string
  *                 description: The user's name
  *               lastName:
@@ -89,9 +89,9 @@ const getUsers = async (req, res) => {
  */
 const createUser = async (req, res) => {
   try {
-    const { name, lastName, email, password } = req.body;
+    const { firstName, lastName, email, password } = req.body;
     const hashedPassword = await hashPassword(password);
-    const user = new User({ name, lastName, email, password: hashedPassword });
+    const user = new User({ firstName, lastName, email, password: hashedPassword });
     await user.save();
     res.status(201).json(user);
   } catch (error) {
@@ -160,7 +160,7 @@ const getUserById = async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               name:
+ *               firstName:
  *                 type: string
  *                 description: The user's first name.
  *               lastName:
@@ -194,7 +194,7 @@ const getUserById = async (req, res) => {
  */
 const updateUser = async (req, res) => {
   try {
-    const { name, lastName, email, password, currentPassword } = req.body;
+    const { firstName, lastName, email, password, currentPassword } = req.body;
     const userId = req.params.id;
 
     // Find the user by ID
@@ -222,7 +222,7 @@ const updateUser = async (req, res) => {
     }
 
     // Update other fields
-    if (name) user.name = name;
+    if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
 
