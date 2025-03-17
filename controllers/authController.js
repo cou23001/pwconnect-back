@@ -163,9 +163,12 @@ const register = async (req, res) => {
  *                 message:
  *                   type: string
  *                   description: Login successful message
- *                 token:
+ *                 accessToken:
  *                   type: string
- *                   description: JWT token
+ *                   description: Access token
+ *                 refreshToken:
+ *                   type: string
+ *                   description: Refresh token
  *       401:
  *         description: Invalid credentials
  *       500:
