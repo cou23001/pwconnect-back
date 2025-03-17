@@ -21,8 +21,9 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
   role: {
-    type: String,
-    default: 'student',
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserRole', // Reference to the UserRole model
+    default: 'student', // Default role ID
   },
 }, {
   timestamps: true,
