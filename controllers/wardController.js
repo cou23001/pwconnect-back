@@ -131,8 +131,10 @@ const getWard = async (req, res) => {
  *         name: id
  *         schema:
  *           type: string
+ *           format: objectid
+ *           pattern: '^[0-9a-fA-F]{24}$'
  *         required: true
- *         description: The ID of the ward to update.
+ *         description: The ID of the ward to update (must be a valid ObjectId).
  *     requestBody:
  *       required: true
  *       content:
@@ -142,20 +144,46 @@ const getWard = async (req, res) => {
  *             properties:
  *               name:
  *                 type: string
- *                 description: The ward's first name.
+ *                 description: The ward's name.
  *               location:
  *                 type: string
- *                 description: The ward's last name.
+ *                 description: The ward's location.
  *               stakeId:
- *                 type: object
- *                 description: The ward's email address.
+ *                 type: string
+ *                 format: objectid
+ *                 pattern: '^[0-9a-fA-F]{24}$'
+ *                 description: The updated stakeId of the ward (must be a valid ObjectId).
+ *               example:
+ *                 name: "Updated Ward Name"
+ *                 location: "Updated Ward Location"
+ *                 stakeId: "507f1f77bcf86cd799439011"
  *     responses:
  *       200:
- *         description: The updated war object (password excluded).
+ *         description: The ward was updated successfully.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Ward'
+ *               type: object
+ *               properties:
+ *                 _id:
+ *                   type: string
+ *                   format: objectid
+ *                   description: The ID of the updated ward.
+ *                 name:
+ *                   type: string
+ *                   description: The updated name of the ward.
+ *                 location:
+ *                   type: string
+ *                   description: The updated location of the ward.
+ *                 stakeId:
+ *                   type: string
+ *                   format: objectid
+ *                   description: The updated stakeId of the ward.
+ *               example:
+ *                 _id: "507f1f77bcf86cd799439011"
+ *                 name: "Updated Ward Name"
+ *                 location: "Updated Ward Location"
+ *                 stakeId: "507f1f77bcf86cd799439012"
  *       404:
  *         description: Ward not found.
  *       500:
@@ -163,10 +191,17 @@ const getWard = async (req, res) => {
  */
 const updateWard = async (req, res) => {
   try {
-    const { name, location } = req.body;
+    const { name, location, stakeId } = req.body;
     const ward = await Ward.findById(req.params.id);
-    ward.name = name;
-    ward.location = location;
+    console.log(ward);
+    if (!ward) {
+      return res.status(404).send('Ward not found');
+    }
+    // Modify if there are changes
+    if (name) { ward.name = name;}
+    if (location) { ward.location = location; }
+    if (stakeId) { ward.stakeId = stakeId;}
+    
     await ward.save();
     res.status(200).json({ ward });
   } catch (error) {
