@@ -164,8 +164,17 @@ const updateStake = async (req, res) => {
   try {
     const { name, location } = req.body;
     const stake = await Stake.findById(req.params.id);
-    stake.name = name;
-    stake.location = location;
+    if (!stake) {
+      return res.status(404).send('Stake not found');
+    }
+    // Validate if changes are made
+    if (name === stake.name && location === stake.location) {
+      return res.status(400).send('No changes made');
+    }
+
+    // Update stake
+    if (name) { stake.name = name; }
+    if (location) { stake.location = location; }
     await stake.save();
     res.status(200).json({ stake });
   } catch (error) {
