@@ -27,6 +27,9 @@ const Term = require('../models/term');
 const getTerms = async (req, res) => {
   try {
     const terms = await Term.find();
+    if (terms.length === 0) {
+      return res.status(404).send('Terms not found');
+    }
     res.json(terms);
   } catch (error) {
     console.error(error);
@@ -58,6 +61,10 @@ const getTerms = async (req, res) => {
  */
 const createTerm = async (req, res) => {
   try {
+    // Validate request
+    if (!req.body.name || !req.body.startDate || !req.body.endDate) {
+      return res.status(400).send('Missing required fields: name, startDate, and endDate');
+    }
     const term = new Term(req.body);
     await term.save();
     res.status(201).json(term);
@@ -93,6 +100,7 @@ const createTerm = async (req, res) => {
 const getTermById = async (req, res) => {
   try {
     const { id } = req.params;
+    
     const term = await Term.findById(id);
     if (!term) {
       return res.status(404).send('Term not found');

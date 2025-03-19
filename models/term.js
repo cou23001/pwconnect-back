@@ -1,8 +1,7 @@
 // models/term.js
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const termSchema = new Schema({
+const termSchema = new mongoose.Schema({
     name: {
         type: String,
         required: true
@@ -18,3 +17,5 @@ const termSchema = new Schema({
 }, {
     timestamps: true
 });
+
+module.exports = mongoose.model('Term', termSchema);

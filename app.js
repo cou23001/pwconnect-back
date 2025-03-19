@@ -6,6 +6,8 @@ const tokenMetadataRoutes = require('./routes/tokenMetadataRoutes');
 const userRoleRoutes = require('./routes/userRoleRoutes');
 const wardRoutes = require('./routes/wardRoutes');
 const stakeRoutes = require('./routes/stakeRoutes');
+const instructorRoutes = require('./routes/instructorRoutes');
+const termRoutes = require('./routes/termRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/user');
@@ -74,5 +76,7 @@ app.use('/api', userPermissionRoutes)
 app.use('/api', userRoleRoutes);
 app.use('/api', wardRoutes);
 app.use('/api', stakeRoutes);
+app.use('/api', instructorRoutes);
+app.use('/api', termRoutes);
 
 module.exports = app;
