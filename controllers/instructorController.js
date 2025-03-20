@@ -52,7 +52,37 @@ const getInstructors = async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Instructor'
+ *             type: object
+ *             properties:
+ *               firstName:
+ *                 type: string
+ *                 description: The instructor's first name.
+ *               lastName:
+ *                 type: string
+ *                 description: The instructor's last name.
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The instructor's email address.
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 description: The instructor's password.
+ *               role:
+ *                 type: string
+ *                 description: The instructor's role (default is "instructor").
+ *                 default: "instructor"
+ *             required:
+ *               - firstName
+ *               - lastName
+ *               - email
+ *               - password
+ *             example:
+ *               firstName: "John"
+ *               lastName: "Doe"
+ *               email: "john.doe@example.com"
+ *               password: "password123"
+ *               role: "instructor"
  *     responses:
  *       201:
  *         description: The instructor was successfully created
@@ -61,7 +91,7 @@ const getInstructors = async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Instructor'
  *       400:
- *         description: Bad request (e.g., invalid input, duplicate email)
+ *         description: Bad request (e.g., invalid input, duplicate email, invalid role).
  *         content:
  *           application/json:
  *             schema:
@@ -73,7 +103,7 @@ const getInstructors = async (req, res) => {
  *       500:
  *         description: Internal server error
  *     security:
- *       - BearerAuth: [] # Add if authentication is required
+ *       - BearerAuth: [] 
  */
 const createInstructor = async (req, res) => {
   const session = await mongoose.startSession();
