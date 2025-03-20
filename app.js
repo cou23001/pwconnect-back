@@ -6,6 +6,8 @@ const tokenMetadataRoutes = require('./routes/tokenMetadataRoutes');
 const userRoleRoutes = require('./routes/userRoleRoutes');
 const wardRoutes = require('./routes/wardRoutes');
 const stakeRoutes = require('./routes/stakeRoutes');
+const instructorRoutes = require('./routes/instructorRoutes');
+const termRoutes = require('./routes/termRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/user');
@@ -15,9 +17,11 @@ const userPermissionSchema = require('./schemas/userPermission');
 const userRoleSchema = require('./schemas/userRole');
 const wardSchema = require('./schemas/ward');
 const stakeSchema = require('./schemas/stake');
+const termSchema = require('./schemas/term');
+const instructorSchema = require('./schemas/instructor');
 const dotenv = require('dotenv');
-const userRole = require('./schemas/userRole');
-const ward = require('./schemas/ward');
+//const userRole = require('./schemas/userRole');
+//const ward = require('./schemas/ward');
 
 // Load environment variables
 if (process.env.NODE_ENV === 'production') {
@@ -52,6 +56,8 @@ const swaggerOptions = {
           UserRole: userRoleSchema.UserRole,
           Ward: wardSchema.Ward,
           Stake: stakeSchema.Stake,
+          Term: termSchema.Term,
+          Instructor: instructorSchema.Instructor
         },
       },
     },
@@ -74,5 +80,7 @@ app.use('/api', userPermissionRoutes)
 app.use('/api', userRoleRoutes);
 app.use('/api', wardRoutes);
 app.use('/api', stakeRoutes);
+app.use('/api', instructorRoutes);
+app.use('/api', termRoutes);
 
 module.exports = app;
