@@ -1,7 +1,6 @@
 // models/user.js
 const mongoose = require('mongoose');
 const argon2 = require('argon2');
-const UserRole = require('./userRole');
 
 const userSchema = new mongoose.Schema({
   firstName: {
