@@ -16,25 +16,73 @@ const UserRole = require("../models/userRole");
  * @swagger
  * /api/instructors:
  *   get:
- *     summary: Get a list of instructors
+ *     summary: Get a list of instructors with user details
  *     tags: [Instructors]
  *     responses:
  *       200:
- *         description: A list of instructors
+ *         description: A list of instructors with user details
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Instructor'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Instructors found"
+ *                 data:
+ *                   type: array
+ *                   description: List of instructors
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         description: Unique ID of the instructor
+ *                       userId:
+ *                         type: string
+ *                         description: Unique ID of the associated user
+ *                       firstName:
+ *                         type: string
+ *                         description: First name of the instructor
+ *                       lastName:
+ *                         type: string
+ *                         description: Last name of the instructor
+ *                       email:
+ *                         type: string
+ *                         format: email
+ *                         description: Email of the instructor
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Timestamp when the instructor was created
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *                         description: Timestamp when the instructor was last updated
+ *       404:
+ *         description: No instructors found
+ *       500:
+ *         description: Internal server error
  */
 const getInstructors = async (req, res) => {
   try {
-    const instructors = await Instructor.find();
+    const instructors = await Instructor.find().populate("userId");
     if (instructors.length === 0) {
       return res.status(404).send("Instructors not found");
     }
-    res.json(instructors);
+
+    // Construct the response
+    const response = instructors.map((instructor) => ({
+      _id: instructor._id,
+      userId: instructor.userId._id,
+      firstName: instructor.userId.firstName,
+      lastName: instructor.userId.lastName,
+      email: instructor.userId.email,
+      createdAt: instructor.createdAt,
+      updatedAt: instructor.updatedAt,
+    }));
+
+    res.json({ message: "Instructors found", data: response });
   } catch (error) {
     console.error(error);
     res.status(500).send("Internal Server Error");
@@ -175,28 +223,80 @@ const createInstructor = async (req, res) => {
  *         name: id
  *         schema:
  *           type: string
+ *           format: objectid
  *         required: true
- *         description: The instructor ID
+ *         description: The ID of the instructor to fetch.
  *     responses:
  *       200:
- *         description: An instructor object
+ *         description: The instructor details.
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Instructor'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Instructor found"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       format: objectid
+ *                       description: The ID of the instructor.
+ *                     userId:
+ *                       type: string
+ *                       format: objectid
+ *                       description: The ID of the associated user.
+ *                     firstName:
+ *                       type: string
+ *                       description: The user's first name.
+ *                     lastName:
+ *                       type: string
+ *                       description: The user's last name.
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       description: The user's email address.
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: The date and time when the instructor was created.
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: The date and time when the instructor was last updated.
  *       404:
- *         description: The instructor was not found
+ *         description: The instructor was not found.
+ *       500:
+ *         description: Internal server
  */
 const getInstructorById = async (req, res) => {
   try {
-    const instructor = await Instructor.findById(req.params.id);
+    // Find the instructor and populate the user
+    const instructor = await Instructor.findById(req.params.id).populate('userId');
     if (!instructor) {
-      res.status(404).send("The instructor was not found");
+      return res.status(404).send({ error: 'Instructor not found' });
     }
-    res.json(instructor);
+    // Extract the user details
+    const user = instructor.userId;
+
+    // Construct the response
+    const response = {
+        _id: instructor._id,
+        userId: instructor._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        createdAt: instructor.createdAt,
+        updatedAt: instructor.updatedAt,
+    };
+
+    // Send the response
+    res.status(200).json({message: 'Instructor found', data: response});
   } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
+    console.error('Error fetching instructor:', error);
+    res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
 };
 
