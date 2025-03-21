@@ -352,7 +352,33 @@ const getInstructorById = async (req, res) => {
  *                   type: string
  *                   example: "Instructor updated successfully"
  *                 data:
- *                   $ref: '#/components/schemas/Instructor'
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       format: objectid
+ *                       description: The ID of the instructor.
+ *                     userId:
+ *                       type: string
+ *                       format: objectid
+ *                       description: The ID of the associated user.
+ *                     firstName:
+ *                       type: string
+ *                       description: The user's first name.
+ *                     lastName:
+ *                       type: string
+ *                       description: The user's last name.
+ *                     email:
+ *                       type: string
+ *                       format: email
+ *                       description: The user's email address.
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: The date and time when the instructor was created.
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: The date and time when the instructor was last updated.
  *       400:
  *         description: Bad request, no fields provided for update
  *         content:
