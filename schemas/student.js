@@ -1,5 +1,4 @@
 // schemas/student.js
-
 module.exports = {
     Student: {
         type: 'object',

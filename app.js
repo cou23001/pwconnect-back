@@ -9,6 +9,7 @@ const stakeRoutes = require('./routes/stakeRoutes');
 const instructorRoutes = require('./routes/instructorRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const termRoutes = require('./routes/termRoutes');
+const studentRoutes = require('./routes/studentRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/user');
@@ -21,7 +22,10 @@ const stakeSchema = require('./schemas/stake');
 const termSchema = require('./schemas/term');
 const instructorSchema = require('./schemas/instructor');
 const addressSchema = require('./schemas/address');
+const studentSchema = require('./schemas/student');
 const dotenv = require('dotenv');
+const { Student } = require('./schemas/student');
+const student = require('./schemas/student');
 
 // Load environment variables
 if (process.env.NODE_ENV === 'production') {
@@ -59,6 +63,7 @@ const swaggerOptions = {
           Term: termSchema.Term,
           Instructor: instructorSchema.Instructor,
           Address: addressSchema.Address,
+          Student: studentSchema.Student,
         },
       },
     },
@@ -84,5 +89,6 @@ app.use('/api', stakeRoutes);
 app.use('/api', instructorRoutes);
 app.use('/api', termRoutes);
 app.use('/api', addressRoutes);
+app.use('/api', studentRoutes);
 
 module.exports = app;
