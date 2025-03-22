@@ -28,7 +28,7 @@ const UserRole = require("../models/userRole");
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Students retrieved"
+ *                   example: "Students retrieved succesfully"
  *                 data:
  *                   type: array
  *                   description: List of students with user and address information
@@ -59,7 +59,7 @@ const UserRole = require("../models/userRole");
  *                             email:
  *                               type: string
  *                               description: The email of the user
- *                               example:
+ *                               example: john.doe@example.com
  *                        address:
  *                          type: object
  *                          properties:
@@ -129,7 +129,7 @@ const getAllStudents = async (req, res) => {
     if (students.length === 0) {
       return res.status(404).json({ message: "No students found" });
     }
-    res.status(200).json({ message: "Success", data: students });
+    res.status(200).json({ message: "Students retrieved succesfully", data: students });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -151,7 +151,7 @@ const getAllStudents = async (req, res) => {
  *          description: Student ID
  *      responses:
  *        200:
- *          description: A list of students
+ *          description: A student details
  *          content:
  *            application/json:
  *              schema:
@@ -159,10 +159,10 @@ const getAllStudents = async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Students retrieved successfully"
+ *                   example: "Student retrieved successfully"
  *                 data:
  *                   type: object
- *                   description: List of students with user and address information
+ *                   description: A student with user and address information
  *                   properties:
  *                        _id:
  *                          type: string
@@ -250,6 +250,14 @@ const getAllStudents = async (req, res) => {
  *                          example: 2020-08-20T20:00:00.000Z
  *        500:
  *          description: Internal server error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: "Internal server error"
  */
 const getStudentById = async (req, res) => {
   try {
@@ -584,7 +592,7 @@ const createStudent = async (req, res) => {
  *                 description: Updated level of the student
  *     responses:
  *       200:
- *         description: Student updated
+ *         description: Student updated successfully
  *         content:
  *            application/json:
  *              schema:
@@ -592,10 +600,10 @@ const createStudent = async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Students retrieved successfully"
+ *                   description: A success message
+ *                   example: "Student updated successfully"
  *                 data:
  *                   type: object
- *                   description: List of students with user and address information
  *                   properties:
  *                        _id:
  *                          type: string
@@ -673,6 +681,14 @@ const createStudent = async (req, res) => {
  *                          example: EC1
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
  */
 const updateStudent = async (req, res) => {
   try {
@@ -701,8 +717,24 @@ const updateStudent = async (req, res) => {
  *     responses:
  *       200:
  *         description: Student deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student deleted"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
  */
 const deleteStudent = async (req, res) => {
   try {
