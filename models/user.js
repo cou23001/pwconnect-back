@@ -1,6 +1,6 @@
 // models/user.js
 const mongoose = require('mongoose');
-const argon2 = require('argon2'); 
+const argon2 = require('argon2');
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
   role: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'UserRole', // Reference to the UserRole model
-    default: 'student', // Default role ID
+    default: 'student',
   },
 }, {
   timestamps: true,
