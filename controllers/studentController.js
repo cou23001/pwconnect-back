@@ -291,6 +291,8 @@ const createStudent = async (req, res) => {
       addressId: req.body.addressId,
       birthDate: req.body.birthDate,
       phone: req.body.phone,
+      level: req.body.level,
+      language: req.body.language,
     });
 
     await student.save();

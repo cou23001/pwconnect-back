@@ -11,6 +11,7 @@ const instructorRoutes = require('./routes/instructorRoutes');
 const addressRoutes = require('./routes/addressRoutes');
 const termRoutes = require('./routes/termRoutes');
 const studentRoutes = require('./routes/studentRoutes');
+const attendanceRoutes = require('./routes/attendanceRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/user');
@@ -27,6 +28,7 @@ const studentSchema = require('./schemas/student');
 const dotenv = require('dotenv');
 const userRole = require('./schemas/userRole');
 const groupSchema = require('./schemas/group');
+const attendanceSchema = require('./schemas/attendance');
 const { Student } = require('./schemas/student');
 const student = require('./schemas/student');
 
@@ -67,7 +69,8 @@ const swaggerOptions = {
           Term: termSchema.Term,
           Instructor: instructorSchema.Instructor,
           Address: addressSchema.Address,
-          Student: studentSchema.Student
+          Student: studentSchema.Student,
+          Attendance: attendanceSchema.Attendance
         },
       },
     },
@@ -95,5 +98,6 @@ app.use('/api', instructorRoutes);
 app.use('/api', termRoutes);
 app.use('/api', addressRoutes);
 app.use('/api', studentRoutes);
+app.use('/api', attendanceRoutes);
 
 module.exports = app;
