@@ -6,6 +6,7 @@ const tokenMetadataRoutes = require('./routes/tokenMetadataRoutes');
 const userRoleRoutes = require('./routes/userRoleRoutes');
 const wardRoutes = require('./routes/wardRoutes');
 const stakeRoutes = require('./routes/stakeRoutes');
+const groupRoutes = require('./routes/groupRoutes');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const userSchema = require('./schemas/user');
@@ -18,6 +19,7 @@ const stakeSchema = require('./schemas/stake');
 const dotenv = require('dotenv');
 const userRole = require('./schemas/userRole');
 const ward = require('./schemas/ward');
+const groupSchema = require('./schemas/group');
 
 // Load environment variables
 if (process.env.NODE_ENV === 'production') {
@@ -52,6 +54,7 @@ const swaggerOptions = {
           UserRole: userRoleSchema.UserRole,
           Ward: wardSchema.Ward,
           Stake: stakeSchema.Stake,
+          Group: groupSchema.Group
         },
       },
     },
@@ -74,5 +77,6 @@ app.use('/api', userPermissionRoutes)
 app.use('/api', userRoleRoutes);
 app.use('/api', wardRoutes);
 app.use('/api', stakeRoutes);
+app.use('/api', groupRoutes);
 
 module.exports = app;
