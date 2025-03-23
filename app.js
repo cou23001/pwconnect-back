@@ -1,4 +1,9 @@
 const express = require('express');
+const swaggerJsdoc = require('swagger-jsdoc');
+const swaggerUi = require('swagger-ui-express');
+const dotenv = require('dotenv');
+
+// Routes
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 const userPermissionRoutes = require('./routes/userPermissionRoutes');
@@ -12,8 +17,9 @@ const addressRoutes = require('./routes/addressRoutes');
 const termRoutes = require('./routes/termRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
-const swaggerJsdoc = require('swagger-jsdoc');
-const swaggerUi = require('swagger-ui-express');
+const registrationRoutes = require('./routes/registrationRoutes');
+
+// Schemas
 const userSchema = require('./schemas/user');
 const userResponseSchema = require('./schemas/userResponse');
 const tokenMetadataSchema = require('./schemas/tokenMetadata');
@@ -25,12 +31,9 @@ const termSchema = require('./schemas/term');
 const instructorSchema = require('./schemas/instructor');
 const addressSchema = require('./schemas/address');
 const studentSchema = require('./schemas/student');
-const dotenv = require('dotenv');
-const userRole = require('./schemas/userRole');
 const groupSchema = require('./schemas/group');
 const attendanceSchema = require('./schemas/attendance');
-const { Student } = require('./schemas/student');
-const student = require('./schemas/student');
+const registrationSchema = require('./schemas/registration');
 
 // Load environment variables
 if (process.env.NODE_ENV === 'production') {
@@ -70,7 +73,8 @@ const swaggerOptions = {
           Instructor: instructorSchema.Instructor,
           Address: addressSchema.Address,
           Student: studentSchema.Student,
-          Attendance: attendanceSchema.Attendance
+          Attendance: attendanceSchema.Attendance,
+          Registration: registrationSchema.Registration
         },
       },
     },
@@ -99,5 +103,6 @@ app.use('/api', termRoutes);
 app.use('/api', addressRoutes);
 app.use('/api', studentRoutes);
 app.use('/api', attendanceRoutes);
+app.use('/api', registrationRoutes)
 
 module.exports = app;
