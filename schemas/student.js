@@ -55,7 +55,7 @@ module.exports = {
                 example: '2020-08-20T20:00:00.000Z',
             },
         },
-        required: ['userId'],
+        required: ['_id','userId','addressId','birthDate','phone','language','level','createdAt','updatedAt'],
 
     },
 };
