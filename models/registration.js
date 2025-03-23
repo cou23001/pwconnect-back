@@ -30,3 +30,5 @@ const registrationSchema = new mongoose.Schema(
 registrationSchema.index({ studentId: 1, groupId: 1, date: 1 });
 
 const Registration = mongoose.model("Registration", registrationSchema);
+
+module.exports = Registration;

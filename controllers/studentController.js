@@ -125,7 +125,7 @@ const UserRole = require("../models/userRole");
 const getAllStudents = async (req, res) => {
   try {
     // Get students with user and address information
-    const students = await Student.find().populate("user").populate("address");
+    const students = await Student.find().populate("userId").populate("addressId");
     if (students.length === 0) {
       return res.status(404).json({ message: "No students found" });
     }
