@@ -725,6 +725,26 @@ const createStudent = async (req, res) => {
  *                          type: string
  *                          description: The level of the student
  *                          example: EC1
+ *       400:
+ *         description: Invalid student ID or missing fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid student ID or missing fields"
+ *       404:
+ *         description: Student not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -798,7 +818,7 @@ const updateStudent = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(200).json({ message: "Student updated", data: student });
+    res.status(200).json({ message: "Student updated succesfully", data: student });
   } catch (error) {
     // Abort the transaction on error
     await session.abortTransaction();
