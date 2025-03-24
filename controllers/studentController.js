@@ -5,6 +5,7 @@ const Address = require("../models/address");
 const mongoose = require("mongoose");
 const UserRole = require("../models/userRole");
 const studentSchema = require("../validators/student");
+const partialStudentSchema = require("../validators/partialStudent");
 
 /**
  * @swagger
@@ -717,12 +718,72 @@ const createStudent = async (req, res) => {
  *                   example: "Internal server error"
  */
 const updateStudent = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const student = await Student.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
+    // Validate request body using Joi
+    const { error, value } = partialStudentSchema.validate(req.body, {
+      abortEarly: false,
     });
+
+    if (error) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        message: error.details.map((err) => err.message).join(", "),
+      });
+    }
+
+    // Find the student first
+    let student = await Student.findById(req.params.id).session(session);
+
+    if (!student) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Update User if provided
+    if (req.body.user) {
+      await User.findByIdAndUpdate(
+        student.userId,
+        { $set: req.body.user }, // Only updates provided fields
+        { session, new: true }
+      );
+    }
+
+    // Update Address if provided
+    if (req.body.address) {
+      await Address.findByIdAndUpdate(
+        student.addressId,
+        { $set: req.body.address }, // Only updates provided fields
+        { session, new: true }
+      );
+    }
+
+    // Update Student (excluding userId & addressId)
+    const studentUpdateFields = { ...req.body };
+    delete studentUpdateFields.user;
+    delete studentUpdateFields.address;
+
+    student = await Student.findByIdAndUpdate(
+      req.params.id,
+      { $set: studentUpdateFields },
+      { new: true, session }
+    )
+      .populate("userId") // Populate updated user details
+      .populate("addressId"); // Populate updated address
+
+    // Commit the transaction
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(200).json({ message: "Student updated", data: student });
   } catch (error) {
+    // Abort the transaction on error
+    await session.abortTransaction();
+    session.endSession();
     res.status(500).json({ message: error.message });
   }
 };
