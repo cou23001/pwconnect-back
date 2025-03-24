@@ -286,74 +286,95 @@ const getStudentById = async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               firstName:
- *                 type: string
- *                 description: The student's first name.
- *               lastName:
- *                 type: string
- *                 description: The student's last name.
- *               email:
- *                 type: string
- *                 format: email
- *                 description: The student's email address.
- *               password:
- *                 type: string
- *                 format: password
- *                 description: The student's password.
- *               role:
- *                 type: string
- *                 description: The student's role (default is "student").
- *                 default: "student"
- *               street:
- *                 type: string
- *                 description: The street address of the student.
- *               neighborhood:
- *                 type: string
- *                 description: The neighborhood or apartment of the student.
- *               city:
- *                 type: string
- *                 description: The city of the student.
- *               state:
- *                 type: string
- *                 description: The state of the student.
- *               country:
- *                 type: string
- *                 description: The country of the student.
- *               postalCode:
- *                 type: string
- *                 description: The postal code of the student.
- *               birthDate:
- *                 type: string
- *                 format: date
- *                 description: The date of birth of the student.
- *               phone:
- *                 type: string
- *                 description: The phone number of the student.
+ *               user:
+ *                 type: object
+ *                 properties:
+ *                   firstName:
+ *                     type: string
+ *                     description: The student's first name.
+ *                   lastName:
+ *                     type: string
+ *                     description: The student's last name.
+ *                   email:
+ *                     type: string
+ *                     format: email
+ *                     description: The student's email address.
+ *                   password:
+ *                     type: string
+ *                     format: password
+ *                     description: The student's password.
+ *                   role:
+ *                     type: string
+ *                     description: The student's role (default is "student").
+ *                     default: "student"
+ *                 required:
+ *                   - firstName
+ *                   - lastName
+ *                   - email
+ *                   - password
+ *               address:
+ *                 type: object
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                     description: The street address of the student.
+ *                   neighborhood:
+ *                     type: string
+ *                     description: The neighborhood or apartment of the student.
+ *                   city:
+ *                     type: string
+ *                     description: The city of the student.
+ *                   state:
+ *                     type: string
+ *                     description: The state of the student.
+ *                   country:
+ *                     type: string
+ *                     description: The country of the student.
+ *                   postalCode:
+ *                     type: string
+ *                     description: The postal code of the student.
+ *                 required:
+ *                   - firstName
+ *                   - lastName
+ *                   - email
+ *                   - password
+ *                   - street
+ *                   - city
+ *                   - state
+ *                   - country
+ *                   - postalCode
+ *                 birthDate:
+ *                   type: string
+ *                   format: date
+ *                   description: The date of birth of the student.
+ *                 phone:
+ *                   type: string
+ *                   description: The phone number of the student.
+ *                 language:
+ *                   type: string
+ *                   enum: [Spanish, Portuguese, French]
+ *                   description: The preferred language of the student.
+ *                 level:
+ *                   type: string
+ *                   description: The level of the student.
  *             required:
- *               - firstName
- *               - lastName
- *               - email
- *               - password
- *               - street
- *               - city
- *               - state
- *               - country
- *               - postalCode
  *               - birthDate
  *               - phone
  *               - language
  *               - level
  *             example:
- *               firstName: "John"
- *               lastName: "Doe"
- *               email: "john.doe@example.com"
- *               password: "password123"
- *               role: "student"
- *               street: "123 Main St."
- *               neighborhood: "Apt. 101"
- *               city: "Salt Lake City"
- *               state: "UT"
- *               country: "USA"
+ *               user:
+ *                 firstName: "John"
+ *                 lastName: "Doe"
+ *                 email: "john.doe@example.com"
+ *                 password: "password123"
+ *                 role: "student"
+ *               address:
+ *                 street: "123 Main St."
+ *                 neighborhood: "Apt. 101"
+ *                 city: "Salt Lake City"
+ *                 state: "UT"
+ *                 country: "USA"
  *               postalCode: "84101"
  *               birthDate: "2000-01-01"
  *               phone: "123-456-7890"
