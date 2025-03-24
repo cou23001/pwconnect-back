@@ -1,6 +1,5 @@
 // controllers/addressController.js
 const Address = require("../models/address");
-const User = require("../models/user");
 const mongoose = require("mongoose");
 
 /**
@@ -25,12 +24,17 @@ const mongoose = require("mongoose");
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Address'
+ *       404:
+ *         description: No addresses found
  *       500:
  *         description: Internal server error
  */
 const getAllAddresses = async (req, res) => {
   try {
     const addresses = await Address.find();
+    if (addresses.length === 0) {
+      return res.status(404).json({ message: "No addresses found" });
+    }
     res.status(200).json({ message: "Success", data: addresses });
   } catch (error) {
     res.status(500).json({ message: error.message });

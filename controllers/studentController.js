@@ -312,104 +312,111 @@ const getStudentById = async (req, res) => {
  * /api/students:
  *   post:
  *     summary: Create a new student
+ *     description: Creates a new student with associated user account and address
  *     tags: [Student]
  *     requestBody:
  *       required: true
+ *       description: Student creation data
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - user
+ *               - address
+ *               - birthDate
+ *               - phone
+ *               - language
+ *               - level
  *             properties:
  *               user:
  *                 type: object
+ *                 required:
+ *                   - firstName
+ *                   - lastName
+ *                   - email
+ *                   - password
  *                 properties:
  *                   firstName:
  *                     type: string
- *                     description: The student's first name.
+ *                     minLength: 2
+ *                     maxLength: 50
+ *                     example: "John"
  *                   lastName:
  *                     type: string
- *                     description: The student's last name.
+ *                     minLength: 2
+ *                     maxLength: 50
+ *                     example: "Doe"
  *                   email:
  *                     type: string
  *                     format: email
- *                     description: The student's email address.
+ *                     example: "john.doe@example.com"
  *                   password:
  *                     type: string
  *                     format: password
- *                     description: The student's password.
+ *                     minLength: 8
+ *                     example: "securePassword123"
  *                   role:
  *                     type: string
- *                     description: The student's role (default is "student").
  *                     default: "student"
- *                 required:
- *                   - firstName
- *                   - lastName
- *                   - email
- *                   - password
+ *                     example: "student"
  *               address:
  *                 type: object
- *                 properties:
- *                   street:
- *                     type: string
- *                     description: The street address of the student.
- *                   neighborhood:
- *                     type: string
- *                     description: The neighborhood or apartment of the student.
- *                   city:
- *                     type: string
- *                     description: The city of the student.
- *                   state:
- *                     type: string
- *                     description: The state of the student.
- *                   country:
- *                     type: string
- *                     description: The country of the student.
- *                   postalCode:
- *                     type: string
- *                     description: The postal code of the student.
  *                 required:
- *                   - firstName
- *                   - lastName
- *                   - email
- *                   - password
  *                   - street
  *                   - city
  *                   - state
  *                   - country
  *                   - postalCode
- *                 birthDate:
- *                   type: string
- *                   format: date
- *                   description: The date of birth of the student.
- *                 phone:
- *                   type: string
- *                   description: The phone number of the student.
- *                 language:
- *                   type: string
- *                   enum: [Spanish, Portuguese, French]
- *                   description: The preferred language of the student.
- *                 level:
- *                   type: string
- *                   description: The level of the student.
- *             required:
- *               - birthDate
- *               - phone
- *               - language
- *               - level
+ *                 properties:
+ *                   street:
+ *                     type: string
+ *                     example: "123 Main St."
+ *                   neighborhood:
+ *                     type: string
+ *                     example: "Apt 101"
+ *                   city:
+ *                     type: string
+ *                     example: "Salt Lake City"
+ *                   state:
+ *                     type: string
+ *                     minLength: 2
+ *                     maxLength: 2
+ *                     example: "UT"
+ *                   country:
+ *                     type: string
+ *                     example: "USA"
+ *                   postalCode:
+ *                     type: string
+ *                     example: "84101"
+ *               birthDate:
+ *                 type: string
+ *                 format: date
+ *                 example: "2000-01-01"
+ *               phone:
+ *                 type: string
+ *                 pattern: '^[\d\-\(\) ]+$'
+ *                 example: "123-456-7890"
+ *               language:
+ *                 type: string
+ *                 enum: [Spanish, Portuguese, French]
+ *                 example: "Spanish"
+ *               level:
+ *                 type: string
+ *                 example: "EC1"
  *             example:
  *               user:
  *                 firstName: "John"
  *                 lastName: "Doe"
  *                 email: "john.doe@example.com"
- *                 password: "password123"
- *                 role: "student"
+ *                 password: "securePassword123"
  *               address:
  *                 street: "123 Main St."
- *                 neighborhood: "Apt. 101"
+ *                 neighborhood: "Apt 101"
  *                 city: "Salt Lake City"
  *                 state: "UT"
  *                 country: "USA"
- *               postalCode: "84101"
+ *                 postalCode: "84101"
  *               birthDate: "2000-01-01"
  *               phone: "123-456-7890"
  *               language: "Spanish"
@@ -428,14 +435,35 @@ const getStudentById = async (req, res) => {
  *                 data:
  *                   type: object
  *                   properties:
- *                     userId:
+ *                     id:
  *                       type: string
  *                       description: The ID of the user associated with the student.
  *                       example: "67def8dc21d7683620e7b62c"
- *                     addressId:
- *                       type: string
- *                       description: The ID of the address associated with the student.
- *                       example: "67def8dc21d7683620e7b62f"
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                           description: The ID of the user associated with the student.
+ *                           example: "67def8dc21d7683620e7b62c"
+ *                         firstName:
+ *                           type: string
+ *                           description: The first name of the user.
+ *                           example: "John"
+ *                         lastName:
+ *                           type: string
+ *                           description: The last name of the user.
+ *                           example: "Doe"
+ *                         email:
+ *                           type: string
+ *                           description: The email of the user.
+ *                           example: "john@doe.com"
+ *                         roleId:
+ *                           type: string
+ *                           description: The role Id of the user.
+ *                           example: "67def8dc21d7683620e7b62c"
+ *                     address:
+ *                       $ref: '#/components/schemas/Address'
  *                     birthDate:
  *                       type: string
  *                       format: date-time
@@ -471,6 +499,26 @@ const getStudentById = async (req, res) => {
  *                       type: integer
  *                       description: The version key for the document.
  *                       example: 0
+ *       400:
+ *         description: Invalid request body or missing fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid request body or missing fields"
+ *       404:
+ *         description: Role not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Role not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -524,7 +572,7 @@ const createStudent = async (req, res) => {
     if (!userRole) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ message: "Role not found" });
+      return res.status(404).json({ message: "Role not found" });
     }
 
     // Create the user
@@ -564,23 +612,19 @@ const createStudent = async (req, res) => {
 
     // Commit the transaction
     await session.commitTransaction();
+
+    // Populate the student data before sending response
+    const populatedStudent = await Student.findById(newStudent._id)
+      .populate('userId', '-password')  // Exclude password field
+      .populate('addressId')
+      .lean();  // Convert to plain JavaScript object
+
     session.endSession();
 
     // Send response
     res.status(201).json({
       message: "Student created successfully",
-      data: {
-        userId: newUser._id,
-        addressId: newAddress._id,
-        birthDate: newStudent.birthDate,
-        phone: newStudent.phone,
-        language: newStudent.language,
-        level: newStudent.level,
-        _id: newStudent._id,
-        createdAt: newStudent.createdAt,
-        updatedAt: newStudent.updatedAt,
-        __v: newStudent.__v,
-      },
+      data: populatedStudent,
     });
   } catch (error) {
     await session.abortTransaction();
@@ -918,7 +962,7 @@ const deleteStudent = async (req, res) => {
     }
 
     // 3. Use deleteOne to trigger the middleware
-    await Student.deleteOne({ _id: id }); // This triggers the post('deleteOne') hook
+    await student.deleteOne(); // This triggers the post('deleteOne') hook
 
     // 3. Success response
     res.status(200).json({ message: "Student and linked data deleted" });
