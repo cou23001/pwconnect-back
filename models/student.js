@@ -37,10 +37,13 @@ const studentSchema = new mongoose.Schema(
   }
 );
 
-studentSchema.post("deleteOne", async function (doc) {
-  // This runs AFTER a student is deleted
-  await User.deleteOne({ _id: doc.userId });
-  await Address.deleteMany({ _id: doc.addressId });
-});
+studentSchema.pre('deleteOne', { document: true }, async function(next) {
+    // 'this' refers to the student document
+    await Promise.all([
+      User.deleteOne({ _id: this.userId }),
+      Address.deleteOne({ _id: this.addressId })
+    ]);
+    next();
+  });
 
 module.exports = mongoose.model("Student", studentSchema);

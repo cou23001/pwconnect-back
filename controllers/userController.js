@@ -35,14 +35,21 @@ const comparePassword = async (password, hash) => {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/User'
+ *       404:
+ *         description: No users found
+ *       500:
+ *         description: Internal Server
  */
 const getUsers = async (req, res) => {
   try {
     const users = await User.find().select('-hashedPassword');
-    res.json(users);
+    if (users.length === 0) {
+      return res.status(404).send({ message: 'No users found' });
+    } 
+    res.status(200).json({ message: 'Success', data: users });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send({ message: 'Internal Server Error' });
   }
 };
 
@@ -93,10 +100,10 @@ const createUser = async (req, res) => {
     const hashedPassword = await hashPassword(password);
     const user = new User({ firstName, lastName, email, password: hashedPassword });
     await user.save();
-    res.status(201).json(user);
+    res.status(201).json({ message: 'User created successfully', data: user });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send({ message: 'Internal Server Error' });
   }
 };
 
@@ -130,12 +137,12 @@ const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-hashedPassword');
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).send({ message: 'User not found' });
     }
     res.json(user);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send({ message: 'Internal Server Error' });
   }
 }
 
@@ -200,20 +207,20 @@ const updateUser = async (req, res) => {
     // Find the user by ID
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).send({ message: 'User not found' });
     }
 
     // If the user wants to change the password, verify the current password
     if (password) {
       if (!currentPassword) {
-        return res.status(400).send('Current password is required to update the password');
+        return res.status(400).send({ message: 'Current password is required' });
       }
 
       // Compare the provided current password with the stored hashed password
       const isPasswordValid = await comparePassword(currentPassword, user.password);
       //const isPasswordValid = await bcrypt.compare(currentPassword, user.hashedPassword);
       if (!isPasswordValid) {
-        return res.status(401).send('Invalid current password');
+        return res.status(401).send({ message: 'Invalid current password' });
       }
 
       // Hash the new password
@@ -233,10 +240,10 @@ const updateUser = async (req, res) => {
     const userResponse = updatedUser.toObject();
     delete userResponse.password;
 
-    res.json(userResponse);
+    res.json({ message: 'User updated successfully', data: userResponse });
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send({ message: 'Internal Server Error' });
   }
 }
 
@@ -270,12 +277,12 @@ const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) {
-      return res.status(404).send('User not found');
+      return res.status(404).send({ message: 'User not found' });
     }
     res.json(user);
   } catch (error) {
     console.error(error);
-    res.status(500).send('Internal Server Error');
+    res.status(500).send({ message: 'Internal Server Error' });
   }
 }
 
