@@ -4,6 +4,7 @@ const User = require("../models/user");
 const Address = require("../models/address");
 const mongoose = require("mongoose");
 const UserRole = require("../models/userRole");
+const studentSchema = require("../validators/student");
 
 /**
  * @swagger
@@ -125,11 +126,15 @@ const UserRole = require("../models/userRole");
 const getAllStudents = async (req, res) => {
   try {
     // Get students with user and address information
-    const students = await Student.find().populate("userId").populate("addressId");
+    const students = await Student.find()
+      .populate("userId")
+      .populate("addressId");
     if (students.length === 0) {
       return res.status(404).json({ message: "No students found" });
     }
-    res.status(200).json({ message: "Students retrieved succesfully", data: students });
+    res
+      .status(200)
+      .json({ message: "Students retrieved succesfully", data: students });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -356,7 +361,7 @@ const getStudentById = async (req, res) => {
  *               level: "EC1"
  *     responses:
  *       201:
-  *         content:
+ *         content:
  *           application/json:
  *             schema:
  *               type: object
@@ -429,96 +434,96 @@ const createStudent = async (req, res) => {
   session.startTransaction();
 
   try {
-    // Get user and address information from body
-    const {
-      firstName,
-      lastName,
-      email,
-      password,
-      street,
-      neighborhood,
-      city,
-      state,
-      country,
-      postalCode,
-      birthDate,
-      phone,
-      language,
-      level,
-    } = req.body;
+    // Validate request body using Joi
+    const { error, value } = studentSchema.validate(req.body, {
+      abortEarly: false,
+    });
 
-    // Check fields are present
-    if (
-      !firstName ||
-      !lastName ||
-      !email ||
-      !password ||
-      !street ||
-      !city ||
-      !state ||
-      !country ||
-      !postalCode ||
-      !birthDate ||
-      !phone ||
-      !language ||
-      !level
-    ) {
+    if (error) {
       await session.abortTransaction();
       session.endSession();
-      return res
-        .status(400)
-        .json({ message: "Please provide all required fields" });
+      return res.status(400).json({
+        message: error.details.map((err) => err.message).join(", "),
+      });
     }
 
+    // Destructure request body
+    const { user, address, birthDate, phone, language, level } = req.body;
+
     // Check if the user already exists
-    const existing = await User.findOne({ email }).session(session);
-    if (existing) {
+    const existingUser = await User.findOne({ email: user.email }).session(session);
+    if (existingUser) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: `User '${user.email}' already exists` });
     }
 
     // Fetch the role
-    const roleName = "student";
-    const userRole = await UserRole.findOne({ name: roleName });
+    const userRole = await UserRole.findOne({ name: "student" }).session(session);
+    if (!userRole) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Role not found" });
+    }
 
-    // Create the user and address objects
-    const user = new User({
+    // Create the user
+    const newUser = new User({
       _id: new mongoose.Types.ObjectId(),
-      firstName,
-      lastName,
-      email,
-      password,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: user.password,
       role: userRole._id,
     });
-    await user.save({ session });
+    await newUser.save({ session });
 
-    const address = new Address({
+    // Create the address
+    const newAddress = new Address({
       _id: new mongoose.Types.ObjectId(),
-      street,
-      neighborhood,
-      city,
-      state,
-      country,
-      postalCode,
+      street: address.street,
+      neighborhood: address.neighborhood,
+      city: address.city,
+      state: address.state,
+      country: address.country,
+      postalCode: address.postalCode,
     });
-    await address.save({ session });
+    await newAddress.save({ session });
 
-    const student = new Student({
+    // Create the student
+    const newStudent = new Student({
       _id: new mongoose.Types.ObjectId(),
-      userId: user._id,
-      addressId: address._id,
+      userId: newUser._id,
+      addressId: newAddress._id,
       birthDate,
       phone,
       language,
       level,
     });
+    await newStudent.save({ session });
 
-    await student.save({ session });
+    // Commit the transaction
     await session.commitTransaction();
     session.endSession();
-    res.status(200).json({ message: "Student created succesfully", data: student });
+
+    // Send response
+    res.status(201).json({
+      message: "Student created successfully",
+      data: {
+        userId: newUser._id,
+        addressId: newAddress._id,
+        birthDate: newStudent.birthDate,
+        phone: newStudent.phone,
+        language: newStudent.language,
+        level: newStudent.level,
+        _id: newStudent._id,
+        createdAt: newStudent.createdAt,
+        updatedAt: newStudent.updatedAt,
+        __v: newStudent.__v,
+      },
+    });
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     res.status(500).json({ message: error.message });
   }
 };
