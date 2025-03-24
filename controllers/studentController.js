@@ -831,6 +831,26 @@ const updateStudent = async (req, res) => {
  *                 message:
  *                   type: string
  *                   example: "Student deleted"
+ *       400:
+ *         description: Invalid student ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid student ID"
+ *       404:
+ *         description: Student not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student not found"
  *       500:
  *         description: Internal server error
  *         content:
