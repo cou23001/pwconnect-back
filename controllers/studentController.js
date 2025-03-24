@@ -254,6 +254,26 @@ const getAllStudents = async (req, res) => {
  *                          format: date-time
  *                          description: The date and time when the student was last updated
  *                          example: 2020-08-20T20:00:00.000Z
+ *        400:
+ *          description: Invalid student ID
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: "Invalid student ID"
+ *        404:
+ *          description: Student not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: "Student not found"
  *        500:
  *          description: Internal server error
  *          content:
