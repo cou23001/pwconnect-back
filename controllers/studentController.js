@@ -267,7 +267,20 @@ const getAllStudents = async (req, res) => {
  */
 const getStudentById = async (req, res) => {
   try {
-    const student = await Student.findById(req.params.id);
+    const { id } = req.params;
+
+    // 1. Validate ID format (400 Bad Request if invalid)
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid student ID" });
+    }
+    // 2. Find student by ID (404 Not Found if not found)
+    const student = await Student.findById(req.params.id)
+      .populate("userId")
+      .populate("addressId");
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    // 3. Success response
     res.status(200).json({ message: "Success", data: student });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -473,15 +486,21 @@ const createStudent = async (req, res) => {
     const { user, address, birthDate, phone, language, level } = req.body;
 
     // Check if the user already exists
-    const existingUser = await User.findOne({ email: user.email }).session(session);
+    const existingUser = await User.findOne({ email: user.email }).session(
+      session
+    );
     if (existingUser) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ message: `User '${user.email}' already exists` });
+      return res
+        .status(400)
+        .json({ message: `User '${user.email}' already exists` });
     }
 
     // Fetch the role
-    const userRole = await UserRole.findOne({ name: "student" }).session(session);
+    const userRole = await UserRole.findOne({ name: "student" }).session(
+      session
+    );
     if (!userRole) {
       await session.abortTransaction();
       session.endSession();
@@ -825,10 +844,26 @@ const updateStudent = async (req, res) => {
  */
 const deleteStudent = async (req, res) => {
   try {
-    await Student.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Student deleted" });
+    const { id } = req.params;
+
+    // 1. Validate ID format (400 Bad Request if invalid)
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid student ID" });
+    }
+
+    // 2. Find the student first (to ensure it exists)
+    const student = await Student.findById(id);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // 3. Use deleteOne to trigger the middleware
+    await Student.deleteOne({ _id: id }); // This triggers the post('deleteOne') hook
+
+    // 3. Success response
+    res.status(200).json({ message: "Student and linked data deleted" });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Internal server error" });
   }
 };
 

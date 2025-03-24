@@ -73,6 +73,9 @@ const getAllAddresses = async (req, res) => {
 const getAddressById = async (req, res) => {
   try {
     const address = await Address.findById(req.params.id);
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
     res.status(200).json({ message: "Success", data: address });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -216,7 +219,11 @@ const updateAddress = async (req, res) => {
  */
 const deleteAddress = async (req, res) => {
   try {
-    const address = await Address.findByIdAndDelete(req.params.id);
+    const id = req.params.id;
+    if (!mongoose.isValidObjectId(id)) {
+          return res.status(400).json({ message: "Invalid address ID" });
+    }
+    const address = await Address.findByIdAndDelete(id);
     res.status(200).json({ message: "Success", data: address });
   } catch (error) {
     res.status(500).json({ message: error.message });
