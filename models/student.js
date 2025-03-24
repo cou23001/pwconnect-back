@@ -39,9 +39,6 @@ const studentSchema = new mongoose.Schema(
 
 studentSchema.pre('deleteOne', { document: true }, async function(next) {
     // 'this' refers to the student document
-    console.log('Deleting user:', this.userId);
-    console.log('Deleting address:', this.addressId);
-    
     await Promise.all([
       User.deleteOne({ _id: this.userId }),
       Address.deleteOne({ _id: this.addressId })
