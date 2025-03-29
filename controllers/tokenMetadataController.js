@@ -105,7 +105,7 @@ const getTokenMetadataById = async (req, res) => {
  * @swagger
  * /api/token-metadata/:
  *   post:
- *     summary: Create a new refresh token
+ *     summary: Create a new token metadata
  *     tags: [TokenMetadata]
  *     description: This endpoint creates a new refresh token for the user.
  *     operationId: createTokenMetadata
