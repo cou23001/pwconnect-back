@@ -89,7 +89,7 @@ const getTokenMetadataById = async (req, res) => {
       return res.status(403).json({ error: 'Token revoked' });
     }
     // Check if the token is valid
-    const isValid = await verifyRefreshToken(tokenMetadata.refreshToken);
+    const isValid = verifyRefreshToken(tokenMetadata.refreshToken);
     if (!isValid) {
       return res.status(403).json({ error: 'Invalid token' });
     }

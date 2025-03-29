@@ -200,7 +200,7 @@ const getUserById = async (req, res) => {
  */
 const updateUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, currentPassword } = req.body;
+    const { firstName, lastName, email, password, currentPassword, roleId } = req.body;
     const userId = req.params.id;
 
     // Find the user by ID
@@ -231,6 +231,7 @@ const updateUser = async (req, res) => {
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
+    if (roleId) user.roleId = roleId;
 
     // Save the updated user
     const updatedUser = await user.save();
