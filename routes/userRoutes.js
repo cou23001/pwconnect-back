@@ -8,15 +8,15 @@ const router = express.Router();
 router.get('/users', authenticate, getUsers);
 
 // GET /users/:id
-router.get('/users/:id', getUserById);
+router.get('/users/:id', authenticate, getUserById);
 
 // POST /users
-router.post('/users', createUser);
+router.post('/users', authenticate, createUser);
 
 // PUT /users/:id
-router.put('/users/:id', updateUser);
+router.put('/users/:id', authenticate, updateUser);
 
 // DELETE /users/:id
-router.delete('/users/:id', deleteUser);
+router.delete('/users/:id', authenticate, deleteUser);
 
 module.exports = router;
