@@ -3,6 +3,7 @@ const User = require('../models/user');
 const { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } = require('../config/jwt');
 const TokenMetadata = require('../models/tokenMetadata');
 const UserRole = require('../models/userRole');
+const argon2 = require('argon2');
 
 // Register a new user
 /**
@@ -187,20 +188,26 @@ const login = async (req, res) => {
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
 
+    // Hash the refresh token
+    const hashedRefreshToken = await argon2.hash(refreshToken);
+
     // Save the refresh token in the database (associated with the user)
     const token = await TokenMetadata.findOne({ userId: user._id });
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     if (!token) {
       await TokenMetadata.create({
         userId: user._id,
-        refreshToken,
+        refreshToken: hashedRefreshToken,
         ipAddress: req.ip,
         userAgent: req.headers['user-agent'],
         expiresAt: expiresAt,
+        updatedAt: new Date(),
       });
     }
     else {
-      token.refreshToken = refreshToken;
+      token.refreshToken = hashedRefreshToken;
+      token.ipAddress = req.ip;
+      token.userAgent = req.headers['user-agent'];
       token.expiresAt = expiresAt;
       token.updatedAt = new Date();
       await token.save();
@@ -218,7 +225,7 @@ const login = async (req, res) => {
  * @swagger
  * /api/auth/refresh-token:
  *   post:
- *     summary: Refresh access token
+ *     summary: Refresh access and refresh token
  *     tags: [Auth]
  *     parameters:
  *       - name: Authorization
@@ -226,11 +233,21 @@ const login = async (req, res) => {
  *         required: true
  *         schema:
  *           type: string
- *           description: 'The refresh token passed as Bearer token (e.g., Authorization: Bearer <refresh_token>)'
+ *           description: >-
+ *             **Refresh token** in Bearer format.  
+ *             - Must be a valid, unexpired refresh token.  
+ *             - Sent as `Bearer <token>` (no quotes around the token).  
  *           example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+ *         example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'  # Explicit example field
  *     responses:
  *       200:
  *         description: Access token refreshed successfully
+ *         headers:
+ *           Set-Cookie:
+ *             schema:
+ *               type: string
+ *             description: HTTP-only cookie containing the new refresh token
+ *             example: refreshToken=abc123; HttpOnly; Secure; SameSite=strict; Path=/api/auth/refresh; Max-Age=604800
  *         content:
  *           application/json:
  *             schema:
@@ -238,15 +255,11 @@ const login = async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   description: Access token refreshed successfully message
+ *                   description: Success message
  *                   example: 'Tokens refreshed successfully'
  *                 accessToken:
  *                   type: string
- *                   description: New access token
- *                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
- *                 refreshToken:
- *                   type: string
- *                   description: New refresh token
+ *                   description: New short-lived access token (JWT)
  *                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
  *       401:
  *         description: Unauthorized
@@ -261,64 +274,69 @@ const login = async (req, res) => {
  *                   example: 'Unauthorized'
 */
 const refreshToken = async (req, res) => {
-  // Get refresh token from bearers
+  // 1. Extract refresh token from Authorization header
   const authHeader = req.headers['authorization'];
-  // Remove "Bearer" from the token
-  const refreshToken = authHeader && authHeader.split(' ')[1];
+  const refreshToken = authHeader?.split(' ')[1]; // Optional chaining
 
-  // Check if refresh token is provided
   if (!refreshToken) {
     return res.status(401).json({ error: 'Refresh token is required' });
   }
 
   try {
-    // Find the token metadata by refresh token
-    const tokenMetadata = await TokenMetadata.findOne({ refreshToken });
+    // 2. Verify the JWT structure (if signed) and extract user ID
+    const user = verifyRefreshToken(refreshToken); // Checks signature/expiry
+    if (!user?.id) {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    // 3. Fetch hashed token from DB
+    const tokenMetadata = await TokenMetadata.findOne({ userId: user.id });
     if (!tokenMetadata) {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
-    // Compare the refresh token with the one in the database
-    const isTheSame = (tokenMetadata.refreshToken === refreshToken);
-    if (!isTheSame) {
-      return res.status(401).json({ error: 'Invalid refresh token' });
+    // 4. Validate against hashed token (argon2)
+    const isValidToken = await argon2.verify(tokenMetadata.refreshToken, refreshToken);
+    if (!isValidToken || tokenMetadata.isRevoked) {
+      return res.status(403).json({ error: 'Invalid or revoked token' });
     }
 
-    // Check if the token is revoked
-    if (tokenMetadata.isRevoked) {
-      return res.status(403).json({ error: 'Token revoked' });
-    }
-    // Check if the token is valid
-    const isValid = verifyRefreshToken(tokenMetadata.refreshToken);
-    if (!isValid) {
-      return res.status(403).json({ error: 'Invalid token' });
-    }
+    // 5. Generate new tokens
+    const newAccessToken = generateAccessToken(user);
+    const newRawRefreshToken = generateRefreshToken(user); // Generate new random token
+    const newHashedRefreshToken = await argon2.hash(newRawRefreshToken);
 
-    // Check if the token is expired
-    const currentDate = new Date();
-    if (tokenMetadata.expiresAt < currentDate) {
-      return res.status(403).json({ error: 'Token expired' });
-    }
-
-    // Generate new access token
-    const user = await User.findById(tokenMetadata.userId);
-    const accessToken = generateAccessToken(user);
-
-    // Update the token metadata with the new refresh token
-    const newRefreshToken = generateRefreshToken(user);
-    tokenMetadata.refreshToken = newRefreshToken;
+    // 6. Update DB atomically (prevent race conditions)
+    tokenMetadata.refreshToken = newHashedRefreshToken;
     tokenMetadata.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
     tokenMetadata.ipAddress = req.ip;
     tokenMetadata.userAgent = req.headers['user-agent'];
     await tokenMetadata.save();
-    
-    // return the new access token and refresh token
-    res.json({ message: 'Tokens refreshed successfully', accessToken, refreshToken: newRefreshToken });
+
+    // 7. Return new tokens (send refresh token securely via HTTP-only cookie in production)
+    //res.json({
+    //  message: 'Tokens refreshed successfully',
+    //  accessToken: newAccessToken,
+    //  refreshToken: newRawRefreshToken, // Or omit if using cookies
+    //});
+
+    // 7. Return with httpOnly cookie
+    res.cookie('refreshToken', newRawRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+      sameSite: 'strict', // Prevent CSRF attacks
+      path: '/api/auth/refresh-token',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+    res.json({
+      message: 'Tokens refreshed successfully',
+      accessToken: newAccessToken,
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Refresh token error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-}
+};
 // Logout user
 /**
  * @swagger
