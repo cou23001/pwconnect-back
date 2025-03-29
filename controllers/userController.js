@@ -66,7 +66,6 @@ const getUsers = async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - firstName
  *               - email
  *               - password
  *             properties:

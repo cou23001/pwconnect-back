@@ -25,17 +25,9 @@ const UserRole = require('../models/userRole');
  *           schema:
  *             type: object
  *             required:
- *               - firstName
- *               - lastName
  *               - email
  *               - password
  *             properties:
- *               firstName:
- *                 type: string
- *                 description: The user's name
- *               lastName:
- *                 type: string
- *                 description: The user's last name
  *               email:
  *                 type: string
  *                 format: email
@@ -44,6 +36,7 @@ const UserRole = require('../models/userRole');
  *                 type: string
  *                 format: password
  *                 description: The user's password
+ *                 example: 'password123'
  *               role:
  *                 type: string
  *                 description: The user's role
