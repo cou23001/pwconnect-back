@@ -57,14 +57,96 @@ const User = require('../models/user');
  *                          type: string
  *                          format: email
  *                          description: The email address of the user
+ *                        roleId:
+ *                          type: object
+ *                          properties:
+ *                            _id:
+ *                              type: string
+ *                              format: ObjectId
+ *                              description: The ID of the role associated with the user
+ *                              example: 507f1f77bcf86cd799439013
+ *                            name:
+ *                              type: string
+ *                              description: The name of the role
+ *                              example: admin
+ *                            userPermissions:
+ *                              type: array
+ *                              items:
+ *                                type: object
+ *                                properties:
+ *                                  _id:
+ *                                    type: string
+ *                                    format: ObjectId
+ *                                    description: The ID of the user permission
+ *                                    example: 507f1f77bcf86cd799439014
+ *                                  name:
+ *                                    type: string
+ *                                    description: The name of the permission
+ *                                    example: create
+ *                                  description:
+ *                                    type: string
+ *                                    description: The description of the permission
+ *                                    example: Can create records
+ *                    ipAddress:
+ *                      type: string
+ *                      description: The IP address of the device that requested the refresh token
  *                    refreshToken:
  *                      type: string
  *                      description: The hashed refresh token
  *                      example: hashed_refresh_token_value
+ *                    userAgent:
+ *                      type: string
+ *                      description: The user agent (browser/device) information of the client
+ *                      example: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+ *                    isRevoked:
+ *                      type: boolean
+ *                      description: Indicates whether the refresh token is revoked
+ *                      example: false
+ *                    expiresAt:
+ *                      type: string
+ *                      format: date-time
+ *                      description: The expiration date and time of the refresh token
+ *                      example: 2025-03-29T04:39:46.976Z
+ *                    createdAt:
+ *                      type: string
+ *                      format: date-time
+ *                      description: The date and time when the refresh token was created
+ *                      example: 2025-03-29T04:39:46.976Z
+ *                    updatedAt:
+ *                      type: string
+ *                      format: date-time
+ *                      description: The date and time when the refresh token was last updated
+ *                      example: 2025-03-29T05:00:42.546Z
+ *       403:
+ *         description: Forbidden (e.g., token expired or revoked)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token expired"
  *       404:
  *         description: Refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token metadata not found"
  *       500:
- *         description: Failed to retrieve token metadata
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to retrieve token metadata"
  */
 const getTokenMetadataById = async (req, res) => {
   try {
