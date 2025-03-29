@@ -3,7 +3,7 @@ module.exports = {
       type: 'object',
       properties: {
         _id: {
-          type: 'integer',
+          type: 'string',
           format: 'ObjectId',
           description: 'The auto-generated ID of the user',
           example: '507f1f77bcf86cd799439011', 
@@ -29,10 +29,11 @@ module.exports = {
           format: 'password',
           description: 'The user\'s password',
         },
-        role: {
+        roleId: {
           type: 'string',
+          format: 'ObjectId',
           description: 'The user\'s role',
-          example: 'user',
+          example: 'student',
         },
         createdAt: {
           type: 'string',

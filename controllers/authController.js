@@ -95,7 +95,7 @@ const register = async (req, res) => {
       lastName, 
       email, 
       password,
-      role: userRole._id,
+      roleId: userRole._id,
     });
     await user.save({ session });
 

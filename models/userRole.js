@@ -1,15 +1,20 @@
-// models/userRole.js
 const mongoose = require('mongoose');
 
 const userRoleSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    unique: true, // Ensure role names are unique
+    unique: true, // Ensure each role name is unique
   },
   userPermissions: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'UserPermission', // Reference to the UserPermission model
+    name: {
+      type: String,
+      required: true,
+    },
+    description: {
+      type: String,
+      default: '',
+    }
   }],
 }, { timestamps: true });
 

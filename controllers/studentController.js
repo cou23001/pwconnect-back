@@ -423,6 +423,7 @@ const getStudentById = async (req, res) => {
  *               level: "EC1"
  *     responses:
  *       201:
+ *         description: Student created successfully
  *         content:
  *           application/json:
  *             schema:
@@ -582,7 +583,7 @@ const createStudent = async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       password: user.password,
-      role: userRole._id,
+      roleId: userRole._id,
     });
     await newUser.save({ session });
 

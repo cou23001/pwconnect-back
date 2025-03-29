@@ -6,7 +6,6 @@ const dotenv = require('dotenv');
 // Routes
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
-const userPermissionRoutes = require('./routes/userPermissionRoutes');
 const tokenMetadataRoutes = require('./routes/tokenMetadataRoutes');
 const userRoleRoutes = require('./routes/userRoleRoutes');
 const wardRoutes = require('./routes/wardRoutes');
@@ -23,7 +22,6 @@ const registrationRoutes = require('./routes/registrationRoutes');
 const userSchema = require('./schemas/user');
 const userResponseSchema = require('./schemas/userResponse');
 const tokenMetadataSchema = require('./schemas/tokenMetadata');
-const userPermissionSchema = require('./schemas/userPermission');
 const userRoleSchema = require('./schemas/userRole');
 const wardSchema = require('./schemas/ward');
 const stakeSchema = require('./schemas/stake');
@@ -64,7 +62,6 @@ const swaggerOptions = {
           User: userSchema.User,
           UserResponse: userResponseSchema.UserResponse,
           TokenMetadata: tokenMetadataSchema.TokenMetadata,
-          UserPermission: userPermissionSchema.UserPermission,
           UserRole: userRoleSchema.UserRole,
           Ward: wardSchema.Ward,
           Stake: stakeSchema.Stake,
@@ -93,7 +90,6 @@ app.use(express.json()); // Parse JSON request bodies
 app.use('/api', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api', tokenMetadataRoutes);
-app.use('/api', userPermissionRoutes)
 app.use('/api', userRoleRoutes);
 app.use('/api', wardRoutes);
 app.use('/api', stakeRoutes);

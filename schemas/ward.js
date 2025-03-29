@@ -3,7 +3,7 @@ module.exports = {
     Ward: {
         type: 'object',
         properties: {
-        id: {
+        _id: {
             type: 'string',
             format: 'ObjectId',
             description: 'The auto generated ID of the ward',
