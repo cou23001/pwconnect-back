@@ -1,6 +1,8 @@
 const TokenMetadata = require('../models/tokenMetadata');
-const jwt = require('jsonwebtoken');
+const jwt = require('../config/jwt');
+const { verifyRefreshToken } = require('../config/jwt');
 const { generateRefreshToken, generateAccessToken } = require('../config/jwt');
+const User = require('../models/user');
 
 // Create a token metadata
 /**
@@ -9,12 +11,113 @@ const { generateRefreshToken, generateAccessToken } = require('../config/jwt');
  *   name: TokenMetadata
  *   description: Token metadata management
  */
+
 /**
  * @swagger
- * /api/refresh-tokens:
+ * /api/token-metadata/{id}:
+ *   get:
+ *     summary: Get token metadata by id
+ *     tags: [TokenMetadata]
+ *     responses:
+ *       200:
+ *         description: Token metadata retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Token metadata retrieved successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                    _id:
+ *                      type: string
+ *                      format: ObjectId
+ *                      description: The auto-generated ID of the refresh token
+ *                      example: 507f1f77bcf86cd799439012
+ *                    userId:
+ *                      type: object
+ *                      properties:
+ *                        _id:
+ *                          type: string
+ *                          format: ObjectId
+ *                          description: The ID of the user associated with the refresh token
+ *                          example: 507f1f77bcf86cd799439011
+ *                        firstName:
+ *                          type: string
+ *                          description: The first name of the user
+ *                          example: John
+ *                        lastName:
+ *                          type: string
+ *                          description: The last name of the user
+ *                          example: Doe
+ *                        email:
+ *                          type: string
+ *                          format: email
+ *                          description: The email address of the user
+ *                    refreshToken:
+ *                      type: string
+ *                      description: The hashed refresh token
+ *                      example: hashed_refresh_token_value
+ *       404:
+ *         description: Refresh token
+ *       500:
+ *         description: Failed to retrieve token metadata
+ */
+const getTokenMetadataById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Find the token metadata by ID populating the userId field and role
+    const tokenMetadata = await TokenMetadata.findById(id)
+      .populate({
+        path: 'userId',
+        populate: { path: 'roleId' }
+      });
+    if (!tokenMetadata) {
+      return res.status(404).json({ error: 'Token metadata not found' });
+    }
+    // Check if the token is expired
+    const currentDate = new Date();
+    if (tokenMetadata.expiresAt < currentDate) {
+      return res.status(403).json({ error: 'Token expired' });
+    }
+    // Check if the token is revoked
+    if (tokenMetadata.isRevoked) {
+      return res.status(403).json({ error: 'Token revoked' });
+    }
+    // Check if the token is valid
+    const isValid = await verifyRefreshToken(tokenMetadata.refreshToken);
+    if (!isValid) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
+
+    res.status(200).json({ message: 'Token metadata retrieved successfully', data: tokenMetadata });
+  } catch (error) {
+    console.error('Error retrieving token metadata:', error);
+    res.status(500).json({ error: 'Failed to retrieve token metadata' });
+  }
+}
+
+/**
+ * @swagger
+ * /api/token-metadata/:
  *   post:
  *     summary: Create a new refresh token
- *     tags: [RefreshTokens]
+ *     tags: [TokenMetadata]
+ *     description: This endpoint creates a new refresh token for the user.
+ *     operationId: createTokenMetadata
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: Authorization
+ *         in: header
+ *         required: true
+ *         description: Bearer token for authentication
+ *         schema:
+ *           type: string
  *     requestBody:
  *       required: true
  *       content:
@@ -39,38 +142,38 @@ const { generateRefreshToken, generateAccessToken } = require('../config/jwt');
  *                 type: string
  *                 description: The user agent (browser/device) information of the client
  *                 example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
- *     responses:
- *       200:
- *         description: Refresh token created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 refreshToken:
- *                   type: string
- *                   description: The newly created refresh token
- *                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
- *       400:
- *         description: Bad Request (e.g., missing required fields)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: 'Missing required fields'
- *       500:
- *         description: Internal Server Error
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: 'Failed to create refresh token'
+ *       responses:
+ *         200:
+ *           description: Refresh token created successfully
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   refreshToken:
+ *                     type: string
+ *                     description: The newly created refresh token
+ *                     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+ *         400:
+ *           description: Bad Request (e.g., missing required fields)
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   error:
+ *                     type: string
+ *                     example: 'Missing required fields'
+ *         500:
+ *           description: Internal Server Error
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   error:
+ *                     type: string
+ *                     example: 'Failed to create refresh token'
  */
 const createTokenMetadata = async (req, res) => {
   // Extract the refresh token from the Authorization header
@@ -120,62 +223,4 @@ const createTokenMetadata = async (req, res) => {
   }
 };
 
-// Get a refresh token by email
-/**
- * @swagger
- * /api/token-metadata/{email}:
- *   get:
- *     summary: Get token metadata by email
- *     tags: [TokenMetadata]
- *     responses:
- *       200:
- *         description: Token metadata retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               required:
- *                 - _id
- *                 - userId
- *                 - refreshToken
- *               properties:
- *                 _id:
- *                   type: string
- *                   format: ObjectId
- *                   description: The auto-generated ID of the refresh token
- *                   example: 507f1f77bcf86cd799439012
- *                 userId:
- *                   type: string
- *                   format: ObjectId
- *                   description: The ID of the user associated with the refresh token
- *                   example: 507f1f77bcf86cd799439011
- *                 refreshToken:
- *                   type: string
- *                   description: The hashed refresh token
- *                   example: hashed_refresh_token_value
- *       404:
- *         description: Refresh token
- *       500:
- *         description: Internal Server Error
- */
-const getTokenMetadataByEmail = async (email) => {
-  try {
-    // Find the user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Find the refresh token associated with the user
-    const tokenRecord = await RefreshToken.findOne({ userId: user._id });
-    if (!tokenRecord) {
-      throw new Error('Refresh token not found');
-    }
-
-    return tokenRecord;
-  } catch (error) {
-    throw new Error('Failed to retrieve refresh token');
-  }
-};
-
-module.exports = { createTokenMetadata, getTokenMetadataByEmail };
+module.exports = { createTokenMetadata, getTokenMetadataById };

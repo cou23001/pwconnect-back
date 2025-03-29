@@ -1,6 +1,7 @@
 // models/user.js
 const mongoose = require('mongoose');
 const argon2 = require('argon2');
+const { required } = require('joi');
 
 const userSchema = new mongoose.Schema({
   firstName: {
@@ -20,10 +21,10 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  role: {
+  roleId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'UserRole', // Reference to the UserRole model
-    default: 'student',
+    required: true,
   },
 }, {
   timestamps: true,
