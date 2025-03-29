@@ -3,12 +3,8 @@ const Joi = require('joi');
 
 // User Schema
 const userSchema = Joi.object({
-    firstName: Joi.string().required().messages({
-        'any.required': 'First name is required',
-    }),
-    lastName: Joi.string().required().messages({
-        'any.required': 'Last name is required',
-    }),
+    firstName: Joi.string().optional(),
+    lastName: Joi.string().optional(),
     email: Joi.string().email().required().messages({
         'string.email': 'Email must be valid',
         'any.required': 'Email is required',
