@@ -1,10 +1,6 @@
 const TokenMetadata = require('../models/tokenMetadata');
-const jwt = require('../config/jwt');
 const { verifyRefreshToken } = require('../config/jwt');
-const { generateRefreshToken, generateAccessToken } = require('../config/jwt');
-const User = require('../models/user');
 
-// Create a token metadata
 /**
  * @swagger
  * tags:
@@ -57,14 +53,96 @@ const User = require('../models/user');
  *                          type: string
  *                          format: email
  *                          description: The email address of the user
+ *                        roleId:
+ *                          type: object
+ *                          properties:
+ *                            _id:
+ *                              type: string
+ *                              format: ObjectId
+ *                              description: The ID of the role associated with the user
+ *                              example: 507f1f77bcf86cd799439013
+ *                            name:
+ *                              type: string
+ *                              description: The name of the role
+ *                              example: admin
+ *                            userPermissions:
+ *                              type: array
+ *                              items:
+ *                                type: object
+ *                                properties:
+ *                                  _id:
+ *                                    type: string
+ *                                    format: ObjectId
+ *                                    description: The ID of the user permission
+ *                                    example: 507f1f77bcf86cd799439014
+ *                                  name:
+ *                                    type: string
+ *                                    description: The name of the permission
+ *                                    example: create
+ *                                  description:
+ *                                    type: string
+ *                                    description: The description of the permission
+ *                                    example: Can create records
+ *                    ipAddress:
+ *                      type: string
+ *                      description: The IP address of the device that requested the refresh token
  *                    refreshToken:
  *                      type: string
  *                      description: The hashed refresh token
  *                      example: hashed_refresh_token_value
+ *                    userAgent:
+ *                      type: string
+ *                      description: The user agent (browser/device) information of the client
+ *                      example: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+ *                    isRevoked:
+ *                      type: boolean
+ *                      description: Indicates whether the refresh token is revoked
+ *                      example: false
+ *                    expiresAt:
+ *                      type: string
+ *                      format: date-time
+ *                      description: The expiration date and time of the refresh token
+ *                      example: 2025-03-29T04:39:46.976Z
+ *                    createdAt:
+ *                      type: string
+ *                      format: date-time
+ *                      description: The date and time when the refresh token was created
+ *                      example: 2025-03-29T04:39:46.976Z
+ *                    updatedAt:
+ *                      type: string
+ *                      format: date-time
+ *                      description: The date and time when the refresh token was last updated
+ *                      example: 2025-03-29T05:00:42.546Z
+ *       403:
+ *         description: Forbidden (e.g., token expired or revoked)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token expired"
  *       404:
  *         description: Refresh token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Token metadata not found"
  *       500:
- *         description: Failed to retrieve token metadata
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Failed to retrieve token metadata"
  */
 const getTokenMetadataById = async (req, res) => {
   try {
@@ -89,7 +167,7 @@ const getTokenMetadataById = async (req, res) => {
       return res.status(403).json({ error: 'Token revoked' });
     }
     // Check if the token is valid
-    const isValid = await verifyRefreshToken(tokenMetadata.refreshToken);
+    const isValid = verifyRefreshToken(tokenMetadata.refreshToken);
     if (!isValid) {
       return res.status(403).json({ error: 'Invalid token' });
     }
@@ -101,126 +179,4 @@ const getTokenMetadataById = async (req, res) => {
   }
 }
 
-/**
- * @swagger
- * /api/token-metadata/:
- *   post:
- *     summary: Create a new token metadata
- *     tags: [TokenMetadata]
- *     description: This endpoint creates a new refresh token for the user.
- *     operationId: createTokenMetadata
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - name: Authorization
- *         in: header
- *         required: true
- *         description: Bearer token for authentication
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - userId
- *               - ipAddress
- *               - userAgent
- *             properties:
- *               userId:
- *                 type: string
- *                 format: ObjectId
- *                 description: The ID of the user associated with the refresh token
- *                 example: '507f1f77bcf86cd799439011'
- *               ipAddress:
- *                 type: string
- *                 description: The IP address of the device that requested the refresh token
- *                 example: '192.168.1.1'
- *               userAgent:
- *                 type: string
- *                 description: The user agent (browser/device) information of the client
- *                 example: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
- *       responses:
- *         200:
- *           description: Refresh token created successfully
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   refreshToken:
- *                     type: string
- *                     description: The newly created refresh token
- *                     example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
- *         400:
- *           description: Bad Request (e.g., missing required fields)
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   error:
- *                     type: string
- *                     example: 'Missing required fields'
- *         500:
- *           description: Internal Server Error
- *           content:
- *             application/json:
- *               schema:
- *                 type: object
- *                 properties:
- *                   error:
- *                     type: string
- *                     example: 'Failed to create refresh token'
- */
-const createTokenMetadata = async (req, res) => {
-  // Extract the refresh token from the Authorization header
-  const authHeader = req.headers['authorization'];
-  const refreshToken = authHeader && authHeader.split(' ')[1]; // Format: "Bearer <token>"
-
-  if (!refreshToken) {
-    return res.status(401).json({ error: 'Refresh token is required' });
-  }
-  try {
-    // Decode the refresh token
-    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-
-    // Find the refresh token in the database
-    const tokenRecord = await TokenMetadata.findOne({
-      userId: decoded.id,
-      isRevoked: false,
-      expiresAt: { $gt: new Date() }, // Check if the token is not expired
-    });
-
-    if (!tokenRecord) {
-      return res.status(403).json({ error: 'Invalid refresh token' });
-    }
-
-    const isValid = (tokenRecord.refreshToken === refreshToken);
-    if (!isValid) {
-      return res.status(403).json({ error: 'Invalid refresh token' });
-    }
-
-    // Generate a new access token
-    const accessToken = generateAccessToken({ id: decoded.id });
-
-    // Generate a new refresh token
-    const newRefreshToken = generateRefreshToken({ id: decoded.id });
-
-    // Update the refresh token in the database
-    tokenRecord.refreshToken = newRefreshToken;
-    tokenRecord.ipAddress = req.ip;
-    tokenRecord.userAgent = req.headers['user-agent'];
-    tokenRecord.expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-    await tokenRecord.save();
-
-    // Return the new tokens
-    res.json({ message: 'Tokens updated successfully', accessToken, refreshToken: newRefreshToken });
-  } catch (error) {
-    return res.status(500).json({ error: 'Failed to create refresh token', details: error });
-  }
-};
-
-module.exports = { createTokenMetadata, getTokenMetadataById };
+module.exports = { getTokenMetadataById };
