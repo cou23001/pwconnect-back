@@ -82,6 +82,57 @@ exports.getRegistrationById = async (req, res) => {
 
 /**
  * @swagger
+ * /api/registrations/group/{groupId}/students:
+ *   get:
+ *     summary: Get all students registered in a group
+ *     tags:
+ *       - Registration
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the group to retrieve students for
+ *     responses:
+ *       200:
+ *         description: List of students registered in the group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Student' # Assuming you have a Student schema
+ *       404:
+ *         description: No registrations found for this group
+ *       500:
+ *         description: Internal server error
+ */
+
+exports.getStudentsByGroupId = async (req, res) => {
+    try {
+      const groupId = req.params.groupId;
+  
+      const registrations = await Registration.find({ groupId: groupId })
+      .populate({
+        path: 'studentId',
+        populate: { path: 'userId' },
+      });
+  
+      if (!registrations || registrations.length === 0) {
+        return res.status(404).json({ message: 'No registrations found for this group' });
+      }
+  
+      const students = registrations.map(registration => registration.studentId);
+  
+      res.status(200).json(students);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  };
+
+/**
+ * @swagger
  * api/registrations:
  *  post:
  *   summary: Create a new registration

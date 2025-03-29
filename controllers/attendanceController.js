@@ -139,6 +139,53 @@ const getAttendance = async (req, res) => {
   }
 };
 
+// Get Attendances by Group ID
+/**
+ * @swagger
+ * /api/attendance/group/{groupId}:
+ *   get:
+ *     summary: Get Attendances by Group ID
+ *     tags:
+ *       - Attendance
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Group ID to retrieve attendances for
+ *     responses:
+ *       200:
+ *         description: Attendances found for the specified group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Attendance' # Assuming you have a schema defined for Attendance
+ *       404:
+ *         description: No attendances found for the specified group
+ *       500:
+ *         description: Internal server error
+ */
+
+
+const getAttendanceByGroup = async (req, res) => {
+  try {
+    const groupId = req.params.groupId;
+    const attendances = await Attendance.find({ groupId: groupId })
+      .populate('studentId');
+
+    if (!attendances || attendances.length === 0) {
+      return res.status(404).json({ message: 'Not found' });
+    }
+
+    res.status(200).json(attendances);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 // Update Attendance record by ID
 /**
  * @swagger
@@ -244,6 +291,7 @@ module.exports = {
   createAttendance,
   getAttendances,
   getAttendance,
+  getAttendanceByGroup,
   updateAttendance,
   deleteAttendance,
 };

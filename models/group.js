@@ -2,7 +2,7 @@
 const mongoose = require('mongoose');
 
 const groupSchema = new mongoose.Schema({
-  group_id: {
+  groupId: {
     type: String,
     required: true,
     unique: true,

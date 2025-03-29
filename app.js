@@ -2,6 +2,7 @@ const express = require('express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const dotenv = require('dotenv');
+const cors = require('cors');
 
 // Routes
 const userRoutes = require('./routes/userRoutes');
@@ -41,6 +42,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const app = express();
+app.use(cors());
 
 // Swagger configuration
 const swaggerOptions = {

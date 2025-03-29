@@ -5,24 +5,28 @@ const {
   createAttendance,
   getAttendances,
   getAttendance,
+  getAttendanceByGroup,
   updateAttendance,
   deleteAttendance,
 } = require('../controllers/attendanceController');
 const authenticate = require('../middleware/authenticate');
 
 // POST /attendance
-router.post('/attendance', authenticate, createAttendance);
+router.post('/attendance', createAttendance);
 
 // GET /attendance
 router.get('/attendance', authenticate, getAttendances);
 
 // GET /attendance/:id
-router.get('/attendance/:id', authenticate, getAttendance);
+router.get('/attendance/:id', getAttendance);
+
+// GET /attendance/:groupId
+router.get('/attendance/group/:groupId', getAttendanceByGroup);
 
 // PUT /attendance/:id
 router.put('/attendance/:id', authenticate, updateAttendance);
 
 // DELETE /attendance/:id
-router.delete('/attendance/:id', authenticate, deleteAttendance);
+router.delete('/attendance/:id', deleteAttendance);
 
 module.exports = router;

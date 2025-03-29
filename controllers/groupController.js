@@ -22,16 +22,13 @@ const Group = require('../models/group');
  *           schema:
  *             type: object
  *             required:
- *               - group_id
+ *               - _id
  *               - name
  *               - stake
  *               - ward
  *               - start_date
  *             properties:
- *               group_id:
- *                 type: string
- *                 description: The unique identifier of the Group
- *               name:
+  *               name:
  *                 type: string
  *                 description: The name of the Group
  *               stake:
@@ -166,9 +163,6 @@ const getGroup = async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               group_id:
- *                 type: string
- *                 description: The unique identifier of the Group
  *               name:
  *                 type: string
  *                 description: The name of the Group

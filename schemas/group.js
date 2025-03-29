@@ -3,16 +3,11 @@ module.exports = {
     Group: {
       type: 'object',
       properties: {
-        id: {
+        _id: {
           type: 'string',
           format: 'ObjectId',
           description: 'The auto generated ID of the Group',
           example: '507f1f77bcf86cd799439011',
-        },
-        group_id: {
-          type: 'string',
-          description: 'The unique identifier of the Group',
-          example: 'ECG123',
         },
         name: {
           type: 'string',
