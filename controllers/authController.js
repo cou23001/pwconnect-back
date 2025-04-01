@@ -336,8 +336,13 @@ const refreshToken = async (req, res) => {
   }
 
   try {
-    // Verify refresh token and check expiration
-    const user = verifyRefreshToken(refreshToken);
+    let user;
+    try {
+      user = verifyRefreshToken(refreshToken);
+    } catch (error) {
+      console.error('Token verification failed:', error.message || error);
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
     if (!user?.id) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
@@ -385,7 +390,12 @@ const refreshToken = async (req, res) => {
     });
 
   } catch (error) {
-    console.error(`[RefreshTokenError] UserID: ${user?.id || 'Unknown'} - Error:`, error.message);
+    if (user!== null) {
+      console.error(`[RefreshTokenError] UserID: ${user?.id || 'Unknown'} - Error:`, error.message);
+    }
+    else {
+      console.error('[RefreshTokenError] Error:', error.message);
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 };
