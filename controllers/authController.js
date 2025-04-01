@@ -129,6 +129,7 @@ const register = async (req, res) => {
     const hashedRefreshToken = await argon2.hash(refreshToken);
 
     // 5. Store hashed refresh token
+    
     await TokenMetadata.create([{
       userId: user._id,
       refreshToken: hashedRefreshToken,
