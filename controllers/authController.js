@@ -65,6 +65,10 @@ const mongoose = require('mongoose');
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the registration was successful
+ *                   example: true
  *                 message:
  *                   type: string
  *                   example: 'User registered successfully'
@@ -155,7 +159,6 @@ const register = async (req, res) => {
       message: 'User registered successfully',
       accessToken,
       ...(!isWebClient && { refreshToken }), // Only for mobile
-      user: { id: user._id, email: user.email }, // Optional
     });
 
   } catch (error) {
@@ -213,6 +216,10 @@ const register = async (req, res) => {
  *                 - message
  *                 - accessToken
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the logout was successful
+ *                   example: true
  *                 message:
  *                   type: string
  *                   example: 'Login successful'
@@ -287,18 +294,8 @@ const login = async (req, res) => {
  *   post:
  *     summary: Refresh access and refresh token
  *     tags: [Auth]
- *     parameters:
- *       - name: Authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           description: >-
- *             **Refresh token** in Bearer format.  
- *             - Must be a valid, unexpired refresh token.  
- *             - Sent as `Bearer <token>` (no quotes around the token).  
- *           example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
- *         example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'  # Explicit example field
+ *     security:
+ *       - bearerAuth: []  # Require Bearer Authentication
  *     responses:
  *       200:
  *         description: Access token refreshed successfully
@@ -313,6 +310,10 @@ const login = async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the refresh was successful
+ *                   example: true
  *                 message:
  *                   type: string
  *                   description: Success message
@@ -334,11 +335,10 @@ const login = async (req, res) => {
  *                   example: 'Unauthorized'
 */
 const refreshToken = async (req, res) => {
-  // 1. Extract token from Authorization header or cookie
   let refreshToken;
   if (req.headers.authorization?.startsWith('Bearer ')) {
     refreshToken = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies.refreshToken) {
+  } else if (req.cookies?.refreshToken) {
     refreshToken = req.cookies.refreshToken;
   }
 
@@ -347,24 +347,29 @@ const refreshToken = async (req, res) => {
   }
 
   try {
-    // 2. Verify token and get user
-    const user = verifyRefreshToken(refreshToken);
+    let user;
+    try {
+      user = verifyRefreshToken(refreshToken);
+    } catch (error) {
+      console.error('Token verification failed:', error.message || error);
+      return res.status(401).json({ error: 'Invalid or expired token' });
+    }
     if (!user?.id) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    // 3. Validate against hashed DB token
+    // Validate against hashed DB token
     const tokenMetadata = await TokenMetadata.findOne({ userId: user.id });
     if (!tokenMetadata || !(await argon2.verify(tokenMetadata.refreshToken, refreshToken))) {
       return res.status(403).json({ error: 'Invalid or revoked token' });
     }
 
-    // 4. Generate new tokens
+    // Generate new tokens
     const newAccessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);
     const newHashedToken = await argon2.hash(newRefreshToken);
 
-    // 5. Update DB
+    // Update database with new refresh token
     await TokenMetadata.findOneAndUpdate(
       { userId: user.id },
       {
@@ -376,13 +381,13 @@ const refreshToken = async (req, res) => {
       { new: true }
     );
 
-    // 6. Handle response based on client type
+    // Determine if the request comes from a web client
     const isWebClient = req.headers['user-agent']?.includes('Mozilla');
 
     if (isWebClient) {
       res.cookie('refreshToken', newRefreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' || req.protocol === 'https',
         sameSite: 'strict',
         path: '/api/auth',
         maxAge: parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION),
@@ -396,10 +401,16 @@ const refreshToken = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Refresh error:', error);
+    if (user!== null) {
+      console.error(`[RefreshTokenError] UserID: ${user?.id || 'Unknown'} - Error:`, error.message);
+    }
+    else {
+      console.error('[RefreshTokenError] Error:', error.message);
+    }
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 // Logout user
 /**
  * @swagger
@@ -407,14 +418,8 @@ const refreshToken = async (req, res) => {
  *   post:
  *     summary: Logout user
  *     tags: [Auth]
- *     parameters:
- *       - name: Authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           description: 'The access token passed as Bearer token (e.g., Authorization: Bearer <refresh_token>)'
- *           example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+ *     security:
+ *       - bearerAuth: []  # Require Bearer Authentication
  *     responses:
  *       200:
  *         description: User logged out successfully
@@ -423,6 +428,10 @@ const refreshToken = async (req, res) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the logout was successful
+ *                   example: true
  *                 message:
  *                   type: string
  *                   description: User logged out successfully message
@@ -463,10 +472,10 @@ const refreshToken = async (req, res) => {
 */
 const logout = async (req, res) => {
   try {
-    // Get access token from the authorization header
+    // 1. Get access token from the Authorization header
     const authHeader = req.headers['authorization'];
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Authorization header is missing' });
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or malformed Authorization header' });
     }
     
     const accessToken = authHeader.split(' ')[1];
@@ -474,33 +483,40 @@ const logout = async (req, res) => {
       return res.status(401).json({ error: 'Access token is missing' });
     }
 
-    // Verify the access token and get user ID
+    // 2. Verify access token and extract user ID
     let userId;
     try {
       const decoded = verifyAccessToken(accessToken);
       userId = decoded.id;
     } catch (err) {
+      console.error('Logout failed: Invalid access token', err);
       return res.status(401).json({ error: 'Invalid access token' });
     }
 
-    // Get the token metadata associated with the user
-    const tokenMetaData = await TokenMetadata.findOne({ userId });
-    if (!tokenMetaData) {
-      return res.status(401).json({ error: 'Token metadata not found' });
+    // 3. Remove the token metadata for the user (logout)
+    const result = await TokenMetadata.deleteOne({ userId });
+
+    if (result.deletedCount === 0) {
+      console.warn(`Logout warning: No active session found for user ${userId}`);
     }
 
-    const refreshToken = tokenMetaData.refreshToken;
-    if (!refreshToken) {
-      return res.status(401).json({ error: 'Refresh token is missing' });
+    // 4. Clear refresh token cookie if it's a web client
+    if (req.headers['user-agent']?.includes('Mozilla')) {
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/api/auth',
+      });
     }
 
-    // Remove the token metadata from the database
-    await TokenMetadata.deleteOne({ refreshToken });
-
-    // Respond with success message
-    res.json({ message: 'User logged out successfully' });
+    // 5. Respond with success
+    res.status(200).json({
+      success: true,
+      message: 'User logged out successfully',
+    });
   } catch (error) {
-    console.error(error);
+    console.error('Logout error:', error.message || error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
