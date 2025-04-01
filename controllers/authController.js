@@ -130,13 +130,13 @@ const register = async (req, res) => {
 
     // 5. Store hashed refresh token
     
-    await TokenMetadata.create([{
-      userId: user._id,
-      refreshToken: hashedRefreshToken,
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'],
-      expiresAt: new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)),
-    }], { session });
+      await TokenMetadata.create([{
+        userId: user._id,
+        refreshToken: hashedRefreshToken,
+        ipAddress: req.clientIp,
+        userAgent: req.headers['user-agent'],
+        expiresAt: new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)),
+      }], { session });
 
     // 6. Commit transaction
     await session.commitTransaction();
@@ -254,7 +254,7 @@ const login = async (req, res) => {
       { userId: user._id },
       {
         refreshToken: hashedRefreshToken,
-        ipAddress: req.ip,
+        ipAddress: req.clientIp,
         userAgent: req.headers['user-agent'],
         expiresAt,
         updatedAt: new Date(),
@@ -375,7 +375,7 @@ const refreshToken = async (req, res) => {
       { userId: user.id },
       {
         refreshToken: newHashedToken,
-        ipAddress: req.ip,
+        ipAddress: req.clientIp,
         userAgent: req.headers['user-agent'],
         expiresAt: new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)),
       },
