@@ -5,6 +5,7 @@ const TokenMetadata = require('../models/tokenMetadata');
 const UserRole = require('../models/userRole');
 const argon2 = require('argon2');
 const { parseEnvTimeToMs } = require('../utils/timeParser'); // Utility function to parse time from environment variables
+const mongoose = require('mongoose');
 
 // Register a new user
 /**

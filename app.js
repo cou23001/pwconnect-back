@@ -1,7 +1,7 @@
 const express = require('express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const dotenv = require('dotenv');
+//const dotenv = require('dotenv');
 const cors = require('cors');
 
 // Routes
@@ -35,10 +35,15 @@ const attendanceSchema = require('./schemas/attendance');
 const registrationSchema = require('./schemas/registration');
 
 // Load environment variables
-if (process.env.NODE_ENV === 'production') {
-    dotenv.config({ path: '.env.production' });
+require('dotenv').config(); 
+
+// Clear existing env variables to avoid conflicts
+const dotenv = require('dotenv');
+
+if (process.env.NODE_ENV === 'development') {
+    dotenv.config({ path: '.env', override: true });
   } else {
-    dotenv.config({ path: '.env' });
+    dotenv.config({ path: '.env.production', override: true });
 }
 
 const app = express();
