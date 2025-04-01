@@ -257,6 +257,7 @@ const login = async (req, res) => {
     // 4. Set HTTP-only cookie for web clients
     const isWebClient = req.headers['user-agent']?.includes('Mozilla');
     if (isWebClient) {
+      console.log('Setting refreshToken cookie...');
       res.cookie('refreshToken', refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -264,7 +265,12 @@ const login = async (req, res) => {
         path: '/api/auth',
         maxAge: parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION),
       });
+    } else {
+      console.log('Not a web client, sending refreshToken in JSON.');
     }
+
+    // Log headers before sending response
+    console.log('Response Headers:', res.getHeaders());
 
     // 5. Single response
     res.json({
