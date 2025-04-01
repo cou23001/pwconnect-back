@@ -3,6 +3,7 @@ const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 //const dotenv = require('dotenv');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 
 // Routes
 const userRoutes = require('./routes/userRoutes');
@@ -55,39 +56,48 @@ app.use(cors({
 
 // Swagger configuration
 const swaggerOptions = {
-    definition: {
+  definition: {
       openapi: '3.0.0',
       info: {
-        title: 'EnglishConnect Admin API',
-        version: '1.0.0',
-        description: 'API for managing EnglishConnect students',
+          title: 'EnglishConnect Admin API',
+          version: '1.0.0',
+          description: 'API for managing EnglishConnect students',
       },
       servers: [
-        {
-          url: process.env.SWAGGER_SERVER_URL,
-          description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Local server',
-        },
+          {
+              url: process.env.SWAGGER_SERVER_URL,
+              description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Local server',
+          },
       ],
       components: {
-        schemas: {
-          User: userSchema.User,
-          UserResponse: userResponseSchema.UserResponse,
-          TokenMetadata: tokenMetadataSchema.TokenMetadata,
-          UserRole: userRoleSchema.UserRole,
-          Ward: wardSchema.Ward,
-          Stake: stakeSchema.Stake,
-          Group: groupSchema.Group,
-          Term: termSchema.Term,
-          Instructor: instructorSchema.Instructor,
-          Address: addressSchema.Address,
-          Student: studentSchema.Student,
-          Attendance: attendanceSchema.Attendance,
-          Registration: registrationSchema.Registration
-        },
+          securitySchemes: {
+              bearerAuth: {
+                  type: "http",
+                  scheme: "bearer",
+                  bearerFormat: "JWT"
+              }
+          },
+          schemas: {
+              User: userSchema.User,
+              UserResponse: userResponseSchema.UserResponse,
+              TokenMetadata: tokenMetadataSchema.TokenMetadata,
+              UserRole: userRoleSchema.UserRole,
+              Ward: wardSchema.Ward,
+              Stake: stakeSchema.Stake,
+              Group: groupSchema.Group,
+              Term: termSchema.Term,
+              Instructor: instructorSchema.Instructor,
+              Address: addressSchema.Address,
+              Student: studentSchema.Student,
+              Attendance: attendanceSchema.Attendance,
+              Registration: registrationSchema.Registration
+          },
       },
-    },
-    apis: ['./controllers/*.js'], // Path to your controller files
+      security: [{ bearerAuth: [] }] // Apply bearer auth globally
+  },
+  apis: ['./controllers/*.js'],
 };
+
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
@@ -109,6 +119,8 @@ app.use(
 
 // Middleware
 app.use(express.json()); // Parse JSON request bodies
+// Cookie parser middleware
+app.use(cookieParser()); // This enables `req.cookies`
 
 // Routes
 app.use('/api', userRoutes);

@@ -287,18 +287,8 @@ const login = async (req, res) => {
  *   post:
  *     summary: Refresh access and refresh token
  *     tags: [Auth]
- *     parameters:
- *       - name: Authorization
- *         in: header
- *         required: true
- *         schema:
- *           type: string
- *           description: >-
- *             **Refresh token** in Bearer format.  
- *             - Must be a valid, unexpired refresh token.  
- *             - Sent as `Bearer <token>` (no quotes around the token).  
- *           example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
- *         example: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'  # Explicit example field
+ *     security:
+ *       - bearerAuth: []  # Require Bearer Authentication
  *     responses:
  *       200:
  *         description: Access token refreshed successfully
@@ -334,11 +324,10 @@ const login = async (req, res) => {
  *                   example: 'Unauthorized'
 */
 const refreshToken = async (req, res) => {
-  // 1. Extract token from Authorization header or cookie
   let refreshToken;
   if (req.headers.authorization?.startsWith('Bearer ')) {
     refreshToken = req.headers.authorization.split(' ')[1];
-  } else if (req.cookies.refreshToken) {
+  } else if (req.cookies?.refreshToken) {
     refreshToken = req.cookies.refreshToken;
   }
 
@@ -347,24 +336,24 @@ const refreshToken = async (req, res) => {
   }
 
   try {
-    // 2. Verify token and get user
+    // Verify refresh token and check expiration
     const user = verifyRefreshToken(refreshToken);
     if (!user?.id) {
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    // 3. Validate against hashed DB token
+    // Validate against hashed DB token
     const tokenMetadata = await TokenMetadata.findOne({ userId: user.id });
     if (!tokenMetadata || !(await argon2.verify(tokenMetadata.refreshToken, refreshToken))) {
       return res.status(403).json({ error: 'Invalid or revoked token' });
     }
 
-    // 4. Generate new tokens
+    // Generate new tokens
     const newAccessToken = generateAccessToken(user);
     const newRefreshToken = generateRefreshToken(user);
     const newHashedToken = await argon2.hash(newRefreshToken);
 
-    // 5. Update DB
+    // Update database with new refresh token
     await TokenMetadata.findOneAndUpdate(
       { userId: user.id },
       {
@@ -376,13 +365,13 @@ const refreshToken = async (req, res) => {
       { new: true }
     );
 
-    // 6. Handle response based on client type
+    // Determine if the request comes from a web client
     const isWebClient = req.headers['user-agent']?.includes('Mozilla');
 
     if (isWebClient) {
       res.cookie('refreshToken', newRefreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production' || req.protocol === 'https',
         sameSite: 'strict',
         path: '/api/auth',
         maxAge: parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION),
@@ -396,10 +385,11 @@ const refreshToken = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Refresh error:', error);
+    console.error(`[RefreshTokenError] UserID: ${user?.id || 'Unknown'} - Error:`, error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 // Logout user
 /**
  * @swagger
