@@ -89,10 +89,23 @@ const swaggerOptions = {
     apis: ['./controllers/*.js'], // Path to your controller files
 };
 
-const swaggerSpec = swaggerJsdoc(swaggerOptions);
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 // Serve Swagger UI
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocs, {
+      explorer: true,
+      swaggerOptions: {
+          withCredentials: true, // Allows Swagger to store and send cookies
+          requestInterceptor: (req) => {
+              req.credentials = "include"; // Ensures cookies are sent in requests
+              return req;
+          },
+      },
+  })
+);
 
 // Middleware
 app.use(express.json()); // Parse JSON request bodies
