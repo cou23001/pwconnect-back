@@ -47,7 +47,11 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.SWAGGER_SERVER_URL,
+  credentials: true
+}));
+
 
 // Swagger configuration
 const swaggerOptions = {

@@ -241,7 +241,7 @@ const login = async (req, res) => {
     const hashedRefreshToken = await argon2.hash(refreshToken);
 
     // 3. Update token metadata
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const expiresAt = new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)); // 7 days
     await TokenMetadata.findOneAndUpdate(
       { userId: user._id },
       {
