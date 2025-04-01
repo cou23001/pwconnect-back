@@ -40,8 +40,9 @@ app.use(cors({
 
 // Middleware to log the client IP address
 app.use((req, res, next) => {
-  const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-  console.log('Client IP:', clientIp);
+  const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.socket.remoteAddress;
+  // Store client IP in request for later use
+  req.clientIp = clientIp;
   next();  // Pass control to the next middleware or route handler
 });
 
