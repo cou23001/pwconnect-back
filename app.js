@@ -1,9 +1,9 @@
 const express = require('express');
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-//const dotenv = require('dotenv');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const setupSwagger = require('./config/swaggerConfig');
 
 // Routes
 const userRoutes = require('./routes/userRoutes');
@@ -19,21 +19,6 @@ const termRoutes = require('./routes/termRoutes');
 const studentRoutes = require('./routes/studentRoutes');
 const attendanceRoutes = require('./routes/attendanceRoutes');
 const registrationRoutes = require('./routes/registrationRoutes');
-
-// Schemas
-const userSchema = require('./schemas/user');
-const userResponseSchema = require('./schemas/userResponse');
-const tokenMetadataSchema = require('./schemas/tokenMetadata');
-const userRoleSchema = require('./schemas/userRole');
-const wardSchema = require('./schemas/ward');
-const stakeSchema = require('./schemas/stake');
-const termSchema = require('./schemas/term');
-const instructorSchema = require('./schemas/instructor');
-const addressSchema = require('./schemas/address');
-const studentSchema = require('./schemas/student');
-const groupSchema = require('./schemas/group');
-const attendanceSchema = require('./schemas/attendance');
-const registrationSchema = require('./schemas/registration');
 
 // Load environment variables
 require('dotenv').config(); 
@@ -53,69 +38,15 @@ app.use(cors({
   credentials: true
 }));
 
+// Middleware to log the client IP address
+app.use((req, res, next) => {
+  const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+  console.log('Client IP:', clientIp);
+  next();  // Pass control to the next middleware or route handler
+});
 
-// Swagger configuration
-const swaggerOptions = {
-  definition: {
-      openapi: '3.0.0',
-      info: {
-          title: 'EnglishConnect Admin API',
-          version: '1.0.0',
-          description: 'API for managing EnglishConnect students',
-      },
-      servers: [
-          {
-              url: process.env.SWAGGER_SERVER_URL,
-              description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Local server',
-          },
-      ],
-      components: {
-          securitySchemes: {
-              bearerAuth: {
-                  type: "http",
-                  scheme: "bearer",
-                  bearerFormat: "JWT"
-              }
-          },
-          schemas: {
-              User: userSchema.User,
-              UserResponse: userResponseSchema.UserResponse,
-              TokenMetadata: tokenMetadataSchema.TokenMetadata,
-              UserRole: userRoleSchema.UserRole,
-              Ward: wardSchema.Ward,
-              Stake: stakeSchema.Stake,
-              Group: groupSchema.Group,
-              Term: termSchema.Term,
-              Instructor: instructorSchema.Instructor,
-              Address: addressSchema.Address,
-              Student: studentSchema.Student,
-              Attendance: attendanceSchema.Attendance,
-              Registration: registrationSchema.Registration
-          },
-      },
-      security: [{ bearerAuth: [] }] // Apply bearer auth globally
-  },
-  apis: ['./controllers/*.js'],
-};
-
-
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-
-// Serve Swagger UI
-app.use(
-  "/api-docs",
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocs, {
-      explorer: true,
-      swaggerOptions: {
-          withCredentials: true, // Allows Swagger to store and send cookies
-          requestInterceptor: (req) => {
-              req.credentials = "include"; // Ensures cookies are sent in requests
-              return req;
-          },
-      },
-  })
-);
+// Swagger setup
+setupSwagger(app);
 
 // Middleware
 app.use(express.json()); // Parse JSON request bodies
