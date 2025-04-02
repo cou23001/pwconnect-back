@@ -445,13 +445,56 @@ const deleteStake = async (req, res) => {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Ward'
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid ID format"
+ *       404:
+ *         description: Stake not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Stake not found"
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
  */
 const getWardsInStake = async (req, res) => {
   try {
-    const wards = await Ward.find({ stakeId: req.params.id });
-    res.status(200).json({ wards });
+    // Validate stake ID
+    const stakeId = req.params.id;
+    const { error } = validateStakeId(stakeId);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+    // Check if stake exists
+    const stake = await Stake.findById(stakeId);
+    if (!stake) {
+      return res.status(404).json({ error: 'Stake not found' });
+    }
+    // Find wards in the stake
+    const wards = await Ward.find({ stakeId });
+    res.status(200).json({ message: 'Wards retrieved successfully', wards });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error fetching wards:', error.message || error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
