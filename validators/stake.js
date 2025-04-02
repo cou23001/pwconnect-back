@@ -1,21 +1,30 @@
-// validators/stake.js
 const Joi = require('joi');
 
-// Define shared schema components
-const stakeIdSchema = Joi.string().required().messages({
-    'string.empty': 'Stake ID is required',
-    'any.required': 'Stake ID is required',
-});
+// Define a MongoDB ObjectId pattern (24 hex characters)
+const objectIdPattern = /^[0-9a-fA-F]{24}$/;
 
-const nameSchema = Joi.string().required().messages({
-    'string.empty': 'Stake name is required',
-    'any.required': 'Stake name is required',
-});
+const stakeIdSchema = Joi.string()
+    .regex(objectIdPattern)
+    .required()
+    .messages({
+        'string.empty': 'Stake ID is required',
+        'any.required': 'Stake ID is required',
+        'string.pattern.base': 'Invalid Stake ID format',
+    });
 
-const locationSchema = Joi.string().required().messages({
-    'string.empty': 'Stake location is required',
-    'any.required': 'Stake location is required',
-});
+const nameSchema = Joi.string()
+    .required()
+    .messages({
+        'string.empty': 'Stake name is required',
+        'any.required': 'Stake name is required',
+    });
+
+const locationSchema = Joi.string()
+    .required()
+    .messages({
+        'string.empty': 'Stake location is required',
+        'any.required': 'Stake location is required',
+    });
 
 // Main Stake Schema
 const stakeSchema = Joi.object({
@@ -31,33 +40,21 @@ const stakeUpdateSchema = Joi.object({
     'object.missing': 'At least one of name or location is required',
 });
 
-// Stake Query Schemas
-const stakeQuerySchema = Joi.object({
-    stakeId: stakeIdSchema,
-});
-
+// Stake Query & Pagination Schemas
+const stakeQuerySchema = Joi.object({ stakeId: stakeIdSchema });
 const stakePaginationSchema = Joi.object({
     page: Joi.number().integer().min(1).optional(),
     limit: Joi.number().integer().min(1).optional(),
 });
 
-// Validation Functions
-const validateStake = (data) => stakeSchema.validate(data);
-const validateStakeUpdate = (data) => stakeUpdateSchema.validate(data);
-const validateStakeId = (data) => stakeIdSchema.validate(data);
-const validateStakeDelete = (data) => stakeQuerySchema.validate(data);
-const validateStakeGet = (data) => stakeQuerySchema.validate(data);
-const validateStakeGetAll = (data) => stakePaginationSchema.validate(data);
-const validateStakeGetByName = (data) => nameSchema.validate(data);
-const validateStakeGetByLocation = (data) => locationSchema.validate(data);
-
+// Exported Validation Functions
 module.exports = {
-    validateStake,
-    validateStakeUpdate,
-    validateStakeId,
-    validateStakeDelete,
-    validateStakeGet,
-    validateStakeGetAll,
-    validateStakeGetByName,
-    validateStakeGetByLocation,
+    validateStake: (data) => stakeSchema.validate(data),
+    validateStakeUpdate: (data) => stakeUpdateSchema.validate(data),
+    validateStakeId: (data) => stakeIdSchema.validate(data),
+    validateStakeDelete: (data) => stakeQuerySchema.validate(data),
+    validateStakeGet: (data) => stakeQuerySchema.validate(data),
+    validateStakeGetAll: (data) => stakePaginationSchema.validate(data),
+    validateStakeGetByName: (data) => nameSchema.validate(data),
+    validateStakeGetByLocation: (data) => locationSchema.validate(data),
 };

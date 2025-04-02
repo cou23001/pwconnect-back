@@ -1,7 +1,8 @@
 // controllers/stakeController.js
 const Stake = require('../models/stake');
 const Ward = require('../models/ward');
-const { validateStake } = require('../validators/stake');
+const { validateStake, validateStakeId } = require('../validators/stake');
+const mongoose = require('mongoose');
 const { message } = require('../validators/user');
 
 
@@ -187,17 +188,61 @@ const createStake = async (req, res) => {
  *          content:
  *            application/json:
  *              schema:
- *                $ref: '#/components/schemas/Stake'
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: "Stake found"
+ *                  stake:
+ *                    type: object
+ *                    $ref: '#/components/schemas/Stake'
+ *        400:
+ *          description: Invalid ID format
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    example: "Invalid ID format"
  *        404:
  *          description: Stake not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    example: "Stake not found"
  *        500:
  *          description: Internal Server Error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    example: "Internal Server Error"
  */
-const getStake = async (req, res) => {
+const getStakeById = async (req, res) => {
   try {
+    // Validate stake ID
+    const { error } = validateStakeId(req.params.id);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    // Find stake by ID
     const stake = await Stake.findById(req.params.id);
-    res.status(200).json({ stake });
+    if (!stake) {
+      return res.status(404).json({ error: 'Stake not found' });
+    }
+    res.status(200).json({ message: 'Stake found', stake });
   } catch (error) {
+    console.error('Error fetching stake:', error.message || error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -330,7 +375,7 @@ const getWardsInStake = async (req, res) => {
 module.exports = {
   createStake,
   getStakes,
-  getStake,
+  getStakeById,
   updateStake,
   deleteStake,
   getWardsInStake,
