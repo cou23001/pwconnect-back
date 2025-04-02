@@ -93,18 +93,18 @@ const getUsers = async (req, res) => {
  *       500:
  *         description: Internal Server Error
  */
-const createUser = async (req, res) => {
-  try {
-    const { firstName, lastName, email, password } = req.body;
-    const hashedPassword = await hashPassword(password);
-    const user = new User({ firstName, lastName, email, password: hashedPassword });
-    await user.save();
-    res.status(201).json({ message: 'User created successfully', data: user });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ message: 'Internal Server Error' });
-  }
-};
+// const createUser = async (req, res) => {
+//   try {
+//     const { firstName, lastName, email, password } = req.body;
+//     const hashedPassword = await hashPassword(password);
+//     const user = new User({ firstName, lastName, email, password: hashedPassword });
+//     await user.save();
+//     res.status(201).json({ message: 'User created successfully', data: user });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send({ message: 'Internal Server Error' });
+//   }
+// };
 
 /**
  * @swagger
@@ -286,4 +286,4 @@ const deleteUser = async (req, res) => {
   }
 }
 
-module.exports = { getUsers, createUser, getUserById, deleteUser, updateUser };
+module.exports = { getUsers, getUserById, deleteUser, updateUser };

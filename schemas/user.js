@@ -29,11 +29,10 @@ module.exports = {
           format: 'password',
           description: 'The user\'s password',
         },
-        roleId: {
-          type: 'string',
-          format: 'ObjectId',
-          description: 'The user\'s role',
-          example: 'student',
+        type: {
+          type: 'number',
+          description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
+          example: 1,
         },
         createdAt: {
           type: 'string',
