@@ -5,18 +5,18 @@ const { getGroups, getGroup, createGroup, updateGroup, deleteGroup } = require('
 const authenticate = require('../middleware/authenticate');
 
 // GET /groups
-router.get('/groups', authenticate(), getGroups);
+router.get('/groups', authenticate, getGroups);
 
 // GET /groups/:id
-router.get('/groups/:id', authenticate(), getGroup);
+router.get('/groups/:id', authenticate, getGroup);
 
 // POST /groups
-router.post('/groups', authenticate(), createGroup);
+router.post('/groups', authenticate, createGroup);
 
 // PUT /groups/:id
-router.put('/groups/:id', authenticate(), updateGroup);
+router.put('/groups/:id', authenticate, updateGroup);
 
 // DELETE /groups/:id
-router.delete('/groups/:id', authenticate(), deleteGroup);
+router.delete('/groups/:id', authenticate, deleteGroup);
 
 module.exports = router;

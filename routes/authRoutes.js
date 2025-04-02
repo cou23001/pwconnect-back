@@ -12,7 +12,7 @@ router.post('/login', login);
 router.post('/refresh-token', refreshToken);
 
 // Protected route
-router.get('/profile', authenticate(), profile);
-router.post('/logout', authenticate(), logout);
+router.get('/profile', authenticate, profile);
+router.post('/logout', authenticate, logout);
 
 module.exports = router;

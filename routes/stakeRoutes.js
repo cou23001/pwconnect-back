@@ -5,22 +5,22 @@ const { getStakes, getStakeById, createStake, updateStake, deleteStake, getWards
 const authenticate = require('../middleware/authenticate'); // Import the authenticate middleware
 
 // GET /stakes
-router.get('/stakes', authenticate(), getStakes);
+router.get('/stakes', authenticate, getStakes);
 
 // GET /stakes/:id
-router.get('/stakes/:id', authenticate(), getStakeById);
+router.get('/stakes/:id', authenticate, getStakeById);
 
 // POST /stakes
-router.post('/stakes', authenticate(), createStake);
+router.post('/stakes', authenticate, createStake);
 
 // PUT /stakes/:id
-router.put('/stakes/:id', authenticate(), updateStake);
+router.put('/stakes/:id', authenticate, updateStake);
 
 // DELETE /stakes/:id
-router.delete('/stakes/:id', authenticate(), deleteStake);
+router.delete('/stakes/:id', authenticate, deleteStake);
 
 // GET /stakes/wards/:id
 // This route retrieves all wards in a specific stake
-router.get('/stakes/wards/:id', authenticate(), getWardsInStake);
+router.get('/stakes/wards/:id', authenticate, getWardsInStake);
 
 module.exports = router;
