@@ -127,6 +127,14 @@ const getStakes = async (req, res) => {
  *                   example: "Stake with this name already exists"
  *       500:
  *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
  */
 const createStake = async (req, res) => {
   try {
