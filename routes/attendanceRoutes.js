@@ -15,7 +15,7 @@ const authenticate = require('../middleware/authenticate');
 router.post('/attendance', createAttendance);
 
 // GET /attendance
-router.get('/attendance', authenticate, getAttendances);
+router.get('/attendance', authenticate(), getAttendances);
 
 // GET /attendance/:id
 router.get('/attendance/:id', getAttendance);
@@ -24,7 +24,7 @@ router.get('/attendance/:id', getAttendance);
 router.get('/attendance/group/:groupId', getAttendanceByGroup);
 
 // PUT /attendance/:id
-router.put('/attendance/:id', authenticate, updateAttendance);
+router.put('/attendance/:id', authenticate(), updateAttendance);
 
 // DELETE /attendance/:id
 router.delete('/attendance/:id', deleteAttendance);

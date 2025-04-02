@@ -5,18 +5,22 @@ const authenticate = require('../middleware/authenticate');
 const router = express.Router();
 
 // GET /students
-router.get('/students', authenticate, getAllStudents);
+router.get('/students', authenticate('read'), getAllStudents);
 
 // GET /students/:id
-router.get('/students/:id', authenticate, getStudentById);
+// Allow all users with 'read' permission (students & instructors)
+router.get('/students/:id', authenticate('read','false','false','true'), getStudentById);
 
 // POST /students
-router.post('/students', authenticate, createStudent);
+// Allow only users with 'create' permission (instructors & admins)
+router.post('/students', authenticate('create','false', 'true'), createStudent);
 
 // PUT /students/:id
-router.put('/students/:id', authenticate, updateStudent);
+// Allow only users with 'update' permission (instructors & admins)
+router.put('/students/:id', authenticate('update','false','false','true'), updateStudent);
 
 // DELETE /students/:id
-router.delete('/students/:id', authenticate, deleteStudent);
+// Allow only users with 'delete' permission (admins)
+router.delete('/students/:id', authenticate('delete','false','true'), deleteStudent);
 
 module.exports = router;

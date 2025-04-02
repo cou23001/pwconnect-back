@@ -5,18 +5,18 @@ const { getRoles, getRole, createRole, updateRole, deleteRole } = require('../co
 const authenticate = require('../middleware/authenticate');
 
 // GET /roles
-router.get('/roles', authenticate, getRoles);
+router.get('/roles', authenticate(), getRoles);
 
 // GET /roles/:id
-router.get('/roles/:id', authenticate, getRole);
+router.get('/roles/:id', authenticate(), getRole);
 
 // POST /roles
-router.post('/roles', authenticate, createRole);
+router.post('/roles', authenticate(), createRole);
 
 // PUT /roles/:id
-router.put('/roles/:id', authenticate, updateRole);
+router.put('/roles/:id', authenticate(), updateRole);
 
 // DELETE /roles/:id
-router.delete('/roles/:id', authenticate, deleteRole);
+router.delete('/roles/:id', authenticate(), deleteRole);
 
 module.exports = router;

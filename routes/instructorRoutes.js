@@ -5,7 +5,7 @@ const authenticate = require('../middleware/authenticate');
 const router = express.Router();
 
 // GET /instructors
-router.get('/instructors', authenticate, getInstructors);
+router.get('/instructors', getInstructors);
 
 // GET /instructors/:id
 router.get('/instructors/:id', getInstructorById);

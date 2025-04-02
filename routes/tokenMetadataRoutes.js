@@ -5,6 +5,6 @@ const { getTokenMetadataById } = require('../controllers/tokenMetadataController
 const authenticate = require('../middleware/authenticate');
 
 // Get token metadata by ID
-router.get('/token-metadata/:id', authenticate, getTokenMetadataById);
+router.get('/token-metadata/:id', authenticate(), getTokenMetadataById);
 
 module.exports = router;
