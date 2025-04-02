@@ -105,6 +105,26 @@ const getStakes = async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Stake'
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid input data"
+ *       409:
+ *         description: Conflict
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Stake with this name already exists"
  *       500:
  *         description: Internal Server Error
  */
