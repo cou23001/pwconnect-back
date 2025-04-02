@@ -429,7 +429,6 @@ const deleteStake = async (req, res) => {
 };
 
 // Get all wards in a stake
-// Get all wards
 /**
  * @swagger
  * /api/stakes/wards:
