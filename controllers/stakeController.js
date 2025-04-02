@@ -377,11 +377,25 @@ const updateStake = async (req, res) => {
  *          description: Stake ID
  *      responses:
  *        200:
- *          description: Stake deleted
+ *         description: Stake deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stake deleted successfully"
+ *        400:
+ *          description: Bad Request
  *          content:
  *            application/json:
  *              schema:
- *               $ref: '#/components/schemas/Stake'
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    example: "Invalid ID format"
  *        404:
  *          description: Stake not found
  *        500:
@@ -389,10 +403,28 @@ const updateStake = async (req, res) => {
  */
 const deleteStake = async (req, res) => {
   try {
-    await Stake.findByIdAndDelete(req.params.id);
-    res.status(204).send();
+    // Validate stake ID
+    const stakeId = req.params.id;
+    const { error } = validateStakeId(stakeId);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+    // Check if stake exists
+    const stake = await Stake.findById(stakeId);
+    if (!stake) {
+      return res.status(404).json({ error: 'Stake not found' });
+    }
+    // Check if stake has wards
+    const wards = await Ward.find({ stakeId });
+    if (wards.length > 0) {
+      return res.status(400).json({ error: 'Stake has wards and cannot be deleted' });
+    }
+    // Delete stake
+    await Stake.findByIdAndDelete(stakeId);
+    res.status(200).json({ message: 'Stake deleted successfully' });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error deleting stake:', error.message || error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 
