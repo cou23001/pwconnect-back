@@ -43,10 +43,12 @@ const partialStudentSchema = Joi.object({
     phone: Joi.string().pattern(/^[0-9\-+() ]{7,15}$/).messages({
         'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
     }),
-    language: Joi.string().valid('Spanish', 'Portuguese', 'French').messages({
-        'any.only': 'Language must be one of: Spanish, Portuguese, or French',
+    language: Joi.string().valid('Spanish', 'Portuguese', 'French', 'Italian').messages({
+        'any.only': 'Language must be one of: Spanish, Portuguese, French or Italian',
     }),
-    level: Joi.string(),
+    level: Joi.string().valid('EC1', 'EC2').messages({
+        'any.only': 'Level must be one of: EC1 or EC2',
+    }),
 }).min(1); // Ensure at least one field is provided
 
 module.exports = partialStudentSchema;
