@@ -1,5 +1,6 @@
 // controllers/authController.js
 const User = require('../models/user');
+const Student = require('../models/student');
 const { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } = require('../config/jwt');
 const TokenMetadata = require('../models/tokenMetadata');
 const UserRole = require('../models/userRole');
@@ -113,15 +114,29 @@ const register = async (req, res) => {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    // 3. Create user with hashed password
+    // 3.1 Create user with hashed password
     const user = new User({ 
       firstName, 
       lastName, 
       email, 
-      password, // Ensure User model hashes this automatically
+      password, 
       roleId: userRole._id,
     });
     await user.save({ session });
+
+    // 3.2 Create student profile if the role is 'student'
+    // Note: The addressId, birthDate, phone, language, and level are set to null for now
+    if (roleName === 'student') {
+      const student = new Student({
+        userId: user._id,
+        addressId: null, 
+        birthDate: null, 
+        phone: null, 
+        language: null, 
+        level: null, 
+      });
+      await student.save({ session });
+    }
 
     // 4. Generate tokens
     const accessToken = generateAccessToken(user);
@@ -129,14 +144,13 @@ const register = async (req, res) => {
     const hashedRefreshToken = await argon2.hash(refreshToken);
 
     // 5. Store hashed refresh token
-    
-      await TokenMetadata.create([{
-        userId: user._id,
-        refreshToken: hashedRefreshToken,
-        ipAddress: req.clientIp,
-        userAgent: req.headers['user-agent'],
-        expiresAt: new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)),
-      }], { session });
+    await TokenMetadata.create([{
+      userId: user._id,
+      refreshToken: hashedRefreshToken,
+      ipAddress: req.clientIp,
+      userAgent: req.headers['user-agent'],
+      expiresAt: new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)),
+    }], { session });
 
     // 6. Commit transaction
     await session.commitTransaction();
@@ -165,7 +179,7 @@ const register = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    console.error('Registration error:', error);
+    console.error('Registration error:', error.message || error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

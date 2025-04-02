@@ -859,11 +859,22 @@ const updateStudent = async (req, res) => {
 
     // Update Address if provided
     if (req.body.address) {
-      await Address.findByIdAndUpdate(
+      // Update the address if it exists
+      const address = await Address.findByIdAndUpdate(
         student.addressId,
         { $set: req.body.address }, // Only updates provided fields
         { session, new: true }
       );
+      // If address is not provided, it will create a new one
+      if (!address) {
+        const newAddress = new Address({
+          _id: new mongoose.Types.ObjectId(),
+          ...req.body.address,
+        });
+        await newAddress.save({ session });
+        student.addressId = newAddress._id; 
+        await student.save({ session });
+      }
     }
 
     // Update Student (excluding userId & addressId)
