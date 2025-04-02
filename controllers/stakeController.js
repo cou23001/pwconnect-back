@@ -1,6 +1,8 @@
 // controllers/stakeController.js
 const Stake = require('../models/stake');
 const Ward = require('../models/ward');
+const { validateStake } = require('../validators/stake');
+const { message } = require('../validators/user');
 
 
 /**
@@ -9,6 +11,65 @@ const Ward = require('../models/ward');
  *   name: Stakes
  *   description: Stake management
  */
+
+// Get all stakes
+/**
+ * @swagger
+ * /api/stakes:
+ *   get:
+ *     summary: Get a list of stakes
+ *     tags: [Stakes]
+ *     responses:
+ *       200:
+ *         description: A list of stakes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stakes retrieved successfully"
+ *                 data:
+ *                   type: array
+ *                   description: List of stakes 
+ *                   items:
+ *                     $ref: '#/components/schemas/Stake'
+ *       404:
+ *         description: No stakes found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: No stakes found
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal Server Error
+ */
+const getStakes = async (req, res) => {
+  try {
+    const stakes = await Stake.find();
+
+    if (stakes.length === 0) {
+      return res.status(200).json({ message: 'No stakes found', stakes: [] });
+    }
+
+    res.status(200).json({ message: 'Stakes retrieved successfully', data: stakes });
+  } catch (error) {
+    console.error('Error fetching stakes:', error.message || error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 
 // Create a new stake
 /**
@@ -24,19 +85,19 @@ const Ward = require('../models/ward');
  *           schema:
  *             type: object
  *             required:
+ *               - stakeId
  *               - name
  *               - location
- *               - stakeId
  *             properties:
+ *               stakeId:
+ *                 type: string
+ *                 description: The stake's stakeId
  *               name:
  *                 type: string
  *                 description: The stake's name
  *               location:
  *                 type: string
  *                 description: The stake's location
- *               stakeId:
- *                 type: string
- *                 description: The stake's stakeId
  *     responses:
  *       201:
  *         description: Stake created successfully
@@ -49,40 +110,33 @@ const Ward = require('../models/ward');
  */
 const createStake = async (req, res) => {
   try {
+    // Validate input with stake validator
+    const { error } = validateStake(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
     const { name, location } = req.body;
+
+    // Optional: Prevent duplicate stakes if name should be unique
+    const existingStake = await Stake.findOne({ name });
+    if (existingStake) {
+      return res.status(409).json({ error: 'Stake with this name already exists' });
+    }
+
+    // Create new stake
     const stake = new Stake({ name, location });
     await stake.save();
-    res.status(201).json({ stake });
+
+    res.status(201).json({ message: 'Stake created successfully', stake });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error creating stake:', error.message || error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
-// Get all stakes
-/**
- * @swagger
- * /api/stakes:
- *   get:
- *     summary: Get a list of stakes
- *     tags: [Stakes]
- *     responses:
- *       200:
- *         description: A list of stakes
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Stake'
- */
-const getStakes = async (req, res) => {
-  try {
-    const stakes = await Stake.find();
-    res.status(200).json({ stakes });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+
+
 
 // Get a stake by ID
 /**
