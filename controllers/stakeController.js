@@ -1,7 +1,7 @@
 // controllers/stakeController.js
 const Stake = require('../models/stake');
 const Ward = require('../models/ward');
-const { validateStake, validateStakeId } = require('../validators/stake');
+const { validateStake, validateStakeId, validateStakeUpdate } = require('../validators/stake');
 const mongoose = require('mongoose');
 const { message } = require('../validators/user');
 
@@ -277,35 +277,86 @@ const getStakeById = async (req, res) => {
  *                 description: The stake's name.
  *     responses:
  *       200:
- *         description: The updated war object (password excluded).
+ *         description: Stake updated
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Stake'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stake updated successfully"
+ *                 stake:
+ *                   type: object
+ *                   $ref: '#/components/schemas/Stake'
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid input data"
  *       404:
  *         description: Stake not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Stake not found"
  *       500:
  *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
  */
 const updateStake = async (req, res) => {
   try {
+    const { stakeId } = req.params;
     const { name, location } = req.body;
-    const stake = await Stake.findById(req.params.id);
+
+    // Validate input with stake validator
+    const { error } = validateStakeUpdate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    // Find existing stake
+    const stake = await Stake.findById(stakeId);
     if (!stake) {
       return res.status(404).send('Stake not found');
     }
-    // Validate if changes are made
-    if (name === stake.name && location === stake.location) {
-      return res.status(400).send('No changes made');
+
+    // Validate if changes are actually made
+    if (
+      (!name || name === stake.name) &&
+      (!location || location === stake.location)
+    ) {
+      return res.status(400).json({ error: 'No changes detected in update' });
     }
 
+
     // Update stake
-    if (name) { stake.name = name; }
-    if (location) { stake.location = location; }
-    await stake.save();
-    res.status(200).json({ stake });
+    const updatedStake = await Stake.findByIdAndUpdate(
+      stakeId,
+      { name, location },
+      { new: true }
+    );
+
+    res.status(200).json({ message: 'Stake updated successfully', stake: updatedStake });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error updating stake:', error.message || error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
