@@ -1,6 +1,4 @@
 // models/instructor.js
-
-
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 

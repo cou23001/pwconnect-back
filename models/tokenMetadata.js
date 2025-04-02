@@ -1,3 +1,4 @@
+// models/tokenMetadata.js
 const mongoose = require('mongoose');
 
 const tokenMetadataSchema = new mongoose.Schema(
