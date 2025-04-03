@@ -93,18 +93,18 @@ const getUsers = async (req, res) => {
  *       500:
  *         description: Internal Server Error
  */
-const createUser = async (req, res) => {
-  try {
-    const { firstName, lastName, email, password } = req.body;
-    const hashedPassword = await hashPassword(password);
-    const user = new User({ firstName, lastName, email, password: hashedPassword });
-    await user.save();
-    res.status(201).json({ message: 'User created successfully', data: user });
-  } catch (error) {
-    console.error(error);
-    res.status(500).send({ message: 'Internal Server Error' });
-  }
-};
+// const createUser = async (req, res) => {
+//   try {
+//     const { firstName, lastName, email, password } = req.body;
+//     const hashedPassword = await hashPassword(password);
+//     const user = new User({ firstName, lastName, email, password: hashedPassword });
+//     await user.save();
+//     res.status(201).json({ message: 'User created successfully', data: user });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).send({ message: 'Internal Server Error' });
+//   }
+// };
 
 /**
  * @swagger
@@ -200,7 +200,7 @@ const getUserById = async (req, res) => {
  */
 const updateUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, currentPassword, roleId } = req.body;
+    const { firstName, lastName, email, password, currentPassword, type } = req.body;
     const userId = req.params.id;
 
     // Find the user by ID
@@ -231,7 +231,7 @@ const updateUser = async (req, res) => {
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
-    if (roleId) user.roleId = roleId;
+    if (type) user.type = type;
 
     // Save the updated user
     const updatedUser = await user.save();
@@ -286,4 +286,4 @@ const deleteUser = async (req, res) => {
   }
 }
 
-module.exports = { getUsers, createUser, getUserById, deleteUser, updateUser };
+module.exports = { getUsers, getUserById, deleteUser, updateUser };

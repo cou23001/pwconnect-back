@@ -1,3 +1,4 @@
+// validators/partialStudent.js
 const Joi = require('joi');
 
 const partialStudentSchema = Joi.object({
@@ -14,7 +15,9 @@ const partialStudentSchema = Joi.object({
         password: Joi.string().min(8).messages({
             'string.min': 'Password must be at least 8 characters',
         }),
-        role: Joi.string(),
+        type: Joi.forbidden().messages({
+            'any.unknown': 'Type cannot be modified',
+        }),
     }),
     address: Joi.object({
         street: Joi.string().messages({

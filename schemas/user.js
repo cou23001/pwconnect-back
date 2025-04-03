@@ -8,7 +8,7 @@ module.exports = {
           description: 'The auto-generated ID of the user',
           example: '507f1f77bcf86cd799439011', 
         },
-        name: {
+        firstName: {
           type: 'string',
           description: 'The user\'s first name',
           example: 'John',
@@ -29,11 +29,10 @@ module.exports = {
           format: 'password',
           description: 'The user\'s password',
         },
-        roleId: {
-          type: 'string',
-          format: 'ObjectId',
-          description: 'The user\'s role',
-          example: 'student',
+        type: {
+          type: 'number',
+          description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
+          example: 1,
         },
         createdAt: {
           type: 'string',

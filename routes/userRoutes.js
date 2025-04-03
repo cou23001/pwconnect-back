@@ -1,6 +1,6 @@
 const express = require('express');
 const { getUsers, createUser, getUserById, deleteUser, updateUser } = require('../controllers/userController');
-const authenticate = require('../middleware/authenticate');
+const { authenticate } = require('../middleware/authenticate');
 
 const router = express.Router();
 
@@ -11,7 +11,7 @@ router.get('/users', authenticate, getUsers);
 router.get('/users/:id', authenticate, getUserById);
 
 // POST /users
-router.post('/users', authenticate, createUser);
+//router.post('/users', authenticate(), createUser);
 
 // PUT /users/:id
 router.put('/users/:id', authenticate, updateUser);

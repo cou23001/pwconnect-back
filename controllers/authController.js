@@ -3,10 +3,10 @@ const User = require('../models/user');
 const Student = require('../models/student');
 const { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } = require('../config/jwt');
 const TokenMetadata = require('../models/tokenMetadata');
-const UserRole = require('../models/userRole');
 const argon2 = require('argon2');
 const { parseEnvTimeToMs } = require('../utils/timeParser'); // Utility function to parse time from environment variables
 const mongoose = require('mongoose');
+const userSchema = require('../validators/user'); 
 
 // Register a new user
 /**
@@ -41,10 +41,12 @@ const mongoose = require('mongoose');
  *                 format: password
  *                 description: The user's password
  *                 example: 'password123'
- *               role:
- *                 type: string
- *                 description: The user's role
- *                 example: student
+ *               type:
+ *                 type: number
+ *                 enum: [1, 10, 11]
+ *                 default: 1
+ *                 description: The user's type (1 = Student, 10 = Admin, 11 = Instructor)
+ *                 example: 1
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -95,16 +97,16 @@ const register = async (req, res) => {
   session.startTransaction();
   
   try {
-    const { firstName, lastName, email, password, role } = req.body;
-
-    // 1. Validate role
-    const roleName = role || 'student';
-    const userRole = await UserRole.findOne({ name: roleName }).session(session);
-    if (!userRole) {
+    // 0. Validate request body
+    const { error, value } = userSchema.validate(req.body);
+    if (error) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ error: `Role '${roleName}' not found` });
+      return res.status(400).json({ error: error.details[0].message });
     }
+
+    // Use the validated value which includes defaults
+    const { firstName, lastName, email, password, type } = value;
 
     // 2. Check for existing user
     const existingUser = await User.findOne({ email }).session(session);
@@ -120,13 +122,13 @@ const register = async (req, res) => {
       lastName, 
       email, 
       password, 
-      roleId: userRole._id,
+      type // 1 = Student, 10 = Admin, 11 = Instructor
     });
     await user.save({ session });
 
-    // 3.2 Create student profile if the role is 'student'
+    // 3.2 Create student profile if the type is 1 (Student)
     // Note: The addressId, birthDate, phone, language, and level are set to null for now
-    if (roleName === 'student') {
+    if (type === 1) { // 1 = Student
       const student = new Student({
         userId: user._id,
         addressId: null, 

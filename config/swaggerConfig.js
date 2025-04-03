@@ -6,7 +6,6 @@ const swaggerUi = require('swagger-ui-express');
 const userSchema = require('../schemas/user');
 const userResponseSchema = require('../schemas/userResponse');
 const tokenMetadataSchema = require('../schemas/tokenMetadata');
-const userRoleSchema = require('../schemas/userRole');
 const wardSchema = require('../schemas/ward');
 const stakeSchema = require('../schemas/stake');
 const groupSchema = require('../schemas/group');
@@ -43,7 +42,6 @@ const swaggerOptions = {
         User: userSchema.User,
         UserResponse: userResponseSchema.UserResponse,
         TokenMetadata: tokenMetadataSchema.TokenMetadata,
-        UserRole: userRoleSchema.UserRole,
         Ward: wardSchema.Ward,
         Stake: stakeSchema.Stake,
         Group: groupSchema.Group,
