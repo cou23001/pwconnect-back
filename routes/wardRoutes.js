@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { getWards, getWard, createWard, updateWard, deleteWard } = require('../controllers/wardController');
-const authenticate = require('../middleware/authenticate');
+const { authenticate } = require('../middleware/authenticate');
 
 // GET /wards
 router.get('/wards', authenticate, getWards);

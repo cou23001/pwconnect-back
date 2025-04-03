@@ -9,7 +9,7 @@ const {
   updateAttendance,
   deleteAttendance,
 } = require('../controllers/attendanceController');
-const authenticate = require('../middleware/authenticate');
+const { authenticate } = require('../middleware/authenticate');
 
 // POST /attendance
 router.post('/attendance', createAttendance);

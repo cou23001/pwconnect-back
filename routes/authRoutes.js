@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const { register, login, profile, refreshToken, logout } = require('../controllers/authController');
-const authenticate = require('../middleware/authenticate');
+const { authenticate } = require('../middleware/authenticate');
 
 // Public routes
 router.post('/register', register);

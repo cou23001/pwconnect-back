@@ -68,7 +68,9 @@ const getInstructors = async (req, res) => {
   try {
     const instructors = await Instructor.find().populate("userId");
     if (instructors.length === 0) {
-      return res.status(404).send("Instructors not found");
+      return res.status(404).send({
+        error: "No instructors found",
+      });
     }
 
     // Construct the response

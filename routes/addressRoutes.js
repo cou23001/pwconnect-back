@@ -1,7 +1,7 @@
 // routes/addressRoutes.js
 const express = require('express');
 const { getAllAddresses, getAddressById, createAddress, updateAddress, deleteAddress } = require('../controllers/addressController');
-const authenticate = require('../middleware/authenticate');
+const { authenticate } = require('../middleware/authenticate');
 
 const router = express.Router();
 

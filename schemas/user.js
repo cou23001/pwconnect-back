@@ -8,7 +8,7 @@ module.exports = {
           description: 'The auto-generated ID of the user',
           example: '507f1f77bcf86cd799439011', 
         },
-        name: {
+        firstName: {
           type: 'string',
           description: 'The user\'s first name',
           example: 'John',
