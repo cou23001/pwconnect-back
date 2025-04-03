@@ -14,8 +14,37 @@ const argon2 = require('argon2');
  * @swagger
  * /api/token-metadata/{id}:
  *   get:
- *     summary: Get token metadata by id
+ *     summary: Get token metadata by id (validates refresh token)}
+ *     description: |
+ *       - Retrieves token metadata by its ID and validates the refresh token.
+ *       - Requires both a valid access token (Bearer) and refresh token.
  *     tags: [TokenMetadata]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The ID of the token metadata to retrieve
+ *         schema:
+ *           type: string
+ *           description: The ID of the token metadata
+ *       - in: header
+ *         name: X-Refresh-Token
+ *         schema:
+ *           type: string
+ *           required: true
+ *           description: The refresh token to validate
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 description: The refresh token to validate
+ *                 example: "refresh_token_value"
  *     responses:
  *       200:
  *         description: Token metadata retrieved successfully
