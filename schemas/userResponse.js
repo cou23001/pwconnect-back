@@ -21,10 +21,10 @@ module.exports = {
                 format: 'email',
                 description: 'The user\'s email address',
             },
-            role: {
-                type: 'string',
-                format: 'email',
-                description: 'The user\'s email address',
+            type: {
+                type: 'number',
+                description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
+                example: 1,
             },
         },
     },

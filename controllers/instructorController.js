@@ -3,7 +3,6 @@ const Instructor = require("../models/instructor");
 const User = require("../models/user");
 const mongoose = require("mongoose");
 const argon2 = require("argon2");
-const UserRole = require("../models/userRole");
 
 /**
  * @swagger
@@ -118,10 +117,9 @@ const getInstructors = async (req, res) => {
  *                 type: string
  *                 format: password
  *                 description: The instructor's password.
- *               role:
- *                 type: string
- *                 description: The instructor's role (default is "instructor").
- *                 default: "instructor"
+ *               type:
+ *                 type: number
+ *                 description: The instructor's type (default is 11).
  *             required:
  *               - firstName
  *               - lastName
@@ -132,7 +130,7 @@ const getInstructors = async (req, res) => {
  *               lastName: "Doe"
  *               email: "john.doe@example.com"
  *               password: "password123"
- *               role: "instructor"
+ *               type: "11"
  *     responses:
  *       201:
  *         description: The instructor was successfully created
@@ -141,7 +139,7 @@ const getInstructors = async (req, res) => {
  *             schema:
  *               $ref: '#/components/schemas/Instructor'
  *       400:
- *         description: Bad request (e.g., invalid input, duplicate email, invalid role).
+ *         description: Bad request (e.g., invalid input, duplicate email, invalid type).
  *         content:
  *           application/json:
  *             schema:
@@ -164,7 +162,6 @@ const createInstructor = async (req, res) => {
       lastName,
       email,
       password,
-      role = "instructor",
     } = req.body;
     // Validate input
     if (!firstName || !lastName || !email || !password) {
@@ -177,12 +174,6 @@ const createInstructor = async (req, res) => {
       return res.status(400).json({ error: "Email already registered" });
     }
 
-    // Get the user role
-    const userRole = await UserRole.findOne({ name: role });
-    if (!userRole) {
-      return res.status(400).json({ error: "Invalid role" });
-    }
-
     // Hash the password
     const hashedPassword = await argon2.hash(password);
 
@@ -192,7 +183,7 @@ const createInstructor = async (req, res) => {
       lastName,
       email,
       password: hashedPassword,
-      role: userRole._id,
+      type: 11, // Instructor type
     });
     await user.save({ session });
 

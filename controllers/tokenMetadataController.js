@@ -1,5 +1,7 @@
 const TokenMetadata = require('../models/tokenMetadata');
 const { verifyRefreshToken } = require('../config/jwt');
+const jwt = require('jsonwebtoken');
+const argon2 = require('argon2');
 
 /**
  * @swagger
@@ -53,36 +55,10 @@ const { verifyRefreshToken } = require('../config/jwt');
  *                          type: string
  *                          format: email
  *                          description: The email address of the user
- *                        roleId:
- *                          type: object
- *                          properties:
- *                            _id:
- *                              type: string
- *                              format: ObjectId
- *                              description: The ID of the role associated with the user
- *                              example: 507f1f77bcf86cd799439013
- *                            name:
- *                              type: string
- *                              description: The name of the role
- *                              example: admin
- *                            userPermissions:
- *                              type: array
- *                              items:
- *                                type: object
- *                                properties:
- *                                  _id:
- *                                    type: string
- *                                    format: ObjectId
- *                                    description: The ID of the user permission
- *                                    example: 507f1f77bcf86cd799439014
- *                                  name:
- *                                    type: string
- *                                    description: The name of the permission
- *                                    example: create
- *                                  description:
- *                                    type: string
- *                                    description: The description of the permission
- *                                    example: Can create records
+ *                        type:
+ *                          type: number
+ *                          description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                          example: 1
  *                    ipAddress:
  *                      type: string
  *                      description: The IP address of the device that requested the refresh token
@@ -147,36 +123,42 @@ const { verifyRefreshToken } = require('../config/jwt');
 const getTokenMetadataById = async (req, res) => {
   try {
     const { id } = req.params;
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
-    // Find the token metadata by ID populating the userId field and role
-    const tokenMetadata = await TokenMetadata.findById(id)
-      .populate({
-        path: 'userId',
-        populate: { path: 'roleId' }
-      });
+    if (!incomingRefreshToken) {
+      return res.status(401).json({ error: 'Refresh token required' });
+    }
+
+    // Check token validity in one query
+    const tokenMetadata = await TokenMetadata.findOne({
+      _id: id,
+      expiresAt: { $gt: new Date() },  // Not expired
+      isRevoked: false                 // Not revoked
+    }).populate('userId', 'firstName lastName email type');
+
     if (!tokenMetadata) {
-      return res.status(404).json({ error: 'Token metadata not found' });
-    }
-    // Check if the token is expired
-    const currentDate = new Date();
-    if (tokenMetadata.expiresAt < currentDate) {
-      return res.status(403).json({ error: 'Token expired' });
-    }
-    // Check if the token is revoked
-    if (tokenMetadata.isRevoked) {
-      return res.status(403).json({ error: 'Token revoked' });
-    }
-    // Check if the token is valid
-    const isValid = verifyRefreshToken(tokenMetadata.refreshToken);
-    if (!isValid) {
-      return res.status(403).json({ error: 'Invalid token' });
+      return res.status(403).json({ error: 'Token invalid or expired' });
     }
 
-    res.status(200).json({ message: 'Token metadata retrieved successfully', data: tokenMetadata });
+    // Verify the incoming token against the hashed version
+    const isValid = await argon2.verify(
+      tokenMetadata.refreshToken, // Hashed token (from DB)
+      incomingRefreshToken        // Plaintext token (from request)
+    );
+
+    if (!isValid) {
+      return res.status(403).json({ error: 'Invalid refresh token' });
+    }
+
+    res.status(200).json({ 
+      message: 'Token metadata retrieved successfully', 
+      data: tokenMetadata 
+    });
+
   } catch (error) {
     console.error('Error retrieving token metadata:', error);
     res.status(500).json({ error: 'Failed to retrieve token metadata' });
   }
-}
+};
 
 module.exports = { getTokenMetadataById };

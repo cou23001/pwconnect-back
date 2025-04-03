@@ -3,7 +3,6 @@ const Student = require("../models/student");
 const User = require("../models/user");
 const Address = require("../models/address");
 const mongoose = require("mongoose");
-const UserRole = require("../models/userRole");
 const studentSchema = require("../validators/student");
 const partialStudentSchema = require("../validators/partialStudent");
 
@@ -356,10 +355,11 @@ const getStudentById = async (req, res) => {
  *                     format: password
  *                     minLength: 8
  *                     example: "securePassword123"
- *                   role:
- *                     type: string
- *                     default: "student"
- *                     example: "student"
+ *                   type:
+ *                     type: number
+ *                     enum: [1, 10, 11]
+ *                     default: 1
+ *                     example: 1
  *               address:
  *                 type: object
  *                 required:
@@ -459,10 +459,10 @@ const getStudentById = async (req, res) => {
  *                           type: string
  *                           description: The email of the user.
  *                           example: "john@doe.com"
- *                         roleId:
- *                           type: string
- *                           description: The role Id of the user.
- *                           example: "67def8dc21d7683620e7b62c"
+ *                         type:
+ *                           type: number
+ *                           description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor).
+ *                           example: "1"
  *                     address:
  *                       $ref: '#/components/schemas/Address'
  *                     birthDate:
@@ -511,7 +511,7 @@ const getStudentById = async (req, res) => {
  *                   type: string
  *                   example: "Invalid request body or missing fields"
  *       404:
- *         description: Role not found
+ *         description: Type not found
  *         content:
  *           application/json:
  *             schema:
@@ -519,7 +519,7 @@ const getStudentById = async (req, res) => {
  *               properties:
  *                 message:
  *                   type: string
- *                   example: "Role not found"
+ *                   example: "Type not found"
  *       500:
  *         description: Internal server error
  *         content:
@@ -566,16 +566,6 @@ const createStudent = async (req, res) => {
         .json({ message: `User '${user.email}' already exists` });
     }
 
-    // Fetch the role
-    const userRole = await UserRole.findOne({ name: "student" }).session(
-      session
-    );
-    if (!userRole) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: "Role not found" });
-    }
-
     // Create the user
     const newUser = new User({
       _id: new mongoose.Types.ObjectId(),
@@ -583,7 +573,7 @@ const createStudent = async (req, res) => {
       lastName: user.lastName,
       email: user.email,
       password: user.password,
-      roleId: userRole._id,
+      type: 1, // Student type
     });
     await newUser.save({ session });
 

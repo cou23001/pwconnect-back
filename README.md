@@ -6,7 +6,7 @@ Production server: https://pwconnect-back.onrender.com/api-docs
 
 ## Features
 - User authentication and JWT-based authorization
-- Role-based access control (Admin, User, etc.)
+- Type-based access control (Admin, User, etc.)
 - RESTful API for managing users and data
 - Cloud-hosted MongoDB integration
 

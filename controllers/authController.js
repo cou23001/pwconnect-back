@@ -3,7 +3,6 @@ const User = require('../models/user');
 const Student = require('../models/student');
 const { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } = require('../config/jwt');
 const TokenMetadata = require('../models/tokenMetadata');
-const UserRole = require('../models/userRole');
 const argon2 = require('argon2');
 const { parseEnvTimeToMs } = require('../utils/timeParser'); // Utility function to parse time from environment variables
 const mongoose = require('mongoose');
@@ -42,10 +41,12 @@ const userSchema = require('../validators/user');
  *                 format: password
  *                 description: The user's password
  *                 example: 'password123'
- *               role:
- *                 type: string
- *                 description: The user's role
- *                 example: student
+ *               type:
+ *                 type: number
+ *                 enum: [1, 10, 11]
+ *                 default: 1
+ *                 description: The user's type (1 = Student, 10 = Admin, 11 = Instructor)
+ *                 example: 1
  *     responses:
  *       201:
  *         description: User registered successfully
@@ -125,7 +126,7 @@ const register = async (req, res) => {
     });
     await user.save({ session });
 
-    // 3.2 Create student profile if the role is 'student'
+    // 3.2 Create student profile if the type is 1 (Student)
     // Note: The addressId, birthDate, phone, language, and level are set to null for now
     if (type === 1) { // 1 = Student
       const student = new Student({

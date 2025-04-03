@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/students', authenticate, authorize([10]), getAllStudents);
 
 // GET /students/:id
-// Route requires authentication and authorization for roles 1 and 10.
+// Route requires authentication and authorization for types 1 and 10.
 // It checks if the user owns the data (or is admin).
 router.get('/students/:id', authenticate, authorize([1, 10]), validateOwnership, getStudentById);
 
@@ -17,12 +17,12 @@ router.get('/students/:id', authenticate, authorize([1, 10]), validateOwnership,
 router.post('/students', authenticate, createStudent);
 
 // PUT /students/:id
-// Route requires authentication and authorization for roles 1 and 10.
+// Route requires authentication and authorization for tyoes 1 and 10.
 // It checks if the user owns the data (or is admin).
 router.put('/students/:id', authenticate, authorize([1,10]), validateOwnership, updateStudent);
 
 // DELETE /students/:id
-// Route requires authentication and authorization for role 10 (admin).
+// Route requires authentication and authorization for type 10 (admin).
 router.delete('/students/:id', authenticate, authorize([10]), deleteStudent);
 
 module.exports = router;
