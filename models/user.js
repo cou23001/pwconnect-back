@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema({
     enum: [1, 10, 11],
     required: true,
   },
+  avatar: {
+    type: String,
+  },
 }, {
   timestamps: true,
 });

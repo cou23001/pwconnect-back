@@ -1,8 +1,9 @@
+// app.js
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const setupSwagger = require('./config/swaggerConfig');
-const routes = require('./routes/index'); 
+const routes = require('./routes/index');
 
 // Load environment variables
 require('dotenv').config(); 
@@ -35,8 +36,7 @@ setupSwagger(app);
 
 // Middleware
 app.use(express.json()); // Parse JSON request bodies
-// Cookie parser middleware
-app.use(cookieParser()); // This enables `req.cookies`
+app.use(cookieParser());
 
 // Use all routes from the routes file
 app.use(routes);

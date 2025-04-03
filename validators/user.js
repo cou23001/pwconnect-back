@@ -18,6 +18,9 @@ const userSchema = Joi.object({
         'any.only': 'Type must be one of the following values: 1 (student), 10 (admin), 11(instructor)',
         'any.required': 'Type is required',
     }),
+    avatar: Joi.string().optional().messages({
+        'string.base': 'Avatar must be a string',
+    }),
 });
 
 module.exports = userSchema;

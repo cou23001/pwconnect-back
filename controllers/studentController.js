@@ -5,6 +5,7 @@ const Address = require("../models/address");
 const mongoose = require("mongoose");
 const studentSchema = require("../validators/student");
 const partialStudentSchema = require("../validators/partialStudent");
+const { uploadToS3, deleteFromS3 } = require("../utils/upload");
 
 /**
  * @swagger
@@ -811,85 +812,116 @@ const createStudent = async (req, res) => {
  *                   type: string
  *                   example: "Internal server error"
  */
-const updateStudent = async (req, res) => {
+const updateStudent = async (req, res, next) => {
+  console.log("Update student request body:", req.body);
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    // Validate request body using Joi
-    const { error, value } = partialStudentSchema.validate(req.body, {
-      abortEarly: false,
-    });
+    // 1. Fetch student with populated user
+    const student = await Student.findById(req.params.id)
+      .populate('userId')
+      .session(session);
+    
+    if (!student || !student.userId) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ message: "Student or user not found" });
+    }
 
+    let oldAvatarUrl = null;
+
+    // 2. Handle file upload if present
+    if (req.file) {
+      // Validate type (redundant check)
+      const validTypes = ['image/jpeg', 'image/png'];
+      if (!validTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ message: 'Invalid file type' });
+      }
+      // Check if the file is too large
+      if (req.file.size > 2 * 1024 * 1024) { // 2MB limit
+        return res.status(400).json({ message: 'File size exceeds limit' });
+      }
+      // Store old avatar URL for cleanup
+      oldAvatarUrl = student.userId.avatar;
+      
+      // Upload new avatar
+      const newAvatarUrl = await uploadToS3(req.file);
+      req.body.user = req.body.user || {};
+      req.body.user.avatar = newAvatarUrl;
+    }
+
+    // 3. Validate request body
+    const { error } = partialStudentSchema.validate(req.body, { abortEarly: false });
     if (error) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({
-        message: error.details.map((err) => err.message).join(", "),
+        message: error.details.map(err => err.message).join(", ")
       });
     }
 
-    // Find the student first
-    let student = await Student.findById(req.params.id).session(session);
-
-    if (!student) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(404).json({ message: "Student not found" });
-    }
-
-    // Update User if provided
+    // 4. Update User (including new avatar if uploaded)
     if (req.body.user) {
       await User.findByIdAndUpdate(
-        student.userId,
-        { $set: req.body.user }, // Only updates provided fields
-        { session, new: true }
+        student.userId._id,
+        { $set: req.body.user },
+        { session }
       );
     }
 
-    // Update Address if provided
+    // 5. Update Address
     if (req.body.address) {
-      // Update the address if it exists
-      const address = await Address.findByIdAndUpdate(
-        student.addressId,
-        { $set: req.body.address }, // Only updates provided fields
-        { session, new: true }
+      const address = await Address.findOneAndUpdate(
+        { _id: student.addressId || new mongoose.Types.ObjectId() },
+        { $set: req.body.address },
+        { upsert: true, session, new: true }
       );
-      // If address is not provided, it will create a new one
-      if (!address) {
-        const newAddress = new Address({
-          _id: new mongoose.Types.ObjectId(),
-          ...req.body.address,
-        });
-        await newAddress.save({ session });
-        student.addressId = newAddress._id; 
-        await student.save({ session });
-      }
+      student.addressId = address._id;
+      await student.save({ session });
     }
 
-    // Update Student (excluding userId & addressId)
-    const studentUpdateFields = { ...req.body };
-    delete studentUpdateFields.user;
-    delete studentUpdateFields.address;
-
-    student = await Student.findByIdAndUpdate(
+    // 6. Update Student
+    const { user, address, ...studentFields } = req.body;
+    const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
-      { $set: studentUpdateFields },
+      { $set: studentFields },
       { new: true, session }
     )
-      .populate("userId") // Populate updated user details
-      .populate("addressId"); // Populate updated address
+      .populate('userId')
+      .populate('addressId');
 
-    // Commit the transaction
+    // 7. Commit transaction
     await session.commitTransaction();
     session.endSession();
 
-    res.status(200).json({ message: "Student updated succesfully", data: student });
+    // 8. Cleanup old avatar AFTER successful commit
+    if (oldAvatarUrl && !oldAvatarUrl.includes('default-avatar')) {
+      try {
+        await deleteFromS3(oldAvatarUrl);
+      } catch (err) {
+        console.error('Error deleting old avatar (non-critical):', err);
+      }
+    }
+
+    return res.status(200).json({
+      message: "Student updated successfully",
+      data: updatedStudent
+    });
+
   } catch (error) {
-    // Abort the transaction on error
     await session.abortTransaction();
     session.endSession();
-    res.status(500).json({ message: error.message });
+    
+    // Cleanup new avatar if transaction failed
+    if (req.file && req.body.user?.avatar) {
+      await deleteFromS3(req.body.user.avatar).catch(console.error);
+    }
+
+    return res.status(500).json({
+      message: "Update failed",
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
   }
 };
 
@@ -973,10 +1005,27 @@ const deleteStudent = async (req, res) => {
   }
 };
 
+// function to upload avatar to S3
+const uploadAvatar = async (req, res) => {
+  try {
+    const avatar = req.file; // Assuming you're using multer to handle file uploads
+
+    if (!avatar) {
+      return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const avatarUrl = await uploadToS3(avatar);
+    res.status(200).json({ message: "Avatar uploaded successfully", url: avatarUrl });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 module.exports = {
   getAllStudents,
   getStudentById,
   createStudent,
   updateStudent,
   deleteStudent,
+  uploadAvatar,
 };
