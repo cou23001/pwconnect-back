@@ -1,4 +1,5 @@
 // utils/upload.js
+// Uploading files to AWS S3 using multer and AWS SDK v3
 const { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const dotenv = require("dotenv");
