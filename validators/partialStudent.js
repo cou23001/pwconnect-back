@@ -18,6 +18,9 @@ const partialStudentSchema = Joi.object({
         type: Joi.forbidden().messages({
             'any.unknown': 'Type cannot be modified',
         }),
+        avatar: Joi.string().messages({
+            'string.base': 'Avatar must be a string',
+        }),
     }),
     address: Joi.object({
         street: Joi.string().messages({

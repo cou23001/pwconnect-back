@@ -122,7 +122,8 @@ const register = async (req, res) => {
       lastName, 
       email, 
       password, 
-      type // 1 = Student, 10 = Admin, 11 = Instructor
+      type, // 1 = Student, 10 = Admin, 11 = Instructor
+      avatar: null
     });
     await user.save({ session });
 
