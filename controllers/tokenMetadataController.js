@@ -1,6 +1,4 @@
 const TokenMetadata = require('../models/tokenMetadata');
-const { verifyRefreshToken } = require('../config/jwt');
-const jwt = require('jsonwebtoken');
 const argon2 = require('argon2');
 
 /**
