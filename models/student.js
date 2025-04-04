@@ -2,6 +2,7 @@
 const mongoose = require("mongoose");
 const User = require("./user");
 const Address = require("./address");
+const e = require("express");
 
 const studentSchema = new mongoose.Schema(
   {
@@ -22,9 +23,13 @@ const studentSchema = new mongoose.Schema(
     },
     language: {
       type: String,
+      enum: ["Spanish", "French", "Portuguese", "Italian"],
+      default: "Spanish",
     },
     level: {
       type: String,
+      enum: ["EC1", "EC2"],
+      default: "EC1",
     },
   },
   {

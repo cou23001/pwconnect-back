@@ -657,6 +657,8 @@ const createStudent = async (req, res) => {
  *   put:
  *     summary: Update a student by ID
  *     tags: [Student]
+ *     consumes:
+ *       - multipart/form-data
  *     parameters:
  *       - in: path
  *         name: id
@@ -667,89 +669,44 @@ const createStudent = async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file to upload as avatar
  *               user:
- *                  type: object
- *                  properties:
- *                      firstName:
- *                          type: string
- *                          description: Updated first name of the student
- *                      lastName:
- *                          type: string
- *                          description: Updated last name of the student
- *                      email:
- *                          type: string
- *                          format: email
- *                          description: Updated email of the student
- *                      password:
- *                          type: string
- *                          format: password
- *                          description: Updated password of the student
- *                      type:
- *                          type: number
- *                          description: Updated type of the user (1 = Student, 10 = Admin, 11 = Instructor)
- *                          example: 1
- *                      avatar:
- *                          type: string
- *                          format: url
- *                          description: Updated URL of the user's avatar
- *                          example: https://example.com/avatar.jpg
+ *                 type: string
+ *                 description: JSON string of user object
+ *                 example: >
+ *                   {
+ *                     "firstName": "Jane",
+ *                     "lastName": "Smith",
+ *                     "email": "joe@example.com",
+ *                   }
  *               address:
- *                 type: object
- *                 properties:
- *                   street:
- *                     type: string
- *                     description: Updated street address
- *                   neighborhood:
- *                     type: string
- *                     description: Updated neighborhood or apartment
- *                   city:
- *                     type: string
- *                     description: Updated city
- *                   state:
- *                     type: string
- *                     description: Updated state
- *                   country:
- *                     type: string
- *                     description: Updated country
- *                   postalCode:
- *                     type: string
- *                     description: Updated postal code
+ *                 type: string
+ *                 description: JSON string of address object
+ *                 example: >
+ *                   {
+ *                     "street": "456 Elm St.",
+ *                     "neighborhood": "Suite 200",
+ *                     "city": "Salt Lake City",
+ *                     "state": "UT",
+ *                     "country": "USA",
+ *                     "postalCode": "84102"
+ *                   }
  *               birthDate:
  *                 type: string
  *                 format: date
- *                 description: Updated date of birth of the student
  *               phone:
  *                 type: string
- *                 description: Updated phone number of the student
  *               language:
  *                 type: string
- *                 description: Updated language spoken by the student
  *               level:
  *                 type: string
- *                 description: Updated level of the student
- *             example:
- *               user:
- *                 firstName: "Jane"
- *                 lastName: "Smith"
- *                 email: "joe@example.com"
- *                 password: "newPassword123"
- *                 type: 1
- *                 avatar: "https://example.com/new-avatar.jpg"
- *               address:
- *                 street: "456 Elm St."
- *                 neighborhood: "Suite 200"
- *                 city: "Salt Lake City"
- *                 state: "UT"
- *                 country: "USA"
- *                 postalCode: "84102"
- *               birthDate: "2000-01-01"
- *               phone: "987-654-3210"
- *               language: "Spanish"
- *               level: "EC2"
  *     responses:
  *       200:
  *         description: Student updated successfully
