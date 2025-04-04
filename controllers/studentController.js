@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 const studentSchema = require("../validators/student");
 const partialStudentSchema = require("../validators/partialStudent");
 const { uploadToS3, deleteFromS3 } = require("../utils/upload");
+const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL
 
 /**
  * @swagger
@@ -331,7 +332,6 @@ const getStudentById = async (req, res) => {
  *     tags: [Student]
  *     consumes:
  *       - multipart/form-data
- *     parameters:
  *     requestBody:
  *       required: true
  *       content:
@@ -351,6 +351,7 @@ const getStudentById = async (req, res) => {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
  *                     "email": "joe@example.com",
+ *                     "password": "password123"
  *                   }
  *               address:
  *                 type: string
@@ -500,93 +501,105 @@ const getStudentById = async (req, res) => {
  *                 message: "Internal server error"
  */
 const createStudent = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  let session;
+  let avatarUrl = null;
+  let shouldCleanupFile = false;
 
   try {
-    // Validate request body using Joi
-    const { error, value } = studentSchema.validate(req.body, {
-      abortEarly: false,
-    });
-
+    // Validate request body
+    const { error } = studentSchema.validate(req.body, { abortEarly: false });
     if (error) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(400).json({
+        success: false,
         message: error.details.map((err) => err.message).join(", "),
       });
     }
 
+    session = await mongoose.startSession();
+    session.startTransaction();
+
     // Destructure request body
-    const { user, address, birthDate, phone, language, level } = req.body;
+    const { user, address, ...studentData } = req.body;
 
     // Check if the user already exists
-    const existingUser = await User.findOne({ email: user.email }).session(
-      session
-    );
+    const existingUser = await User.findOne({ email: user.email }).session(session);
     if (existingUser) {
-      await session.abortTransaction();
-      session.endSession();
       return res
         .status(400)
         .json({ message: `User '${user.email}' already exists` });
     }
+    
+    // Handle file upload if present
+    if (req.file) {
+      avatarUrl = await uploadToS3(req.file);
+      shouldCleanupFile = true; // Set cleanup flag
+    }
 
     // Create the user
-    const newUser = new User({
+    const newUser = await User.create([{
+      ...user, // Spread the user object
       _id: new mongoose.Types.ObjectId(),
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
       password: user.password,
       type: 1, // Student type
-    });
-    await newUser.save({ session });
+      avatar:  avatarUrl || defaultAvatarUrl, // Use uploaded avatar or default
+    }], { session });
 
     // Create the address
-    const newAddress = new Address({
+    const newAddress = await Address.create([{
+      ...address, // Spread the address object
       _id: new mongoose.Types.ObjectId(),
-      street: address.street,
-      neighborhood: address.neighborhood,
-      city: address.city,
-      state: address.state,
-      country: address.country,
-      postalCode: address.postalCode,
-    });
-    await newAddress.save({ session });
+    }], { session });
 
     // Create the student
-    const newStudent = new Student({
+    const newStudent = await Student.create([{
+      ...studentData, // Spread the student data
       _id: new mongoose.Types.ObjectId(),
-      userId: newUser._id,
-      addressId: newAddress._id,
-      birthDate,
-      phone,
-      language,
-      level,
-    });
-    await newStudent.save({ session });
+      userId: newUser[0]._id,
+      addressId: newAddress[0]._id
+    }], { session });
 
     // Commit the transaction
     await session.commitTransaction();
+    shouldCleanupFile = false; // Reset cleanup flag
 
     // Populate the student data before sending response
-    const populatedStudent = await Student.findById(newStudent._id)
+    const result = await Student.findById(newStudent[0]._id)
       .populate('userId', '-password')  // Exclude password field
       .populate('addressId')
       .lean();  // Convert to plain JavaScript object
 
-    session.endSession();
-
     // Send response
     res.status(201).json({
+      success: true,
       message: "Student created successfully",
-      data: populatedStudent,
+      data: {
+        ...result,
+      },
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    res.status(500).json({ message: error.message });
+    // Cleanup uploaded file if anything failed
+    if (shouldCleanupFile && avatarUrl) {
+      await deleteFromS3(avatarUrl).catch(err => 
+        console.error('Failed to cleanup uploaded file:', err)
+      );
+    }
+
+    if (session?.inTransaction()) {
+      await session.abortTransaction();
+    }
+
+    const status = error.message.includes('already exists') ? 409 : 500;
+    res.status(status).json({
+      success: false,
+      message: error.message.includes('already exists') 
+        ? error.message 
+        : 'Student creation failed',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
+  } finally {
+    if (session) {
+      session.endSession();
+    }
   }
 };
 
@@ -651,10 +664,6 @@ const createStudent = async (req, res) => {
  *                 description: The student's preferred language
  *                 enum: [Spanish, French, Portuguese, Italian]
  *                 example: "Spanish"
- *               level:
- *                 type: string
- *                 description: The student's proficiency level
- *                 enum: [EC1, EC2]
  *     responses:
  *       200:
  *         description: Student updated successfully
@@ -784,7 +793,6 @@ const createStudent = async (req, res) => {
  *                   example: "Internal server error"
  */
 const updateStudent = async (req, res, next) => {
-  console.log("Update student request body:", req.body);
   const session = await mongoose.startSession();
   session.startTransaction();
 
