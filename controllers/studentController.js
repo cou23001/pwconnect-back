@@ -965,6 +965,7 @@ const deleteStudent = async (req, res) => {
   const session = await mongoose.startSession();
   try {
     const { id } = req.params;
+    console.log("Deleting student with ID:", id);
 
     // 1. Validate ID format (400 Bad Request if invalid)
     if (!mongoose.isValidObjectId(id)) {
