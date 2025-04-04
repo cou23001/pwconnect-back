@@ -32,12 +32,22 @@ const upload = multer({
 });
 
 // GET /students
-router.get("/students", getAllStudents);
+router.get(
+  "/students",
+  authenticate,
+  authorize([10]),
+  getAllStudents
+);
 
 // GET /students/:id
 // Route requires authentication and authorization for types 1 and 10.
 // It checks if the user owns the data (or is admin).
-router.get("/students/:id", authenticate, authorize([1, 10]), validateOwnership, getStudentById
+router.get(
+  "/students/:id", 
+  authenticate, 
+  authorize([1, 10]), 
+  validateOwnership, 
+  getStudentById
 );
 
 // POST /students
@@ -45,6 +55,8 @@ router.post(
   "/students", 
   upload.single("avatar"),
   uploadErrors,
+  authenticate,
+  authorize([10]),
   formDataToJson, createStudent
 );
 
@@ -65,12 +77,13 @@ router.delete("/students/:id", authenticate, authorize([10]), deleteStudent);
 // POST /students/upload/:id
 // Route requires authentication and authorization for types 1 and 10.
 // It checks if the user owns the data (or is admin).
-router.post(
+router.put(
   "/students/upload/:id",
   upload.single("avatar"),
   authenticate,
   authorize([1, 10]),
   formDataToJson,
+  validateOwnership,
   uploadAvatar
 );
 
