@@ -52,8 +52,8 @@ const partialStudentSchema = Joi.object({
     language: Joi.string().valid('Spanish', 'Portuguese', 'French', 'Italian').messages({
         'any.only': 'Language must be one of: Spanish, Portuguese, French or Italian',
     }),
-    level: Joi.string().valid('EC1', 'EC2').messages({
-        'any.only': 'Level must be one of: EC1 or EC2',
+    level: Joi.forbidden().messages({
+        'any.unknown': 'Level cannot be modified',
     }),
 }).min(1); // Ensure at least one field is provided
 
