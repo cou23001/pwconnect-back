@@ -34,6 +34,12 @@ module.exports = {
           description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
           example: 1,
         },
+        avatar: {
+          type: 'string',
+          format: 'url',
+          description: 'The URL of the user\'s avatar image',
+          example: 'https://example.com/avatar.jpg',
+        },
         createdAt: {
           type: 'string',
           format: 'date-time',
