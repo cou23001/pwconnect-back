@@ -960,43 +960,120 @@ const updateStudent = async (req, res, next) => {
  *                   example: "Internal server error"
  */
 const deleteStudent = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const { id } = req.params;
 
     // 1. Validate ID format (400 Bad Request if invalid)
     if (!mongoose.isValidObjectId(id)) {
-      return res.status(400).json({ message: "Invalid student ID" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid student ID" 
+      });
     }
 
     // 2. Find the student first (to ensure it exists)
-    const student = await Student.findById(id);
+    const student = await Student.findById(id).session(session);
     if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Student not found" });
     }
 
-    // 3. Use deleteOne to trigger the middleware
-    await student.deleteOne(); // This triggers the post('deleteOne') hook
+    session.startTransaction();
 
-    // 3. Success response
-    res.status(200).json({ message: "Student and linked data deleted" });
+    // Get user data before deletion for avatar cleanup
+    const user = student.userId 
+      ? await User.findById(student.userId).session(session)
+      : null;
+
+    // Parallel deletions in transaction
+    await Promise.all([
+      User.deleteOne({ _id: student.userId }, { session }),
+      Address.deleteOne({ _id: student.addressId }, { session }),
+      student.deleteOne({ session })
+    ]);
+
+    // Cleanup avatar if exists
+    if (user?.avatar) {
+      await deleteFromS3(user.avatar).catch(err => 
+        console.error('Avatar cleanup failed:', err)
+      );
+    }
+
+    // Commit transaction
+    await session.commitTransaction();
+
+    // Response
+    res.status(200).json({
+      success: true,
+      message: "Student and linked data deleted",
+      deletedIds: {
+        studentId: student._id,
+        userId: student.userId,
+        addressId: student.addressId
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    await session.abortTransaction();
+    
+    res.status(500).json({
+      success: false,
+      message: "Deletion failed",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  } finally {
+    session.endSession();
   }
 };
 
 // function to upload avatar to S3
 const uploadAvatar = async (req, res) => {
   try {
-    const avatar = req.file; // Assuming you're using multer to handle file uploads
+    const avatar = req.file;
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
 
     if (!avatar) {
-      return res.status(400).json({ message: "No file uploaded" });
+      return res.status(400).json({ 
+        success: false,
+        message: "No file uploaded" 
+      });
+    }
+
+    if (!validTypes.includes(avatar.mimetype)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Only JPEG, PNG, or WebP images allowed",
+        allowedTypes: validTypes
+      });
+    }
+
+    if (avatar.size > MAX_SIZE) {
+      return res.status(413).json({ 
+        success: false,
+        message: "File exceeds 2MB limit" 
+      });
     }
 
     const avatarUrl = await uploadToS3(avatar);
-    res.status(200).json({ message: "Avatar uploaded successfully", url: avatarUrl });
+    
+    res.status(200).json({
+      success: true,
+      message: "Avatar uploaded successfully",
+      data: {
+        url: avatarUrl,
+        size: avatar.size,
+        type: avatar.mimetype
+      }
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({
+      success: false,
+      message: "Avatar upload failed",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
 };
 
