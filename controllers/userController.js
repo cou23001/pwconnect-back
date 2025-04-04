@@ -55,59 +55,6 @@ const getUsers = async (req, res) => {
 
 /**
  * @swagger
- * /api/users:
- *   post:
- *     summary: Create a new user
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *             properties:
- *               firstName:
- *                 type: string
- *                 description: The user's name
- *               lastName:
- *                 type: string
- *                 description: The user's last name
- *               email:
- *                 type: string
- *                 format: email
- *                 description: The user's email address
- *               password:
- *                 type: string
- *                 format: password
- *                 description: The user's password
- *     responses:
- *       201:
- *         description: User created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/User'
- *       500:
- *         description: Internal Server Error
- */
-// const createUser = async (req, res) => {
-//   try {
-//     const { firstName, lastName, email, password } = req.body;
-//     const hashedPassword = await hashPassword(password);
-//     const user = new User({ firstName, lastName, email, password: hashedPassword });
-//     await user.save();
-//     res.status(201).json({ message: 'User created successfully', data: user });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).send({ message: 'Internal Server Error' });
-//   }
-// };
-
-/**
- * @swagger
  * /api/users/{id}:
  *    get:
  *      summary: Get a user by ID
@@ -129,8 +76,24 @@ const getUsers = async (req, res) => {
  *                $ref: '#/components/schemas/User'
  *        404:
  *          description: User not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: User not found
  *        500:
  *          description: Internal Server Error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: Internal Server Error
  */
 const getUserById = async (req, res) => {
   try {
@@ -176,12 +139,27 @@ const getUserById = async (req, res) => {
  *                 type: string
  *                 format: email
  *                 description: The user's email address.
+ *               type:
+ *                 type: number
+ *                 description: The user's type (1 = Student, 10 = Admin, 11 = Instructor).
+ *               avatar:
+ *                 type: string
+ *                 format: url
+ *                 description: The URL of the user's avatar image.
  *               password:
  *                 type: string
  *                 description: The new password.
  *               currentPassword:
  *                 type: string
  *                 description: The current password (required if updating the password).
+ *             example:
+ *               firstName: John
+ *               lastName: Doe
+ *               email: j@doe.com
+ *               type: 1
+ *               avatar: https://example.com/avatar.jpg
+ *               password: newpassword123
+ *               currentPassword: oldpassword123
  *     responses:
  *       200:
  *         description: The updated user object (password excluded).
@@ -191,12 +169,44 @@ const getUserById = async (req, res) => {
  *               $ref: '#/components/schemas/UserResponse'
  *       400:
  *         description: Bad request (e.g., current password is required but not provided).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Current password is required
  *       401:
  *         description: Unauthorized (e.g., invalid current password).
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid current password
  *       404:
  *         description: User not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
  *       500:
  *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal Server Error
  */
 const updateUser = async (req, res) => {
   try {
@@ -267,11 +277,27 @@ const updateUser = async (req, res) => {
  *          content:
  *            application/json:
  *              schema:
- *               $ref: '#/components/schemas/User'
+ *               $ref: '#/components/schemas/UserResponse'
  *        404:
  *          description: User not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: User not found
  *        500:
  *          description: Internal Server Error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: Internal Server Error
  */
 const deleteUser = async (req, res) => {
   try {
