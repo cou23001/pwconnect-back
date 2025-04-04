@@ -62,6 +62,14 @@ const { uploadToS3, deleteFromS3 } = require("../utils/upload");
  *                               type: string
  *                               description: The email of the user
  *                               example: john.doe@example.com
+ *                             type:
+ *                               type: number
+ *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                               example: 1
+ *                             avatar:
+ *                               type: string
+ *                               description: The URL of the user's avatar
+ *                               example: https://example.com/avatar.jpg
  *                        address:
  *                          type: object
  *                          properties:
@@ -195,6 +203,14 @@ const getAllStudents = async (req, res) => {
  *                               type: string
  *                               description: The email of the user
  *                               example: john@doe.com
+ *                             type:
+ *                               type: number
+ *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                               example: 1
+ *                             avatar:
+ *                               type: string
+ *                               description: The URL of the user's avatar
+ *                               example: https://example.com/avatar.jpg
  *                        address:
  *                          type: object
  *                          properties:
@@ -361,6 +377,10 @@ const getStudentById = async (req, res) => {
  *                     enum: [1, 10, 11]
  *                     default: 1
  *                     example: 1
+ *                   avatar:
+ *                     type: string
+ *                     format: url
+ *                     example: "https://example.com/avatar.jpg"
  *               address:
  *                 type: object
  *                 required:
@@ -411,6 +431,8 @@ const getStudentById = async (req, res) => {
  *                 lastName: "Doe"
  *                 email: "john.doe@example.com"
  *                 password: "securePassword123"
+ *                 type: 1
+ *                 avatar: "https://example.com/avatar.jpg"
  *               address:
  *                 street: "123 Main St."
  *                 neighborhood: "Apt 101"
@@ -464,6 +486,10 @@ const getStudentById = async (req, res) => {
  *                           type: number
  *                           description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor).
  *                           example: "1"
+ *                         avatar:
+ *                           type: string
+ *                           description: The URL of the user's avatar.
+ *                           example: "https://example.com/avatar.jpg"
  *                     address:
  *                       $ref: '#/components/schemas/Address'
  *                     birthDate:
@@ -658,6 +684,19 @@ const createStudent = async (req, res) => {
  *                          type: string
  *                          format: email
  *                          description: Updated email of the student
+ *                      password:
+ *                          type: string
+ *                          format: password
+ *                          description: Updated password of the student
+ *                      type:
+ *                          type: number
+ *                          description: Updated type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                          example: 1
+ *                      avatar:
+ *                          type: string
+ *                          format: url
+ *                          description: Updated URL of the user's avatar
+ *                          example: https://example.com/avatar.jpg
  *               address:
  *                 type: object
  *                 properties:
@@ -692,6 +731,25 @@ const createStudent = async (req, res) => {
  *               level:
  *                 type: string
  *                 description: Updated level of the student
+ *             example:
+ *               user:
+ *                 firstName: "Jane"
+ *                 lastName: "Smith"
+ *                 email: "joe@example.com"
+ *                 password: "newPassword123"
+ *                 type: 1
+ *                 avatar: "https://example.com/new-avatar.jpg"
+ *               address:
+ *                 street: "456 Elm St."
+ *                 neighborhood: "Suite 200"
+ *                 city: "Salt Lake City"
+ *                 state: "UT"
+ *                 country: "USA"
+ *                 postalCode: "84102"
+ *               birthDate: "2000-01-01"
+ *               phone: "987-654-3210"
+ *               language: "Spanish"
+ *               level: "EC2"
  *     responses:
  *       200:
  *         description: Student updated successfully
@@ -732,6 +790,14 @@ const createStudent = async (req, res) => {
  *                               type: string
  *                               description: The email of the user
  *                               example: john@doe.com
+ *                             type:
+ *                               type: number
+ *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                               example: 1
+ *                             avatar:
+ *                               type: string
+ *                               description: The URL of the user's avatar
+ *                               example: https://example.com/avatar.jpg
  *                        address:
  *                          type: object
  *                          properties:
