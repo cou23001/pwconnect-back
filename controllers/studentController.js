@@ -327,123 +327,62 @@ const getStudentById = async (req, res) => {
  * @swagger
  * /api/students:
  *   post:
- *     summary: Create a new student
- *     description: Creates a new student with associated user account and address
+ *     summary: Create a student
  *     tags: [Student]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
  *     requestBody:
  *       required: true
- *       description: Student creation data
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
- *             required:
- *               - user
- *               - address
- *               - birthDate
- *               - phone
- *               - language
- *               - level
  *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file to upload as avatar
  *               user:
- *                 type: object
- *                 required:
- *                   - firstName
- *                   - lastName
- *                   - email
- *                   - password
- *                 properties:
- *                   firstName:
- *                     type: string
- *                     minLength: 2
- *                     maxLength: 50
- *                     example: "John"
- *                   lastName:
- *                     type: string
- *                     minLength: 2
- *                     maxLength: 50
- *                     example: "Doe"
- *                   email:
- *                     type: string
- *                     format: email
- *                     example: "john.doe@example.com"
- *                   password:
- *                     type: string
- *                     format: password
- *                     minLength: 8
- *                     example: "securePassword123"
- *                   type:
- *                     type: number
- *                     enum: [1, 10, 11]
- *                     default: 1
- *                     example: 1
- *                   avatar:
- *                     type: string
- *                     format: url
- *                     example: "https://example.com/avatar.jpg"
+ *                 type: string
+ *                 description: JSON string of user object
+ *                 example: >
+ *                   {
+ *                     "firstName": "Jane",
+ *                     "lastName": "Smith",
+ *                     "email": "joe@example.com",
+ *                   }
  *               address:
- *                 type: object
- *                 required:
- *                   - street
- *                   - city
- *                   - state
- *                   - country
- *                   - postalCode
- *                 properties:
- *                   street:
- *                     type: string
- *                     example: "123 Main St."
- *                   neighborhood:
- *                     type: string
- *                     example: "Apt 101"
- *                   city:
- *                     type: string
- *                     example: "Salt Lake City"
- *                   state:
- *                     type: string
- *                     minLength: 2
- *                     maxLength: 2
- *                     example: "UT"
- *                   country:
- *                     type: string
- *                     example: "USA"
- *                   postalCode:
- *                     type: string
- *                     example: "84101"
+ *                 type: string
+ *                 description: JSON string of address object
+ *                 example: >
+ *                   {
+ *                     "street": "456 Elm St.",
+ *                     "neighborhood": "Suite 200",
+ *                     "city": "Salt Lake City",
+ *                     "state": "UT",
+ *                     "country": "USA",
+ *                     "postalCode": "84102"
+ *                   }
  *               birthDate:
  *                 type: string
  *                 format: date
- *                 example: "2000-01-01"
+ *                 description: The student's date of birth
+ *                 example: "1999-01-01" 
  *               phone:
  *                 type: string
- *                 pattern: '^[\d\-\(\) ]+$'
- *                 example: "123-456-7890"
+ *                 description: The student's phone number
+ *                 example: "520-123-2345"
  *               language:
  *                 type: string
- *                 enum: [Spanish, Portuguese, French]
+ *                 description: The student's preferred language
+ *                 enum: [Spanish, French, Portuguese, Italian]
  *                 example: "Spanish"
  *               level:
  *                 type: string
+ *                 description: The student's proficiency level
+ *                 enum: [EC1, EC2]
  *                 example: "EC1"
- *             example:
- *               user:
- *                 firstName: "John"
- *                 lastName: "Doe"
- *                 email: "john.doe@example.com"
- *                 password: "securePassword123"
- *                 type: 1
- *                 avatar: "https://example.com/avatar.jpg"
- *               address:
- *                 street: "123 Main St."
- *                 neighborhood: "Apt 101"
- *                 city: "Salt Lake City"
- *                 state: "UT"
- *                 country: "USA"
- *                 postalCode: "84101"
- *               birthDate: "2000-01-01"
- *               phone: "123-456-7890"
- *               language: "Spanish"
- *               level: "EC1"
  *     responses:
  *       201:
  *         description: Student created successfully
@@ -684,7 +623,7 @@ const createStudent = async (req, res) => {
  *                   {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
- *                     "email": "joe@example.com",
+ *                     "email": "joe@example.com"
  *                   }
  *               address:
  *                 type: string
@@ -701,12 +640,21 @@ const createStudent = async (req, res) => {
  *               birthDate:
  *                 type: string
  *                 format: date
+ *                 description: The student's date of birth
+ *                 example: "1999-01-01"
  *               phone:
  *                 type: string
+ *                 description: The student's phone number
+ *                 example: "520-123-2345"
  *               language:
  *                 type: string
+ *                 description: The student's preferred language
+ *                 enum: [Spanish, French, Portuguese, Italian]
+ *                 example: "Spanish"
  *               level:
  *                 type: string
+ *                 description: The student's proficiency level
+ *                 enum: [EC1, EC2]
  *     responses:
  *       200:
  *         description: Student updated successfully
