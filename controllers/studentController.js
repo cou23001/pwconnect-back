@@ -6,6 +6,9 @@ const mongoose = require("mongoose");
 const studentSchema = require("../validators/student");
 const partialStudentSchema = require("../validators/partialStudent");
 const { uploadToS3, deleteFromS3 } = require("../utils/upload");
+const dotenv = require("dotenv");
+dotenv.config();
+const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL;
 
 /**
  * @swagger
@@ -327,123 +330,62 @@ const getStudentById = async (req, res) => {
  * @swagger
  * /api/students:
  *   post:
- *     summary: Create a new student
- *     description: Creates a new student with associated user account and address
+ *     summary: Create a student
  *     tags: [Student]
+ *     consumes:
+ *       - multipart/form-data
  *     requestBody:
  *       required: true
- *       description: Student creation data
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
- *             required:
- *               - user
- *               - address
- *               - birthDate
- *               - phone
- *               - language
- *               - level
  *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file to upload as avatar
  *               user:
- *                 type: object
- *                 required:
- *                   - firstName
- *                   - lastName
- *                   - email
- *                   - password
- *                 properties:
- *                   firstName:
- *                     type: string
- *                     minLength: 2
- *                     maxLength: 50
- *                     example: "John"
- *                   lastName:
- *                     type: string
- *                     minLength: 2
- *                     maxLength: 50
- *                     example: "Doe"
- *                   email:
- *                     type: string
- *                     format: email
- *                     example: "john.doe@example.com"
- *                   password:
- *                     type: string
- *                     format: password
- *                     minLength: 8
- *                     example: "securePassword123"
- *                   type:
- *                     type: number
- *                     enum: [1, 10, 11]
- *                     default: 1
- *                     example: 1
- *                   avatar:
- *                     type: string
- *                     format: url
- *                     example: "https://example.com/avatar.jpg"
+ *                 type: string
+ *                 description: JSON string of user object
+ *                 example: >
+ *                   {
+ *                     "firstName": "Jane",
+ *                     "lastName": "Smith",
+ *                     "email": "joe@example.com",
+ *                     "password": "password123"
+ *                   }
  *               address:
- *                 type: object
- *                 required:
- *                   - street
- *                   - city
- *                   - state
- *                   - country
- *                   - postalCode
- *                 properties:
- *                   street:
- *                     type: string
- *                     example: "123 Main St."
- *                   neighborhood:
- *                     type: string
- *                     example: "Apt 101"
- *                   city:
- *                     type: string
- *                     example: "Salt Lake City"
- *                   state:
- *                     type: string
- *                     minLength: 2
- *                     maxLength: 2
- *                     example: "UT"
- *                   country:
- *                     type: string
- *                     example: "USA"
- *                   postalCode:
- *                     type: string
- *                     example: "84101"
+ *                 type: string
+ *                 description: JSON string of address object
+ *                 example: >
+ *                   {
+ *                     "street": "456 Elm St.",
+ *                     "neighborhood": "Suite 200",
+ *                     "city": "Salt Lake City",
+ *                     "state": "UT",
+ *                     "country": "USA",
+ *                     "postalCode": "84102"
+ *                   }
  *               birthDate:
  *                 type: string
  *                 format: date
- *                 example: "2000-01-01"
+ *                 description: The student's date of birth
+ *                 example: "1999-01-01" 
  *               phone:
  *                 type: string
- *                 pattern: '^[\d\-\(\) ]+$'
- *                 example: "123-456-7890"
+ *                 description: The student's phone number
+ *                 example: "520-123-2345"
  *               language:
  *                 type: string
- *                 enum: [Spanish, Portuguese, French]
+ *                 description: The student's preferred language
+ *                 enum: [Spanish, French, Portuguese, Italian]
  *                 example: "Spanish"
  *               level:
  *                 type: string
+ *                 description: The student's proficiency level
+ *                 enum: [EC1, EC2]
  *                 example: "EC1"
- *             example:
- *               user:
- *                 firstName: "John"
- *                 lastName: "Doe"
- *                 email: "john.doe@example.com"
- *                 password: "securePassword123"
- *                 type: 1
- *                 avatar: "https://example.com/avatar.jpg"
- *               address:
- *                 street: "123 Main St."
- *                 neighborhood: "Apt 101"
- *                 city: "Salt Lake City"
- *                 state: "UT"
- *                 country: "USA"
- *                 postalCode: "84101"
- *               birthDate: "2000-01-01"
- *               phone: "123-456-7890"
- *               language: "Spanish"
- *               level: "EC1"
  *     responses:
  *       201:
  *         description: Student created successfully
@@ -561,93 +503,105 @@ const getStudentById = async (req, res) => {
  *                 message: "Internal server error"
  */
 const createStudent = async (req, res) => {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  let session;
+  let avatarUrl = null;
+  let shouldCleanupFile = false;
 
   try {
-    // Validate request body using Joi
-    const { error, value } = studentSchema.validate(req.body, {
-      abortEarly: false,
-    });
-
+    // Validate request body
+    const { error } = studentSchema.validate(req.body, { abortEarly: false });
     if (error) {
-      await session.abortTransaction();
-      session.endSession();
       return res.status(400).json({
+        success: false,
         message: error.details.map((err) => err.message).join(", "),
       });
     }
 
+    session = await mongoose.startSession();
+    session.startTransaction();
+
     // Destructure request body
-    const { user, address, birthDate, phone, language, level } = req.body;
+    const { user, address, ...studentData } = req.body;
 
     // Check if the user already exists
-    const existingUser = await User.findOne({ email: user.email }).session(
-      session
-    );
+    const existingUser = await User.findOne({ email: user.email }).session(session);
     if (existingUser) {
-      await session.abortTransaction();
-      session.endSession();
       return res
         .status(400)
         .json({ message: `User '${user.email}' already exists` });
     }
+    
+    // Handle file upload if present
+    if (req.file) {
+      avatarUrl = await uploadToS3(req.file);
+      shouldCleanupFile = true; // Set cleanup flag
+    }
 
     // Create the user
-    const newUser = new User({
+    const newUser = await User.create([{
+      ...user, // Spread the user object
       _id: new mongoose.Types.ObjectId(),
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
       password: user.password,
       type: 1, // Student type
-    });
-    await newUser.save({ session });
+      avatar:  avatarUrl || defaultAvatarUrl, // Use uploaded avatar or default
+    }], { session });
 
     // Create the address
-    const newAddress = new Address({
+    const newAddress = await Address.create([{
+      ...address, // Spread the address object
       _id: new mongoose.Types.ObjectId(),
-      street: address.street,
-      neighborhood: address.neighborhood,
-      city: address.city,
-      state: address.state,
-      country: address.country,
-      postalCode: address.postalCode,
-    });
-    await newAddress.save({ session });
+    }], { session });
 
     // Create the student
-    const newStudent = new Student({
+    const newStudent = await Student.create([{
+      ...studentData, // Spread the student data
       _id: new mongoose.Types.ObjectId(),
-      userId: newUser._id,
-      addressId: newAddress._id,
-      birthDate,
-      phone,
-      language,
-      level,
-    });
-    await newStudent.save({ session });
+      userId: newUser[0]._id,
+      addressId: newAddress[0]._id
+    }], { session });
 
     // Commit the transaction
     await session.commitTransaction();
+    shouldCleanupFile = false; // Reset cleanup flag
 
     // Populate the student data before sending response
-    const populatedStudent = await Student.findById(newStudent._id)
+    const result = await Student.findById(newStudent[0]._id)
       .populate('userId', '-password')  // Exclude password field
       .populate('addressId')
       .lean();  // Convert to plain JavaScript object
 
-    session.endSession();
-
     // Send response
     res.status(201).json({
+      success: true,
       message: "Student created successfully",
-      data: populatedStudent,
+      data: {
+        ...result,
+      },
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-    res.status(500).json({ message: error.message });
+    // Cleanup uploaded file if anything failed
+    if (shouldCleanupFile && avatarUrl) {
+      await deleteFromS3(avatarUrl).catch(err => 
+        console.error('Failed to cleanup uploaded file:', err)
+      );
+    }
+
+    if (session?.inTransaction()) {
+      await session.abortTransaction();
+    }
+
+    const status = error.message.includes('already exists') ? 409 : 500;
+    res.status(status).json({
+      success: false,
+      message: error.message.includes('already exists') 
+        ? error.message 
+        : 'Student creation failed',
+      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+    });
+  } finally {
+    if (session) {
+      session.endSession();
+    }
   }
 };
 
@@ -657,6 +611,8 @@ const createStudent = async (req, res) => {
  *   put:
  *     summary: Update a student by ID
  *     tags: [Student]
+ *     consumes:
+ *       - multipart/form-data
  *     parameters:
  *       - in: path
  *         name: id
@@ -667,89 +623,49 @@ const createStudent = async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file to upload as avatar
  *               user:
- *                  type: object
- *                  properties:
- *                      firstName:
- *                          type: string
- *                          description: Updated first name of the student
- *                      lastName:
- *                          type: string
- *                          description: Updated last name of the student
- *                      email:
- *                          type: string
- *                          format: email
- *                          description: Updated email of the student
- *                      password:
- *                          type: string
- *                          format: password
- *                          description: Updated password of the student
- *                      type:
- *                          type: number
- *                          description: Updated type of the user (1 = Student, 10 = Admin, 11 = Instructor)
- *                          example: 1
- *                      avatar:
- *                          type: string
- *                          format: url
- *                          description: Updated URL of the user's avatar
- *                          example: https://example.com/avatar.jpg
+ *                 type: string
+ *                 description: JSON string of user object
+ *                 example: >
+ *                   {
+ *                     "firstName": "Jane",
+ *                     "lastName": "Smith",
+ *                     "email": "joe@example.com"
+ *                   }
  *               address:
- *                 type: object
- *                 properties:
- *                   street:
- *                     type: string
- *                     description: Updated street address
- *                   neighborhood:
- *                     type: string
- *                     description: Updated neighborhood or apartment
- *                   city:
- *                     type: string
- *                     description: Updated city
- *                   state:
- *                     type: string
- *                     description: Updated state
- *                   country:
- *                     type: string
- *                     description: Updated country
- *                   postalCode:
- *                     type: string
- *                     description: Updated postal code
+ *                 type: string
+ *                 description: JSON string of address object
+ *                 example: >
+ *                   {
+ *                     "street": "456 Elm St.",
+ *                     "neighborhood": "Suite 200",
+ *                     "city": "Salt Lake City",
+ *                     "state": "UT",
+ *                     "country": "USA",
+ *                     "postalCode": "84102"
+ *                   }
  *               birthDate:
  *                 type: string
  *                 format: date
- *                 description: Updated date of birth of the student
+ *                 description: The student's date of birth
+ *                 example: "1999-01-01"
  *               phone:
  *                 type: string
- *                 description: Updated phone number of the student
+ *                 description: The student's phone number
+ *                 example: "520-123-2345"
  *               language:
  *                 type: string
- *                 description: Updated language spoken by the student
- *               level:
- *                 type: string
- *                 description: Updated level of the student
- *             example:
- *               user:
- *                 firstName: "Jane"
- *                 lastName: "Smith"
- *                 email: "joe@example.com"
- *                 password: "newPassword123"
- *                 type: 1
- *                 avatar: "https://example.com/new-avatar.jpg"
- *               address:
- *                 street: "456 Elm St."
- *                 neighborhood: "Suite 200"
- *                 city: "Salt Lake City"
- *                 state: "UT"
- *                 country: "USA"
- *                 postalCode: "84102"
- *               birthDate: "2000-01-01"
- *               phone: "987-654-3210"
- *               language: "Spanish"
- *               level: "EC2"
+ *                 description: The student's preferred language
+ *                 enum: [Spanish, French, Portuguese, Italian]
+ *                 example: "Spanish"
  *     responses:
  *       200:
  *         description: Student updated successfully
@@ -879,7 +795,6 @@ const createStudent = async (req, res) => {
  *                   example: "Internal server error"
  */
 const updateStudent = async (req, res, next) => {
-  console.log("Update student request body:", req.body);
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -1047,43 +962,259 @@ const updateStudent = async (req, res, next) => {
  *                   example: "Internal server error"
  */
 const deleteStudent = async (req, res) => {
+  const session = await mongoose.startSession();
   try {
     const { id } = req.params;
 
     // 1. Validate ID format (400 Bad Request if invalid)
     if (!mongoose.isValidObjectId(id)) {
-      return res.status(400).json({ message: "Invalid student ID" });
+      return res.status(400).json({
+        success: false,
+        message: "Invalid student ID" 
+      });
     }
 
     // 2. Find the student first (to ensure it exists)
-    const student = await Student.findById(id);
+    const student = await Student.findById(id).session(session);
     if (!student) {
-      return res.status(404).json({ message: "Student not found" });
+      return res.status(404).json({ 
+        success: false,
+        message: "Student not found" });
     }
 
-    // 3. Use deleteOne to trigger the middleware
-    await student.deleteOne(); // This triggers the post('deleteOne') hook
+    session.startTransaction();
 
-    // 3. Success response
-    res.status(200).json({ message: "Student and linked data deleted" });
+    // Get user data before deletion for avatar cleanup
+    const user = student.userId 
+      ? await User.findById(student.userId).session(session)
+      : null;
+
+    // Parallel deletions in transaction
+    await Promise.all([
+      User.deleteOne({ _id: student.userId }, { session }),
+      Address.deleteOne({ _id: student.addressId }, { session }),
+      student.deleteOne({ session })
+    ]);
+
+    // Cleanup avatar if exists
+    if (user?.avatar) {
+      await deleteFromS3(user.avatar).catch(err => 
+        console.error('Avatar cleanup failed:', err)
+      );
+    }
+
+    // Commit transaction
+    await session.commitTransaction();
+
+    // Response
+    res.status(200).json({
+      success: true,
+      message: "Student and linked data deleted",
+      deletedIds: {
+        studentId: student._id,
+        userId: student.userId,
+        addressId: student.addressId
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    await session.abortTransaction();
+    
+    res.status(500).json({
+      success: false,
+      message: "Deletion failed",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  } finally {
+    session.endSession();
   }
 };
 
 // function to upload avatar to S3
+/**
+ * @swagger
+ * /api/students/upload/{id}:
+ *   put:
+ *     summary: Upload an avatar
+ *     tags: [Student]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file to upload as avatar
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Avatar uploaded successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     url:
+ *                       type: string
+ *                       description: The URL of the uploaded avatar
+ *                       example: "https://example.com/avatar.jpg"
+ *                     size:
+ *                       type: integer
+ *                       description: The size of the uploaded file in bytes
+ *                       example: 204800
+ *                     type:
+ *                       type: string
+ *                       description: The MIME type of the uploaded file
+ *                       example: "image/jpeg"
+ *       400:
+ *         description: Invalid file type or size
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid file type or size"
+ *       404:
+ *         description: Student not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Avatar upload failed"
+ *                 error:
+ *                   type: string
+ *                   example: "Error message"
+ *                 allowedTypes:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["image/jpeg", "image/png", "image/webp"]
+ *                 maxSize:
+ *                   type: string
+ *                   example: "2MB"
+ */
 const uploadAvatar = async (req, res) => {
-  try {
-    const avatar = req.file; // Assuming you're using multer to handle file uploads
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    if (!avatar) {
-      return res.status(400).json({ message: "No file uploaded" });
+  try {
+    const { id } = req.params;
+    const avatar = req.file;
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+
+    // Validate student exists
+    const student = await Student.findById(id).populate('userId').session(session);
+    if (!student?.userId) {
+      return res.status(404).json({ 
+        success: false,
+        message: "Student not found" 
+      });
     }
 
+    // Validate file exists
+    if (!avatar) {
+      return res.status(400).json({ 
+        success: false,
+        message: "No file uploaded" 
+      });
+    }
+
+    // Validate file type
+    if (!validTypes.includes(avatar.mimetype)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Only JPEG, PNG, or WebP images allowed"
+      });
+    }
+
+    // Validate file size
+    if (avatar.size > MAX_SIZE) {
+      return res.status(413).json({ 
+        success: false,
+        message: "File exceeds 2MB limit" 
+      });
+    }
+
+    // Upload new avatar
     const avatarUrl = await uploadToS3(avatar);
-    res.status(200).json({ message: "Avatar uploaded successfully", url: avatarUrl });
+
+    // Save old avatar URL for cleanup
+    const oldAvatar = student.userId.avatar;
+
+    // Update user's avatar
+    await User.updateOne(
+      { _id: student.userId._id },
+      { avatar: avatarUrl },
+      { session }
+    );
+
+    await session.commitTransaction();
+    
+    if (oldAvatar) {
+      const isDefaultAvatar = new URL(oldAvatar).pathname === new URL(defaultAvatarUrl).pathname;
+      
+      if (!isDefaultAvatar) {
+        try {
+          await deleteFromS3(oldAvatar);
+        } catch (err) {
+          return res.status(500).json({
+            success: false,
+            message: `Failed to delete avatar (${oldAvatar}):`,
+            error: err.message
+          });
+        }
+      }
+    }
+    res.status(200).json({
+      success: true,
+      message: "Avatar uploaded successfully",
+      data: {
+        url: avatarUrl,
+        size: avatar.size,
+        type: avatar.mimetype
+      }
+    });
+
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    await session.abortTransaction();
+    
+    res.status(500).json({
+      success: false,
+      message: "Avatar upload failed",
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  } finally {
+    session.endSession();
   }
 };
 
