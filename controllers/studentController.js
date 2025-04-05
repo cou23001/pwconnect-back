@@ -2,13 +2,14 @@
 const Student = require("../models/student");
 const User = require("../models/user");
 const Address = require("../models/address");
+const TokenMetadata = require("../models/tokenMetadata");
 const mongoose = require("mongoose");
 const studentSchema = require("../validators/student");
 const partialStudentSchema = require("../validators/partialStudent");
 const { uploadToS3, deleteFromS3 } = require("../utils/upload");
 const dotenv = require("dotenv");
 dotenv.config();
-const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL;
+const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
 
 /**
  * @swagger
@@ -371,7 +372,7 @@ const getStudentById = async (req, res) => {
  *                 type: string
  *                 format: date
  *                 description: The student's date of birth
- *                 example: "1999-01-01" 
+ *                 example: "1999-01-01"
  *               phone:
  *                 type: string
  *                 description: The student's phone number
@@ -524,13 +525,15 @@ const createStudent = async (req, res) => {
     const { user, address, ...studentData } = req.body;
 
     // Check if the user already exists
-    const existingUser = await User.findOne({ email: user.email }).session(session);
+    const existingUser = await User.findOne({ email: user.email }).session(
+      session
+    );
     if (existingUser) {
       return res
         .status(400)
         .json({ message: `User '${user.email}' already exists` });
     }
-    
+
     // Handle file upload if present
     if (req.file) {
       avatarUrl = await uploadToS3(req.file);
@@ -538,27 +541,42 @@ const createStudent = async (req, res) => {
     }
 
     // Create the user
-    const newUser = await User.create([{
-      ...user, // Spread the user object
-      _id: new mongoose.Types.ObjectId(),
-      password: user.password,
-      type: 1, // Student type
-      avatar:  avatarUrl || defaultAvatarUrl, // Use uploaded avatar or default
-    }], { session });
+    const newUser = await User.create(
+      [
+        {
+          ...user, // Spread the user object
+          _id: new mongoose.Types.ObjectId(),
+          password: user.password,
+          type: 1, // Student type
+          avatar: avatarUrl || defaultAvatarUrl, // Use uploaded avatar or default
+        },
+      ],
+      { session }
+    );
 
     // Create the address
-    const newAddress = await Address.create([{
-      ...address, // Spread the address object
-      _id: new mongoose.Types.ObjectId(),
-    }], { session });
+    const newAddress = await Address.create(
+      [
+        {
+          ...address, // Spread the address object
+          _id: new mongoose.Types.ObjectId(),
+        },
+      ],
+      { session }
+    );
 
     // Create the student
-    const newStudent = await Student.create([{
-      ...studentData, // Spread the student data
-      _id: new mongoose.Types.ObjectId(),
-      userId: newUser[0]._id,
-      addressId: newAddress[0]._id
-    }], { session });
+    const newStudent = await Student.create(
+      [
+        {
+          ...studentData, // Spread the student data
+          _id: new mongoose.Types.ObjectId(),
+          userId: newUser[0]._id,
+          addressId: newAddress[0]._id,
+        },
+      ],
+      { session }
+    );
 
     // Commit the transaction
     await session.commitTransaction();
@@ -566,9 +584,9 @@ const createStudent = async (req, res) => {
 
     // Populate the student data before sending response
     const result = await Student.findById(newStudent[0]._id)
-      .populate('userId', '-password')  // Exclude password field
-      .populate('addressId')
-      .lean();  // Convert to plain JavaScript object
+      .populate("userId", "-password") // Exclude password field
+      .populate("addressId")
+      .lean(); // Convert to plain JavaScript object
 
     // Send response
     res.status(201).json({
@@ -581,8 +599,8 @@ const createStudent = async (req, res) => {
   } catch (error) {
     // Cleanup uploaded file if anything failed
     if (shouldCleanupFile && avatarUrl) {
-      await deleteFromS3(avatarUrl).catch(err => 
-        console.error('Failed to cleanup uploaded file:', err)
+      await deleteFromS3(avatarUrl).catch((err) =>
+        console.error("Failed to cleanup uploaded file:", err)
       );
     }
 
@@ -590,13 +608,13 @@ const createStudent = async (req, res) => {
       await session.abortTransaction();
     }
 
-    const status = error.message.includes('already exists') ? 409 : 500;
+    const status = error.message.includes("already exists") ? 409 : 500;
     res.status(status).json({
       success: false,
-      message: error.message.includes('already exists') 
-        ? error.message 
-        : 'Student creation failed',
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+      message: error.message.includes("already exists")
+        ? error.message
+        : "Student creation failed",
+      ...(process.env.NODE_ENV === "development" && { error: error.message }),
     });
   } finally {
     if (session) {
@@ -638,7 +656,6 @@ const createStudent = async (req, res) => {
  *                   {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
- *                     "email": "joe@example.com"
  *                   }
  *               address:
  *                 type: string
@@ -801,9 +818,9 @@ const updateStudent = async (req, res, next) => {
   try {
     // 1. Fetch student with populated user
     const student = await Student.findById(req.params.id)
-      .populate('userId')
+      .populate("userId")
       .session(session);
-    
+
     if (!student || !student.userId) {
       await session.abortTransaction();
       session.endSession();
@@ -815,17 +832,18 @@ const updateStudent = async (req, res, next) => {
     // 2. Handle file upload if present
     if (req.file) {
       // Validate type (redundant check)
-      const validTypes = ['image/jpeg', 'image/png'];
+      const validTypes = ["image/jpeg", "image/png"];
       if (!validTypes.includes(req.file.mimetype)) {
-        return res.status(400).json({ message: 'Invalid file type' });
+        return res.status(400).json({ message: "Invalid file type" });
       }
       // Check if the file is too large
-      if (req.file.size > 2 * 1024 * 1024) { // 2MB limit
-        return res.status(400).json({ message: 'File size exceeds limit' });
+      if (req.file.size > 2 * 1024 * 1024) {
+        // 2MB limit
+        return res.status(400).json({ message: "File size exceeds limit" });
       }
       // Store old avatar URL for cleanup
       oldAvatarUrl = student.userId.avatar;
-      
+
       // Upload new avatar
       const newAvatarUrl = await uploadToS3(req.file);
       req.body.user = req.body.user || {};
@@ -833,12 +851,14 @@ const updateStudent = async (req, res, next) => {
     }
 
     // 3. Validate request body
-    const { error } = partialStudentSchema.validate(req.body, { abortEarly: false });
+    const { error } = partialStudentSchema.validate(req.body, {
+      abortEarly: false,
+    });
     if (error) {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({
-        message: error.details.map(err => err.message).join(", ")
+        message: error.details.map((err) => err.message).join(", "),
       });
     }
 
@@ -869,31 +889,30 @@ const updateStudent = async (req, res, next) => {
       { $set: studentFields },
       { new: true, session }
     )
-      .populate('userId')
-      .populate('addressId');
+      .populate("userId")
+      .populate("addressId");
 
     // 7. Commit transaction
     await session.commitTransaction();
     session.endSession();
 
     // 8. Cleanup old avatar AFTER successful commit
-    if (oldAvatarUrl && !oldAvatarUrl.includes('default-avatar')) {
+    if (oldAvatarUrl && oldAvatarUrl !== DEFAULT_AVATAR_URL) {
       try {
         await deleteFromS3(oldAvatarUrl);
       } catch (err) {
-        console.error('Error deleting old avatar (non-critical):', err);
+        console.error("Error deleting old avatar (non-critical):", err);
       }
     }
 
     return res.status(200).json({
       message: "Student updated successfully",
-      data: updatedStudent
+      data: updatedStudent,
     });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    
+
     // Cleanup new avatar if transaction failed
     if (req.file && req.body.user?.avatar) {
       await deleteFromS3(req.body.user.avatar).catch(console.error);
@@ -901,7 +920,7 @@ const updateStudent = async (req, res, next) => {
 
     return res.status(500).json({
       message: "Update failed",
-      ...(process.env.NODE_ENV === 'development' && { error: error.message })
+      ...(process.env.NODE_ENV === "development" && { error: error.message }),
     });
   }
 };
@@ -962,73 +981,127 @@ const updateStudent = async (req, res, next) => {
  *                   example: "Internal server error"
  */
 const deleteStudent = async (req, res) => {
-  const session = await mongoose.startSession();
-  try {
-    const { id } = req.params;
-    console.log("Deleting student with ID:", id);
+  const { id } = req.params;
 
-    // 1. Validate ID format (400 Bad Request if invalid)
-    if (!mongoose.isValidObjectId(id)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid student ID" 
-      });
-    }
-
-    // 2. Find the student first (to ensure it exists)
-    const student = await Student.findById(id).session(session);
-    if (!student) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Student not found" });
-    }
-
-    session.startTransaction();
-
-    // Get user data before deletion for avatar cleanup
-    const user = student.userId 
-      ? await User.findById(student.userId).session(session)
-      : null;
-
-    // Parallel deletions in transaction
-    await Promise.all([
-      User.deleteOne({ _id: student.userId }, { session }),
-      Address.deleteOne({ _id: student.addressId }, { session }),
-      student.deleteOne({ session })
-    ]);
-
-    // Cleanup avatar if exists
-    if (user?.avatar) {
-      await deleteFromS3(user.avatar).catch(err => 
-        console.error('Avatar cleanup failed:', err)
-      );
-    }
-
-    // Commit transaction
-    await session.commitTransaction();
-
-    // Response
-    res.status(200).json({
-      success: true,
-      message: "Student and linked data deleted",
-      deletedIds: {
-        studentId: student._id,
-        userId: student.userId,
-        addressId: student.addressId
-      }
-    });
-  } catch (error) {
-    await session.abortTransaction();
-    
-    res.status(500).json({
+  if (!mongoose.isValidObjectId(id)) {
+    return res.status(400).json({
       success: false,
-      message: "Deletion failed",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      message: "Invalid student ID",
     });
-  } finally {
-    session.endSession();
+  }
+
+  const MAX_RETRIES = 3;
+  let retryCount = 0;
+  let done = false;
+  let userAvatarUrl = null;
+
+  while (!done && retryCount < MAX_RETRIES) {
+    const session = await mongoose.startSession();
+
+    try {
+      session.startTransaction();
+
+      // Find student within the transaction session
+      const student = await Student.findById(id).session(session);
+      if (!student) {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(404).json({
+          success: false,
+          message: "Student not found",
+        });
+      }
+
+      // Optionally get user data before deletion (for avatar cleanup)
+      const user = student.userId
+        ? await User.findById(student.userId).session(session)
+        : null;
+
+      if (user) {
+        //console.log("User data:", user);
+        userAvatarUrl = user?.avatar; // save the avatar URL
+      }
+
+      //console.log("User avatar URL before transaction:", userAvatarUrl); // Log avatar URL before session
+
+      const tkMetaData = await TokenMetadata.findOne({
+        userId: student.userId,
+      }).session(session);
+
+      // Prepare deletion operations
+      const deletions = [student.deleteOne({ session })];
+
+      if (student.userId) {
+        deletions.push(User.deleteOne({ _id: student.userId }, { session }));
+      }
+
+      if (student.addressId) {
+        deletions.push(
+          Address.deleteOne({ _id: student.addressId }, { session })
+        );
+      }
+
+      if (tkMetaData) {
+        deletions.push(
+          TokenMetadata.deleteOne({ userId: student.userId }, { session })
+        );
+      }
+
+      // Execute all deletions
+      await Promise.all(deletions);
+
+      // Commit transaction and end session after DB operations
+      await session.commitTransaction();
+      session.endSession();
+      done = true;
+
+      // Log before checking the condition
+      //console.log("Checking if we need to delete avatar from S3:");
+
+      if (
+        userAvatarUrl &&
+        userAvatarUrl.startsWith("https://") &&
+        userAvatarUrl.includes("s3.amazonaws.com") &&
+        !userAvatarUrl.includes("avatar/default")
+      ) {
+        //console.log("Deleting avatar from S3:", userAvatarUrl);
+        await deleteFromS3(userAvatarUrl).catch((err) => {
+          console.error(`Failed to delete avatar for user ${user._id}:`, err);
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Student and linked data deleted",
+        deletedIds: {
+          studentId: student._id,
+          userId: student.userId,
+          addressId: student.addressId,
+        },
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      retryCount++;
+
+      //console.warn(`Transaction attempt ${retryCount} failed:`, error.message);
+
+      if (retryCount >= MAX_RETRIES) {
+        return res.status(500).json({
+          success: false,
+          message: "Deletion failed after multiple attempts",
+          error:
+            process.env.NODE_ENV === "development" ? error.message : undefined,
+        });
+      }
+
+      // Wait a tiny bit before retrying (helps with race conditions)
+      await new Promise((res) => setTimeout(res, 100));
+    }
   }
 };
+
+
 
 // function to upload avatar to S3
 /**
@@ -1131,43 +1204,52 @@ const uploadAvatar = async (req, res) => {
     const { id } = req.params;
     const avatar = req.file;
     const MAX_SIZE = 2 * 1024 * 1024; // 2MB
-    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
 
     // Validate student exists
-    const student = await Student.findById(id).populate('userId').session(session);
+    const student = await Student.findById(id)
+      .populate("userId")
+      .session(session);
     if (!student?.userId) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Student not found" 
+        message: "Student not found",
       });
     }
 
     // Validate file exists
     if (!avatar) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: "No file uploaded" 
+        message: "No file uploaded",
       });
     }
 
     // Validate file type
     if (!validTypes.includes(avatar.mimetype)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        message: "Only JPEG, PNG, or WebP images allowed"
+        message: "Only JPEG, PNG, or WebP images allowed",
       });
     }
 
     // Validate file size
     if (avatar.size > MAX_SIZE) {
-      return res.status(413).json({ 
+      return res.status(413).json({
         success: false,
-        message: "File exceeds 2MB limit" 
+        message: "File exceeds 2MB limit",
       });
     }
 
     // Upload new avatar
     const avatarUrl = await uploadToS3(avatar);
+    // Validate upload success
+    if (!avatarUrl) {
+      return res.status(500).json({
+        success: false,
+        message: "Avatar upload failed",
+      });
+    }
 
     // Save old avatar URL for cleanup
     const oldAvatar = student.userId.avatar;
@@ -1180,10 +1262,11 @@ const uploadAvatar = async (req, res) => {
     );
 
     await session.commitTransaction();
-    
+
     if (oldAvatar) {
-      const isDefaultAvatar = new URL(oldAvatar).pathname === new URL(defaultAvatarUrl).pathname;
-      
+      const isDefaultAvatar =
+        new URL(oldAvatar).pathname === new URL(DEFAULT_AVATAR_URL).pathname;
+
       if (!isDefaultAvatar) {
         try {
           await deleteFromS3(oldAvatar);
@@ -1191,7 +1274,7 @@ const uploadAvatar = async (req, res) => {
           return res.status(500).json({
             success: false,
             message: `Failed to delete avatar (${oldAvatar}):`,
-            error: err.message
+            error: err.message,
           });
         }
       }
@@ -1202,17 +1285,16 @@ const uploadAvatar = async (req, res) => {
       data: {
         url: avatarUrl,
         size: avatar.size,
-        type: avatar.mimetype
-      }
+        type: avatar.mimetype,
+      },
     });
-
   } catch (error) {
     await session.abortTransaction();
-    
+
     res.status(500).json({
       success: false,
       message: "Avatar upload failed",
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   } finally {
     session.endSession();
