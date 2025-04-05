@@ -139,7 +139,8 @@ const register = async (req, res) => {
         birthDate: null, 
         phone: null, 
         language: null, 
-        level: null, 
+        level: null,
+        churchMembership: null,
       });
       await student.save({ session });
     }

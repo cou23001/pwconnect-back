@@ -85,6 +85,12 @@ router.put(
 
 // DELETE /students/:id
 // Route requires authentication and authorization for type 10 (admin).
-router.delete("/students/:id", authenticate, authorize([10]), deleteStudent);
+router.delete(
+  "/students/:id",
+  authenticate,
+  authorize([1, 10]),
+  validateOwnership,
+  deleteStudent
+);
 
 module.exports = router;
