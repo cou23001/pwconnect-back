@@ -582,7 +582,7 @@ const profile = async (req, res) => {
   // If user type is 1, return only the student profile
   if (userType === 1) {
     // Populate the student data
-    const student = await Student.findOne({ userId: req.user.id });
+    const student = await Student.findOne({ userId: req.user.id }).populate('userId').populate('addressId');
     return res.json({ message: 'You are authenticated', student });
   }
   // If user type is 10 or 11, return the full user profile
