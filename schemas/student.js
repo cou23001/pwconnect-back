@@ -42,6 +42,11 @@ module.exports = {
                 description: 'The level of the student',
                 example: 'EC1',
             },
+            churchMembership: {
+                type: 'string',
+                description: 'The church membership status of the student',
+                example: 'Member',
+            },
             createdAt: {
                 type: 'string',
                 format: 'date-time',
@@ -55,7 +60,7 @@ module.exports = {
                 example: '2020-08-20T20:00:00.000Z',
             },
         },
-        required: ['_id','userId','addressId','birthDate','phone','language','level','createdAt','updatedAt'],
+        required: ['_id','userId','addressId','birthDate','phone','language','level','chuchMembership','createdAt','updatedAt'],
 
     },
 };

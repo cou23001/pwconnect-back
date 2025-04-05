@@ -123,6 +123,11 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                          type: string
  *                          description: The level of the student
  *                          example: EC1
+ *                        churchMembership:
+ *                          type: string
+ *                          description: The church membership status of the student
+ *                          enum: [Member, Non-member]
+ *                          example: Member
  *                        createdAt:
  *                          type: string
  *                          format: date-time
@@ -264,6 +269,11 @@ const getAllStudents = async (req, res) => {
  *                          type: string
  *                          description: The level of the student
  *                          example: EC1
+ *                        churchMembership:
+ *                          type: string
+ *                          description: The church membership status of the student
+ *                          enum: [Member, Non-member]
+ *                          example: Member
  *                        createdAt:
  *                          type: string
  *                          format: date-time
@@ -387,6 +397,11 @@ const getStudentById = async (req, res) => {
  *                 description: The student's proficiency level
  *                 enum: [EC1, EC2]
  *                 example: "EC1"
+ *               churchMembership:
+ *                 type: string
+ *                 description: The student's church membership status
+ *                 enum: [Member, Non-member]
+ *                 example: "Member"
  *     responses:
  *       201:
  *         description: Student created successfully
@@ -402,9 +417,9 @@ const getStudentById = async (req, res) => {
  *                 data:
  *                   type: object
  *                   properties:
- *                     id:
+ *                     _id:
  *                       type: string
- *                       description: The ID of the user associated with the student.
+ *                       description: The ID of the student associated with the student.
  *                       example: "67def8dc21d7683620e7b62c"
  *                     user:
  *                       type: object
@@ -452,10 +467,10 @@ const getStudentById = async (req, res) => {
  *                       type: string
  *                       description: The student's proficiency level.
  *                       example: "EC1"
- *                     _id:
+ *                     churchMembership:
  *                       type: string
- *                       description: The auto-generated ID of the student.
- *                       example: "67def8dc21d7683620e7b632"
+ *                       description: The student's church membership status.
+ *                       example: "Member"
  *                     createdAt:
  *                       type: string
  *                       format: date-time
@@ -683,6 +698,16 @@ const createStudent = async (req, res) => {
  *                 description: The student's preferred language
  *                 enum: [Spanish, French, Portuguese, Italian]
  *                 example: "Spanish"
+ *               level:
+ *                 type: string
+ *                 description: The student's proficiency level
+ *                 enum: [EC1, EC2]
+ *                 example: "EC1"
+ *               churchMembership:
+ *                 type: string
+ *                 description: The student's church membership status
+ *                 enum: [Member, Non-member]
+ *                 example: "Member"
  *     responses:
  *       200:
  *         description: Student updated successfully
@@ -780,6 +805,11 @@ const createStudent = async (req, res) => {
  *                          type: string
  *                          description: The level of the student
  *                          example: EC1
+ *                        churchMembership:
+ *                          type: string
+ *                          description: The church membership status of the student
+ *                          enum: [Member, Non-member]
+ *                          example: Member
  *       400:
  *         description: Invalid student ID or missing fields
  *         content:
@@ -1077,6 +1107,7 @@ const deleteStudent = async (req, res) => {
           studentId: student._id,
           userId: student.userId,
           addressId: student.addressId,
+          tokenMetadataId: tkMetaData ? tkMetaData._id : null,
         },
       });
     } catch (error) {
