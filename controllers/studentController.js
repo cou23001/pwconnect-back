@@ -66,6 +66,10 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                               type: string
  *                               description: The email of the user
  *                               example: john.doe@example.com
+ *                             phone:
+ *                               type: string
+ *                               description: The phone number of the user
+ *                               example: 123-456-7890
  *                             type:
  *                               type: number
  *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
@@ -111,10 +115,6 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                          format: date
  *                          description: The date of birth of the student
  *                          example: 2000-01-01
- *                        phone:
- *                          type: string
- *                          description: The phone number of the student
- *                          example: 123-456-7890
  *                        language:
  *                          type: string
  *                          description: The language spoken by the student
@@ -140,6 +140,14 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                          example: 2020-08-20T20:00:00.000Z
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  example: "Internal server error"
  */
 const getAllStudents = async (req, res) => {
   try {
@@ -212,6 +220,10 @@ const getAllStudents = async (req, res) => {
  *                               type: string
  *                               description: The email of the user
  *                               example: john@doe.com
+ *                             phone:
+ *                               type: string
+ *                               description: The phone number of the user
+ *                               example: 123-456-7890
  *                             type:
  *                               type: number
  *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
@@ -257,10 +269,6 @@ const getAllStudents = async (req, res) => {
  *                          format: date
  *                          description: The date of birth of the student
  *                          example: 2000-01-01
- *                        phone:
- *                          type: string
- *                          description: The phone number of the student
- *                          example: 123-456-7890
  *                        language:
  *                          type: string
  *                          description: The language spoken by the student
@@ -363,8 +371,7 @@ const getStudentById = async (req, res) => {
  *                   {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
- *                     "email": "joe@example.com",
- *                     "password": "password123"
+ *                     "phone": "123-456-7890"
  *                   }
  *               address:
  *                 type: string
@@ -383,10 +390,6 @@ const getStudentById = async (req, res) => {
  *                 format: date
  *                 description: The student's date of birth
  *                 example: "1999-01-01"
- *               phone:
- *                 type: string
- *                 description: The student's phone number
- *                 example: "520-123-2345"
  *               language:
  *                 type: string
  *                 description: The student's preferred language
@@ -440,6 +443,10 @@ const getStudentById = async (req, res) => {
  *                           type: string
  *                           description: The email of the user.
  *                           example: "john@doe.com"
+ *                         phone:
+ *                           type: string
+ *                           description: The phone number of the user.
+ *                           example: "520-123-2345"
  *                         type:
  *                           type: number
  *                           description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor).
@@ -455,10 +462,6 @@ const getStudentById = async (req, res) => {
  *                       format: date-time
  *                       description: The student's date of birth.
  *                       example: "1999-01-01T00:00:00.000Z"
- *                     phone:
- *                       type: string
- *                       description: The student's phone number.
- *                       example: "520-123-2345"
  *                     language:
  *                       type: string
  *                       description: The student's preferred language.
@@ -671,6 +674,7 @@ const createStudent = async (req, res) => {
  *                   {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
+ *                     "phone": "123-456-7890"
  *                   }
  *               address:
  *                 type: string
@@ -689,10 +693,6 @@ const createStudent = async (req, res) => {
  *                 format: date
  *                 description: The student's date of birth
  *                 example: "1999-01-01"
- *               phone:
- *                 type: string
- *                 description: The student's phone number
- *                 example: "520-123-2345"
  *               language:
  *                 type: string
  *                 description: The student's preferred language
@@ -748,6 +748,10 @@ const createStudent = async (req, res) => {
  *                               type: string
  *                               description: The email of the user
  *                               example: john@doe.com
+ *                             phone:
+ *                               type: string
+ *                               description: The phone number of the user
+ *                               example: 123-456-7890
  *                             type:
  *                               type: number
  *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
@@ -793,10 +797,6 @@ const createStudent = async (req, res) => {
  *                          format: date
  *                          description: The date of birth of the student
  *                          example: 2000-01-01
- *                        phone:
- *                          type: string
- *                          description: The phone number of the student
- *                          example: 123-456-7890
  *                        language:
  *                          type: string
  *                          description: The language spoken by the student

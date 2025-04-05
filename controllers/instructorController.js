@@ -37,31 +37,79 @@ const argon2 = require("argon2");
  *                       _id:
  *                         type: string
  *                         description: Unique ID of the instructor
- *                       userId:
- *                         type: string
- *                         description: Unique ID of the associated user
- *                       firstName:
- *                         type: string
- *                         description: First name of the instructor
- *                       lastName:
- *                         type: string
- *                         description: Last name of the instructor
- *                       email:
- *                         type: string
- *                         format: email
- *                         description: Email of the instructor
- *                       createdAt:
- *                         type: string
- *                         format: date-time
- *                         description: Timestamp when the instructor was created
- *                       updatedAt:
- *                         type: string
- *                         format: date-time
- *                         description: Timestamp when the instructor was last updated
+ *                         example: "507f1f77bcf86cd799439011"
+ *                       user:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                             description: Unique ID of the user
+ *                             example: "507f1f77bcf86cd799439011"
+ *                           firstName:
+ *                             type: string
+ *                             description: First name of the user
+ *                             example: "John"
+ *                           lastName:
+ *                             type: string
+ *                             description: Last name of the user
+ *                             example: "Doe"
+ *                           email:
+ *                             type: string
+ *                             format: email
+ *                             description: Email of the user
+ *                             example: "usuario@email.com"
+ *                           phone:
+ *                             type: string
+ *                             description: Phone number of the user
+ *                             example: "123-456-7890"
+ *                           type:
+ *                             type: number
+ *                             description: Type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                             example: 11
+ *                           avatar:
+ *                             type: string
+ *                             format: url
+ *                             description: URL of the user's avatar
+ *                             example: "https://example.com/avatar.jpg"
+ *                       ward:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                             description: Unique ID of the ward
+ *                             example: "507f1f77bcf86cd799439011"
+ *                           name:
+ *                             type: string
+ *                             description: Name of the ward
+ *                             example: "Ward A"
+ *                           location:
+ *                             type: string
+ *                             description: Location of the ward
+ *                             example: "Ciudad de México"
+ *                           stakeId:
+ *                             type: string
+ *                             description: Unique ID of the stake
+ *                             example: "507f1f77bcf86cd799439011"
  *       404:
  *         description: No instructors found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "No instructors found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
  */
 const getInstructors = async (req, res) => {
   try {
@@ -96,48 +144,92 @@ const getInstructors = async (req, res) => {
  *   post:
  *     summary: Create a new instructor
  *     tags: [Instructors]
+ *     consumes:
+ *       - multipart/form-data
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Student ID
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               firstName:
+ *               avatar:
  *                 type: string
- *                 description: The instructor's first name.
- *               lastName:
+ *                 format: binary
+ *                 description: Image file to upload as avatar
+ *               user:
  *                 type: string
- *                 description: The instructor's last name.
- *               email:
+ *                 description: JSON string of user object
+ *                 example: >
+ *                   {
+ *                     "firstName": "Jane",
+ *                     "lastName": "Smith",
+ *                     "phone": "123-456-7890"
+ *                   }
+ *               wardId:
  *                 type: string
- *                 format: email
- *                 description: The instructor's email address.
- *               password:
- *                 type: string
- *                 format: password
- *                 description: The instructor's password.
- *               type:
- *                 type: number
- *                 description: The instructor's type (default is 11).
- *             required:
- *               - firstName
- *               - lastName
- *               - email
- *               - password
- *             example:
- *               firstName: "John"
- *               lastName: "Doe"
- *               email: "john.doe@example.com"
- *               password: "password123"
- *               type: "11"
+ *                 description: ID of the ward the instructor belongs to
+ *                 example: "6637f39fd15b7d4b4d31a9f8"
  *     responses:
  *       201:
  *         description: The instructor was successfully created
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Instructor'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Instructor created successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       format: objectid
+ *                       description: The ID of the instructor.
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                           format: objectid
+ *                           description: The id of the user associated with the student
+ *                           example: 5f3f9c5f6d7a0f0021e9d4b7
+ *                         firstName:
+ *                           type: string
+ *                           description: The first name of the user
+ *                           example: John
+ *                         lastName:
+ *                           type: string
+ *                           description: The last name of the user
+ *                           example: Doe
+ *                         email:
+ *                           type: string
+ *                           description: The email of the user
+ *                           example: "jhon@example.com"
+ *                         phone:
+ *                           type: string
+ *                           description: The phone number of the user
+ *                           example: 123-456-7890
+ *                         type:
+ *                           type: number
+ *                           description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                           example: 1
+ *                         avatar:
+ *                           type: string
+ *                           description: The URL of the user's avatar
+ *                           example: https://example.com/avatar.jpg
+ *                     ward:
+ *                       $ref: '#/components/schemas/Ward'
  *       400:
  *         description: Bad request (e.g., invalid input, duplicate email, invalid type).
  *         content:
@@ -150,6 +242,14 @@ const getInstructors = async (req, res) => {
  *                   example: "Invalid input"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal server error"
  *     security:
  *       - BearerAuth: []
  */
@@ -307,32 +407,41 @@ const getInstructorById = async (req, res) => {
  * @swagger
  * /api/instructors/{id}:
  *   put:
- *     summary: Update an instructor
+ *     summary: Update an instructor by ID
  *     tags: [Instructors]
+ *     consumes:
+ *       - multipart/form-data
  *     parameters:
  *       - in: path
  *         name: id
  *         schema:
  *           type: string
  *         required: true
- *         description: The instructor ID
+ *         description: Student ID
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
- *               firstName:
+ *               avatar:
  *                 type: string
- *                 description: Updated first name of the instructor
- *               lastName:
+ *                 format: binary
+ *                 description: Image file to upload as avatar
+ *               user:
  *                 type: string
- *                 description: Updated last name of the instructor
- *               email:
+ *                 description: JSON string of user object
+ *                 example: >
+ *                   {
+ *                     "firstName": "Jane",
+ *                     "lastName": "Smith",
+ *                     "phone": "123-456-7890"
+ *                   }
+ *               wardId:
  *                 type: string
- *                 format: email
- *                 description: Updated email of the instructor
+ *                 description: ID of the ward the instructor belongs to
+ *                 example: "6637f39fd15b7d4b4d31a9f8"
  *     responses:
  *       200:
  *         description: The instructor was succesfully updated
@@ -350,28 +459,41 @@ const getInstructorById = async (req, res) => {
  *                       type: string
  *                       format: objectid
  *                       description: The ID of the instructor.
- *                     userId:
- *                       type: string
- *                       format: objectid
- *                       description: The ID of the associated user.
- *                     firstName:
- *                       type: string
- *                       description: The user's first name.
- *                     lastName:
- *                       type: string
- *                       description: The user's last name.
- *                     email:
- *                       type: string
- *                       format: email
- *                       description: The user's email address.
- *                     createdAt:
- *                       type: string
- *                       format: date-time
- *                       description: The date and time when the instructor was created.
- *                     updatedAt:
- *                       type: string
- *                       format: date-time
- *                       description: The date and time when the instructor was last updated.
+ *                       example: "507f1f77bcf86cd799439011"
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         _id:
+ *                           type: string
+ *                           format: objectid
+ *                           description: The id of the user associated with the student
+ *                           example: 5f3f9c5f6d7a0f0021e9d4b7
+ *                         firstName:
+ *                           type: string
+ *                           description: The first name of the user
+ *                           example: John
+ *                         lastName:
+ *                           type: string
+ *                           description: The last name of the user
+ *                           example: Doe
+ *                         email:
+ *                           type: string
+ *                           description: The email of the user
+ *                           example: john@doe.com
+ *                         phone:
+ *                           type: string
+ *                           description: The phone number of the user
+ *                           example: 123-456-7890
+ *                         type:
+ *                           type: number
+ *                           description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                           example: 1
+ *                         avatar:
+ *                           type: string
+ *                           description: The URL of the user's avatar
+ *                           example: https://example.com/avatar.jpg
+ *                     ward:
+ *                       $ref: '#/components/schemas/Ward'
  *       400:
  *         description: Bad request, no fields provided for update
  *         content:
@@ -466,8 +588,24 @@ const updateInstructor = async (req, res) => {
  *     responses:
  *       200:
  *         description: The instructor was deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Instructor deleted successfully"
  *       404:
  *         description: The instructor was not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "The instructor was not found"
  */
 const deleteInstructor = async (req, res) => {
   try {

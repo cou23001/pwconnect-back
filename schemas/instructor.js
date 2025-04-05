@@ -15,6 +15,12 @@ module.exports = {
                 description: 'The id of the user associated with the instructor',
                 example: '5f3f9c5f6d7a0f0021e9d4b7',
             },
+            wardId: {
+                type: 'string',
+                format: 'objectid',
+                description: 'The id of the ward associated with the instructor',
+                example: '5f3f9c5f6d7a0f0021e9d4b7',
+            },
             createdAt: {
                 type: 'string',
                 format: 'date-time',

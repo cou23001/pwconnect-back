@@ -18,9 +18,6 @@ const studentSchema = new mongoose.Schema(
     birthDate: {
       type: Date,
     },
-    phone: {
-      type: String,
-    },
     language: {
       type: String,
       enum: ["Spanish", "French", "Portuguese", "Italian"],

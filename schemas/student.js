@@ -27,11 +27,6 @@ module.exports = {
                 description: 'The date of birth of the student',
                 example: '2000-01-01',
             },
-            phone: {
-                type: 'string',
-                description: 'The phone number of the student',
-                example: '123-456-7890',
-            },
             language: {
                 type: 'string',
                 description: 'The language spoken by the student',
