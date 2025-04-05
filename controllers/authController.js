@@ -577,8 +577,18 @@ const logout = async (req, res) => {
  *       401:
  *         description: Unauthorized
 */
-const profile = (req, res) => {
-  res.json({ message: 'You are authenticated', user: req.user });
+const profile = async (req, res) => {
+  const userType = req.user.type;
+  // If user type is 1, return only the student profile
+  if (userType === 1) {
+    // Populate the student data
+    const student = await Student.findOne({ userId: req.user.id });
+    return res.json({ message: 'You are authenticated', student });
+  }
+  // If user type is 10 or 11, return the full user profile
+  if (userType === 10 || userType === 11) {
+    return res.json({ message: 'You are authenticated', user: req.user });
+  }
 };
 
 module.exports = { register, login, profile, refreshToken, logout };
