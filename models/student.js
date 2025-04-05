@@ -31,6 +31,11 @@ const studentSchema = new mongoose.Schema(
       enum: ["EC1", "EC2"],
       default: "EC1",
     },
+    churchMembership: {
+      type: String,
+      enum: ["Member", "Non-member"],
+      default: "Member",
+    },
   },
   {
     timestamps: true,
