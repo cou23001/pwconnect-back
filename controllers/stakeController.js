@@ -72,6 +72,76 @@ const getStakes = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/stakes/country/{countryName}:
+ *   get:
+ *     summary: Get a list of stakes by country
+ *     tags: [Stakes]
+ *     parameters:
+ *       - in: path
+ *         name: countryName
+ *         required: true
+ *         description: The name of the country to filter by
+ *         schema:
+ *           type: string
+ *           example: Bolivia
+ *     responses:
+ *       200:
+ *         description: A list of stakes in the specified country
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Stakes in Bolivia retrieved successfully"
+ *                 data:
+ *                   type: array
+ *                   description: List of stakes in the specified country
+ *                   items:
+ *                     $ref: '#/components/schemas/Stake'
+ *       404:
+ *         description: No stakes found in the specified country
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: No stakes found in Bolivia
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal Server Error
+ */
+
+const getStakesByCountry = async (req, res) => {
+  const { countryName } = req.params;
+
+  try {
+      // Use a case-insensitive regex to find stakes where the location contains the country name
+      const stakes = await Stake.find({ location: { $regex: new RegExp(countryName, 'i') } });
+
+      if (stakes.length === 0) {
+          return res.status(200).json({ message: `No stakes found in ${countryName}`, data: [] });
+      }
+
+      res.status(200).json({ message: `Stakes in ${countryName} retrieved successfully`, data: stakes });
+  } catch (error) {
+      console.error(`Error fetching stakes by country (${countryName}):`, error.message || error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Create a new stake
 /**
  * @swagger
@@ -504,4 +574,5 @@ module.exports = {
   updateStake,
   deleteStake,
   getWardsInStake,
+  getStakesByCountry,
 };

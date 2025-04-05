@@ -1,7 +1,7 @@
 // routes/stakeRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getStakes, getStakeById, createStake, updateStake, deleteStake, getWardsInStake } = require('../controllers/stakeController');
+const { getStakes, getStakeById, createStake, updateStake, deleteStake, getWardsInStake, getStakesByCountry } = require('../controllers/stakeController');
 const { authenticate, authorize } = require('../middleware/authenticate');
 
 // GET /stakes
@@ -22,5 +22,9 @@ router.delete('/stakes/:id', authenticate, authorize([10]), deleteStake);
 // GET /stakes/wards/:id
 // This route retrieves all wards in a specific stake
 router.get('/stakes/wards/:id', authenticate, authorize([10]), getWardsInStake);
+
+// GET /stakes/country/:countryName
+// This route retrieves all stakes in a specific country
+router.get('/stakes/country/:countryName', authenticate, authorize([10]), getStakesByCountry);
 
 module.exports = router;
