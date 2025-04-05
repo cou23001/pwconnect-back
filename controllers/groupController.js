@@ -141,6 +141,54 @@ const getGroup = async (req, res) => {
   }
 };
 
+// Get Groups by Ward ID
+/**
+ * @swagger
+ * /api/groups/ward/{wardId}:
+ *   get:
+ *     summary: Get Groups by Ward ID
+ *     description: Retrieve a list of Groups belonging to a specific Ward
+ *     tags: [Groups]
+ *     parameters:
+ *       - in: path
+ *         name: wardId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Ward ID
+ *     responses:
+ *       200:
+ *         description: A list of Groups in the specified Ward
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Group'
+ *       204:
+ *         description: No Groups found for the specified Ward
+ *       500:
+ *         description: Internal Server Error
+ */
+
+const getGroupsByWard = async (req, res) => {
+  try {
+    const groups = await Group.find({ ward: req.params.wardId })
+      .populate('stake')
+      .populate('ward');
+
+    if (groups.length === 0) {
+      return res.status(204).send(); // No Content
+    }
+
+    res.status(200).json({ groups });
+  } catch (error) {
+    console.error('Error retrieving groups by ward:', error.message || error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
+
 // Update a Group
 /**
  * @swagger
@@ -255,4 +303,5 @@ module.exports = {
   getGroup,
   updateGroup,
   deleteGroup,
+  getGroupsByWard,
 };
