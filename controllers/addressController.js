@@ -1,6 +1,7 @@
 // controllers/addressController.js
 const Address = require("../models/address");
 const mongoose = require("mongoose");
+const { addressSchema, partialAddressSchema } = require("../validators/address");
 
 /**
  * @swagger
@@ -26,8 +27,24 @@ const mongoose = require("mongoose");
  *                 $ref: '#/components/schemas/Address'
  *       404:
  *         description: No addresses found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "No addresses found"
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
  */
 const getAllAddresses = async (req, res) => {
   try {
@@ -71,11 +88,34 @@ const getAllAddresses = async (req, res) => {
  *                     $ref: '#/components/schemas/Address'
  *        404:
  *          description: Address not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: Address not found
  *        500:
  *          description: Internal server error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  message:
+ *                    type: string
+ *                    example: "Internal server error"
  */
 const getAddressById = async (req, res) => {
   try {
+    const { id } = req.params;
+    // Validate ID format
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid address ID" });
+    }
+    
+    // Check if address exists
     const address = await Address.findById(req.params.id);
     if (!address) {
       return res.status(404).json({ message: "Address not found" });
@@ -97,7 +137,26 @@ const getAddressById = async (req, res) => {
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Address'
+ *             type: object
+ *             properties:
+ *               street:
+ *                 type: string
+ *                 example: "123 Main St"
+ *               neighborhood:
+ *                 type: string
+ *                 example: "Downtown"
+ *               city:
+ *                 type: string
+ *                 example: "New York"
+ *               state:
+ *                 type: string
+ *                 example: "NY"
+ *               country:
+ *                 type: string
+ *                 example: "USA"
+ *               postalCode:
+ *                 type: string
+ *                 example: "10001"
  *     responses:
  *       201:
  *         description: The address was succesfully created
@@ -117,14 +176,24 @@ const getAddressById = async (req, res) => {
  *                   example: "Invalid input"
  *       500:
  *         description: Internal server error
- *     security:
- *       - BearerAuth: []
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
  */
 const createAddress = async (req, res) => {
   try {
-    const address = new Address(req.body);
-    await address.save();
-    res.status(200).json({ message: "Success", data: address });
+    // Validate request body
+    const { value, error } = addressSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    const newAddress = await Address.create(value);
+    res.status(200).json({ message: "Success", data: newAddress });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -149,7 +218,25 @@ const createAddress = async (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
- *             $ref: '#/components/schemas/Address'
+ *             properties:
+ *               street:
+ *                 type: string
+ *                 example: "123 Main St"
+ *               neighborhood:
+ *                 type: string
+ *                 example: "Downtown"
+ *               city:
+ *                 type: string
+ *                 example: "New York"
+ *               state:
+ *                 type: string
+ *                 example: "NY"
+ *               country:
+ *                 type: string
+ *                 example: "USA"
+ *               postalCode:
+ *                 type: string
+ *                 example: "10001"
  *     responses:
  *       200:
  *         description: The address was succesfully updated
@@ -186,8 +273,14 @@ const createAddress = async (req, res) => {
  *                   example: "The instructor was not found"
  *       500:
  *         description: Internal server error
- *     security:
- *       - BearerAuth: []
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
  */
 const updateAddress = async (req, res) => {
   try {
@@ -197,7 +290,7 @@ const updateAddress = async (req, res) => {
       return res.status(400).json({ message: "Invalid address ID" });
     }
     // Validate request body
-    const { error } = Address.validate(req.body);
+    const { value, error } = partialAddressSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
@@ -207,7 +300,7 @@ const updateAddress = async (req, res) => {
       return res.status(404).json({ message: "Address not found" });
     }
     // Update address
-    const newAddress = await Address.findByIdAndUpdate(id, req.body, {
+    const newAddress = await Address.findByIdAndUpdate(id, value, {
       new: true,
     });
     res.status(200).json({ message: "Success", data: newAddress });

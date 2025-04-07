@@ -2,12 +2,13 @@
 const Joi = require("joi");
 
 const groupSchema = Joi.object({
-  name: Joi.string().required().messages({
+  name: Joi.string().trim().required().messages({
     "string.base": "Name must be a string",
     "any.required": "Name is required",
     "string.empty": "Name cannot be empty",
   }),
   wardId: Joi.string()
+    .trim()
     .required()
     .pattern(/^[0-9a-fA-F]{24}$/)
     .messages({
@@ -26,16 +27,17 @@ const groupSchema = Joi.object({
     "date.iso": "End date must be in ISO format (YYYY-MM-DD)",
     "any.required": "End date is required",
   }),
-  schedule: Joi.string().required().messages({
+  schedule: Joi.string().trim().required().messages({
     "string.base": "Schedule must be a string",
     "any.required": "Schedule is required",
     "string.empty": "Schedule cannot be empty",
   }),
-  room: Joi.string().optional().messages({
+  room: Joi.string().trim().optional().messages({
     "string.base": "Room must be a string",
     "string.empty": "Room cannot be empty",
   }),
   instructorId: Joi.string()
+    .trim()
     .required()
     .pattern(/^[0-9a-fA-F]{24}$/)
     .messages({
@@ -47,11 +49,12 @@ const groupSchema = Joi.object({
 });
 
 const groupUpdateSchema = Joi.object({
-  name: Joi.string().optional().messages({
+  name: Joi.string().trim().optional().messages({
     "string.base": "Name must be a string",
     "string.empty": "Name cannot be empty",
   }),
   wardId: Joi.string()
+    .trim()
     .optional()
     .pattern(/^[0-9a-fA-F]{24}$/)
     .messages({
@@ -66,15 +69,16 @@ const groupUpdateSchema = Joi.object({
     "date.base": "End date must be a valid date",
     "date.iso": "End date must be in ISO format (YYYY-MM-DD)",
   }),
-  schedule: Joi.string().optional().messages({
+  schedule: Joi.string().trim().optional().messages({
     "string.base": "Schedule must be a string",
     "string.empty": "Schedule cannot be empty",
   }),
-  room: Joi.string().optional().messages({
+  room: Joi.string().trim().optional().messages({
     "string.base": "Room must be a string",
     "string.empty": "Room cannot be empty",
   }),
   instructorId: Joi.string()
+    .trim()
     .optional()
     .pattern(/^[0-9a-fA-F]{24}$/)
     .messages({

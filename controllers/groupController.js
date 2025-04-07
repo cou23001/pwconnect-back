@@ -200,13 +200,13 @@ const getGroupById = async (req, res) => {
 const createGroup = async (req, res) => {
   try {
     // Validate the request body
-    const { error } = groupSchema.validate(req.body);
+    const { value, error } = groupSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-    
+
     // Extract instructorId and wardId from the request body
-    const { instructorId, wardId, name } = req.body;
+    const { instructorId, wardId, name } = value;
 
     // Check the name uniqueness
     const existingGroup = await Group.findOne({ name: name });
@@ -228,7 +228,7 @@ const createGroup = async (req, res) => {
 
     // Create the group
     const newGroup = await Group.create({
-      ...req.body,
+      ...value,
     });
 
     res.status(201).json({ message: 'Group created successfully', newGroup });
@@ -237,7 +237,6 @@ const createGroup = async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
-
 
 // Get Groups by Ward ID
 /**
@@ -294,7 +293,6 @@ const createGroup = async (req, res) => {
  *                   type: string
  *                   example: Internal server error
  */
-
 const getGroupsByWard = async (req, res) => {
   try {
     // Validate the Ward ID
@@ -303,19 +301,18 @@ const getGroupsByWard = async (req, res) => {
     if (!isValidId) {
       return res.status(400).json({ error: 'Invalid Ward ID format' });
     }
-    const groups = await Group.find({ wardId: req.params.wardId });
+    const groups = await Group.find({ wardId: wardId });
 
     if (groups.length === 0) {
       return res.status(404).json({ message: 'Ward not found' }); 
     }
 
-    res.status(200).json({ groups });
+    res.status(200).json({ message: 'Groups found', groups });
   } catch (error) {
     console.error('Error retrieving groups by ward:', error.message || error);
     res.status(500).json({ error: error.message || 'Internal server error' });
   }
 };
-
 
 // Update a Group
 /**
@@ -410,43 +407,41 @@ const getGroupsByWard = async (req, res) => {
  *                   type: string
  *                   example: Internal server error
  */
-
 const updateGroup = async (req, res) => {
   try {
     // Validat the ID
     const { id } = req.params;
-
     const isValidId = mongoose.Types.ObjectId.isValid(id);
     if (!isValidId) {
       return res.status(400).json({ error: 'Invalid ID format' });
     }
     
     // Validate the request body
-    const { error } = groupUpdateSchema.validate(req.body);
+    const { value, error } = groupUpdateSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
     
     // Check if the instructor exists
-    const instructor = await Instructor.findById(req.body.instructorId);
+    const instructor = await Instructor.findById(value.instructorId);
     if (!instructor) {
       return res.status(404).json({ error: 'Instructor not found' });
     }
     
     // Check if the ward exists
-    const ward = await Ward.findById(req.body.wardId);
+    const ward = await Ward.findById(value.wardId);
     if (!ward) {
       return res.status(404).json({ error: 'Ward not found' });
     }
     
     // Check the name uniqueness
-    const existingGroup = await Group.findOne({ name: req.body.name });
+    const existingGroup = await Group.findOne({ name: value.name });
     if (existingGroup) {
       return res.status(400).json({ error: 'Group name already exists' });
     }
     
     // Check if the group exists and update it
-    const group = await Group.findByIdAndUpdate(id, req.body, { new: true }); // Populates stake and ward
+    const group = await Group.findByIdAndUpdate(id, value, { new: true }); // Populates stake and ward
     if (!group) {
       return res.status(404).send();
     }
@@ -513,7 +508,6 @@ const updateGroup = async (req, res) => {
  *                   type: string
  *                   example: Internal server error
  */
-
 const deleteGroup = async (req, res) => {
   try {
     // Validate the ID
