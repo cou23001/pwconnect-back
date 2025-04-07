@@ -446,7 +446,7 @@ const updateGroup = async (req, res) => {
     }
     
     // Check if the group exists and update it
-    const group = await Group.findByIdAndUpdate(req.params.id, req.body, { new: true }); // Populates stake and ward
+    const group = await Group.findByIdAndUpdate(id, req.body, { new: true }); // Populates stake and ward
     if (!group) {
       return res.status(404).send();
     }
@@ -524,7 +524,7 @@ const deleteGroup = async (req, res) => {
     }
 
     // Check if the group exists and delete it
-    const group = await Group.findByIdAndDelete(req.params.id);
+    const group = await Group.findByIdAndDelete(id);
     if (!group) {
       return res.status(404).send();
     }

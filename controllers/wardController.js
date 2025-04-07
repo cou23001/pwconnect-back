@@ -284,12 +284,20 @@ const createWard = async (req, res) => {
  */
 const updateWard = async (req, res) => {
   try {
+    // Check if the ID is a valid ObjectId
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({ error: 'Invalid ID format' });
+    }
+    
     const { name, location, stakeId } = req.body;
     // Validate the request body
     const { error } = wardUpdateSchema.validate(req.body);
     if (error) {
       return res.status(400).send({ error: error.details[0].message });
     }
+
+    // Check if the ward exists
     const ward = await Ward.findById(req.params.id).populate('stakeId');
     if (!ward) {
       return res.status(404).send({ error: 'Ward not found' });

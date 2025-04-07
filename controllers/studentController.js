@@ -846,8 +846,15 @@ const updateStudent = async (req, res, next) => {
   session.startTransaction();
 
   try {
+    const { id } = req.params;
+    // 1. Validate ID format
+    if (!mongoose.isValidObjectId(id)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Invalid student ID" });
+    }
     // 1. Fetch student with populated user
-    const student = await Student.findById(req.params.id)
+    const student = await Student.findById(id)
       .populate("userId")
       .session(session);
 

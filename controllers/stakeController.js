@@ -475,19 +475,21 @@ const updateStake = async (req, res) => {
  */
 const deleteStake = async (req, res) => {
   try {
+          
+    const { id } = req.params.id;
     // Validate stake ID
-    const stakeId = req.params.id;
-    const { error } = validateStakeId(stakeId);
+    const { error } = validateStakeId(id);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
+    
     // Check if stake exists
-    const stake = await Stake.findById(stakeId);
+    const stake = await Stake.findById(id);
     if (!stake) {
       return res.status(404).json({ error: 'Stake not found' });
     }
     // Check if stake has wards
-    const wards = await Ward.find({ stakeId });
+    const wards = await Ward.find({ id });
     if (wards.length > 0) {
       return res.status(400).json({ error: 'Stake has wards and cannot be deleted' });
     }
