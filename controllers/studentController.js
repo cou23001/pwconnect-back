@@ -4,8 +4,8 @@ const User = require("../models/user");
 const Address = require("../models/address");
 const TokenMetadata = require("../models/tokenMetadata");
 const mongoose = require("mongoose");
-const studentSchema = require("../validators/student");
-const partialStudentSchema = require("../validators/partialStudent");
+const { studentSchema } = require("../validators/student");
+const { partialStudentSchema } = require("../validators/partialStudent");
 const { uploadToS3, deleteFromS3 } = require("../utils/upload");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -66,6 +66,10 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                               type: string
  *                               description: The email of the user
  *                               example: john.doe@example.com
+ *                             phone:
+ *                               type: string
+ *                               description: The phone number of the user
+ *                               example: 123-456-7890
  *                             type:
  *                               type: number
  *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
@@ -111,10 +115,6 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                          format: date
  *                          description: The date of birth of the student
  *                          example: 2000-01-01
- *                        phone:
- *                          type: string
- *                          description: The phone number of the student
- *                          example: 123-456-7890
  *                        language:
  *                          type: string
  *                          description: The language spoken by the student
@@ -140,6 +140,14 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                          example: 2020-08-20T20:00:00.000Z
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *              type: object
+ *              properties:
+ *                message:
+ *                  type: string
+ *                  example: "Internal server error"
  */
 const getAllStudents = async (req, res) => {
   try {
@@ -154,7 +162,7 @@ const getAllStudents = async (req, res) => {
       .status(200)
       .json({ message: "Students retrieved succesfully", data: students });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json( "Internal server error" );
   }
 };
 
@@ -212,6 +220,10 @@ const getAllStudents = async (req, res) => {
  *                               type: string
  *                               description: The email of the user
  *                               example: john@doe.com
+ *                             phone:
+ *                               type: string
+ *                               description: The phone number of the user
+ *                               example: 123-456-7890
  *                             type:
  *                               type: number
  *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
@@ -257,10 +269,6 @@ const getAllStudents = async (req, res) => {
  *                          format: date
  *                          description: The date of birth of the student
  *                          example: 2000-01-01
- *                        phone:
- *                          type: string
- *                          description: The phone number of the student
- *                          example: 123-456-7890
  *                        language:
  *                          type: string
  *                          description: The language spoken by the student
@@ -324,7 +332,7 @@ const getStudentById = async (req, res) => {
       return res.status(400).json({ message: "Invalid student ID" });
     }
     // 2. Find student by ID (404 Not Found if not found)
-    const student = await Student.findById(req.params.id)
+    const student = await Student.findById(id)
       .populate("userId")
       .populate("addressId");
     if (!student) {
@@ -341,7 +349,7 @@ const getStudentById = async (req, res) => {
  * @swagger
  * /api/students:
  *   post:
- *     summary: Create a student
+ *     summary: Create a new student
  *     tags: [Student]
  *     consumes:
  *       - multipart/form-data
@@ -363,8 +371,7 @@ const getStudentById = async (req, res) => {
  *                   {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
- *                     "email": "joe@example.com",
- *                     "password": "password123"
+ *                     "phone": "123-456-7890"
  *                   }
  *               address:
  *                 type: string
@@ -383,10 +390,6 @@ const getStudentById = async (req, res) => {
  *                 format: date
  *                 description: The student's date of birth
  *                 example: "1999-01-01"
- *               phone:
- *                 type: string
- *                 description: The student's phone number
- *                 example: "520-123-2345"
  *               language:
  *                 type: string
  *                 description: The student's preferred language
@@ -440,6 +443,10 @@ const getStudentById = async (req, res) => {
  *                           type: string
  *                           description: The email of the user.
  *                           example: "john@doe.com"
+ *                         phone:
+ *                           type: string
+ *                           description: The phone number of the user.
+ *                           example: "520-123-2345"
  *                         type:
  *                           type: number
  *                           description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor).
@@ -455,10 +462,6 @@ const getStudentById = async (req, res) => {
  *                       format: date-time
  *                       description: The student's date of birth.
  *                       example: "1999-01-01T00:00:00.000Z"
- *                     phone:
- *                       type: string
- *                       description: The student's phone number.
- *                       example: "520-123-2345"
  *                     language:
  *                       type: string
  *                       description: The student's preferred language.
@@ -563,7 +566,7 @@ const createStudent = async (req, res) => {
           _id: new mongoose.Types.ObjectId(),
           password: user.password,
           type: 1, // Student type
-          avatar: avatarUrl || defaultAvatarUrl, // Use uploaded avatar or default
+          avatar: avatarUrl || DEFAULT_AVATAR_URL, // Use uploaded avatar or default
         },
       ],
       { session }
@@ -671,6 +674,7 @@ const createStudent = async (req, res) => {
  *                   {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
+ *                     "phone": "123-456-7890"
  *                   }
  *               address:
  *                 type: string
@@ -689,10 +693,6 @@ const createStudent = async (req, res) => {
  *                 format: date
  *                 description: The student's date of birth
  *                 example: "1999-01-01"
- *               phone:
- *                 type: string
- *                 description: The student's phone number
- *                 example: "520-123-2345"
  *               language:
  *                 type: string
  *                 description: The student's preferred language
@@ -748,6 +748,10 @@ const createStudent = async (req, res) => {
  *                               type: string
  *                               description: The email of the user
  *                               example: john@doe.com
+ *                             phone:
+ *                               type: string
+ *                               description: The phone number of the user
+ *                               example: 123-456-7890
  *                             type:
  *                               type: number
  *                               description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
@@ -793,10 +797,6 @@ const createStudent = async (req, res) => {
  *                          format: date
  *                          description: The date of birth of the student
  *                          example: 2000-01-01
- *                        phone:
- *                          type: string
- *                          description: The phone number of the student
- *                          example: 123-456-7890
  *                        language:
  *                          type: string
  *                          description: The language spoken by the student

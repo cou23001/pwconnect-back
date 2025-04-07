@@ -19,11 +19,8 @@ module.exports = {
             description: 'The ward\'s location',
             example: 'Lagos',
         },
-        stakeId: {
-            type: 'string',
-            format: 'ObjectId',
-            description: 'The ID of the stake the ward belongs to',
-            example: '507f1f77bcf86cd799439011',
+        stake: {
+            $ref: '#/components/schemas/Stake',
         },
         createdAt: {
             type: 'string',

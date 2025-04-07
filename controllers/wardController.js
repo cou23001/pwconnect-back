@@ -1,60 +1,13 @@
 // controllers/wardControllers.js
 const Ward = require('../models/ward');
+const { wardSchema, wardUpdateSchema } = require('../validators/ward');
+const mongoose = require('mongoose');
 /**
  * @swagger
  * tags:
  *   name: Wards
  *   description: Ward management
  */
-// Create a new ward
-/**
- * @swagger
- * /api/wards:
- *   post:
- *     summary: Create a new ward
- *     tags: [Wards]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - name
- *               - location
- *               - stakeId
- *             properties:
- *               name:
- *                 type: string
- *                 description: The ward's name
- *               location:
- *                 type: string
- *                 description: The ward's location
- *               stakeId:
- *                 type: string
- *                 format: objectid
- *                 description: The ward's stakeId
- *                 ref: 'Stake' 
- *     responses:
- *       201:
- *         description: Ward created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Ward'
- *       500:
- *         description: Internal Server Error
- */
-const createWard = async (req, res) => {
-  try {
-    const { name, location, stakeId } = req.body;
-    const ward = new Ward({ name, location, stakeId });
-    await ward.save();
-    res.status(201).json({ ward });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
 
 // Get all wards
 /**
@@ -75,7 +28,12 @@ const createWard = async (req, res) => {
  */
 const getWards = async (req, res) => {
   try {
-    const wards = await Ward.find();
+    const wards = await Ward.find().populate('stakeId');
+    // Check if wards exist
+    if (wards.length === 0) {
+      return res.status(404).send('No wards found');
+    }
+    // Return the wards
     res.status(200).json({ wards });
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -104,15 +62,135 @@ const getWards = async (req, res) => {
  *            application/json:
  *              schema:
  *                $ref: '#/components/schemas/Ward'
+ *        400:
+ *          description: Invalid ID format
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    description: Error message
+ *                    example: Invalid ID format
  *        404:
  *          description: Ward not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    description: Error message
+ *                    example: Ward not found
  *        500:
  *          description: Internal Server Error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    description: Error message
+ *                    example: Internal Server Error
  */
-const getWard = async (req, res) => {
+const getWardById = async (req, res) => {
   try {
-    const ward = await Ward.findById(req.params.id);
-    res.status(200).json({ ward });
+    const { id } = req.params;
+    // Check if the ID is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({ error: 'Invalid ID format' });
+    }
+    // Find the ward by ID
+    const ward = await Ward.findById(id).populate('stakeId');
+    // Check if the ward exists
+    if (!ward) {
+      return res.status(404).send({ error: 'Ward not found' });
+    }
+    // Return the ward
+    res.status(200).json({ message: 'Ward found', ward });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Create a new ward
+/**
+ * @swagger
+ * /api/wards:
+ *   post:
+ *     summary: Create a new ward
+ *     tags: [Wards]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - location
+ *               - stakeId
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The ward's name
+ *                 example: "Ward 1"
+ *               location:
+ *                 type: string
+ *                 description: The ward's location
+ *                 example: "123 Main St, City, Country"
+ *               stakeId:
+ *                 type: string
+ *                 format: objectid
+ *                 description: The ward's stakeId
+ *                 example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       201:
+ *         description: Ward created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Ward'
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: Internal Server Error
+ */
+const createWard = async (req, res) => {
+  try {
+    const { error } = wardSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
+    }
+    const { name, location, stakeId } = req.body;
+
+    const ward = new Ward({ name, location, stakeId });
+    await ward.save();
+
+    // Populate stake details
+    const populatedWard = await Ward.findById(ward._id).populate('stakeId').lean();
+
+    res.status(201).json({ message: 'Ward created successfully', populatedWard });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -145,67 +223,93 @@ const getWard = async (req, res) => {
  *               name:
  *                 type: string
  *                 description: The ward's name.
+ *                 example: "Updated Ward Name"
  *               location:
  *                 type: string
  *                 description: The ward's location.
- *               stakeId:
+ *                 example: "456 Updated St, City, Country"
+ *               stake:
  *                 type: string
  *                 format: objectid
  *                 pattern: '^[0-9a-fA-F]{24}$'
  *                 description: The updated stakeId of the ward (must be a valid ObjectId).
- *               example:
- *                 name: "Updated Ward Name"
- *                 location: "Updated Ward Location"
- *                 stakeId: "507f1f77bcf86cd799439011"
+ *                 example: "507f1f77bcf86cd799439011"
  *     responses:
  *       200:
- *         description: The ward was updated successfully.
+ *         description: Ward updated successfully.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 _id:
+ *                 message:
  *                   type: string
- *                   format: objectid
- *                   description: The ID of the updated ward.
- *                 name:
+ *                   description: Success message.
+ *                   example: "Ward updated successfully"
+ *                 ward:
+ *                   $ref: '#/components/schemas/Ward'
+ *       400:
+ *         description: Bad Request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
  *                   type: string
- *                   description: The updated name of the ward.
- *                 location:
- *                   type: string
- *                   description: The updated location of the ward.
- *                 stakeId:
- *                   type: string
- *                   format: objectid
- *                   description: The updated stakeId of the ward.
- *               example:
- *                 _id: "507f1f77bcf86cd799439011"
- *                 name: "Updated Ward Name"
- *                 location: "Updated Ward Location"
- *                 stakeId: "507f1f77bcf86cd799439012"
+ *                   description: Error message.
+ *                   example: "Invalid ID format"
  *       404:
  *         description: Ward not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message.
+ *                   example: "Ward not found"
  *       500:
  *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message.
+ *                   example: "Internal Server Error"
  */
 const updateWard = async (req, res) => {
   try {
     const { name, location, stakeId } = req.body;
-    const ward = await Ward.findById(req.params.id);
-    console.log(ward);
-    if (!ward) {
-      return res.status(404).send('Ward not found');
+    // Validate the request body
+    const { error } = wardUpdateSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ error: error.details[0].message });
     }
+    const ward = await Ward.findById(req.params.id).populate('stakeId');
+    if (!ward) {
+      return res.status(404).send({ error: 'Ward not found' });
+    }
+
+    // Validate if changes were made
+    if (!name && !location && !stakeId) {
+      return res.status(400).send({ error: 'No changes made' });
+    }
+
     // Modify if there are changes
     if (name) { ward.name = name;}
     if (location) { ward.location = location; }
     if (stakeId) { ward.stakeId = stakeId;}
     
     await ward.save();
-    res.status(200).json({ ward });
+    res.status(200).json({ message: 'Ward updated successfully', ward });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
@@ -225,20 +329,57 @@ const updateWard = async (req, res) => {
  *          required: true
  *          description: Ward ID
  *      responses:
- *        200:
- *          description: Ward deleted
+ *        204:
+ *          description: Ward deleted successfully
+ *        400:
+ *          description: Invalid ID format
  *          content:
  *            application/json:
  *              schema:
- *               $ref: '#/components/schemas/Ward'
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    description: Error message
+ *                    example: Invalid ID format
  *        404:
  *          description: Ward not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    description: Error message
+ *                    example: Ward not found
  *        500:
  *          description: Internal Server Error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    description: Error message
+ *                    example: Internal Server Error
  */
 const deleteWard = async (req, res) => {
   try {
-    await Ward.findByIdAndDelete(req.params.id);
+    // Check if the ID is a valid ObjectId
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({ error: 'Invalid ID format' });
+    }
+    // Check if the ward exists
+    const ward = await Ward.findById(id);
+    if (!ward) {
+      return res.status(404).send({ error: 'Ward not found' });
+    }
+    // Delete the ward
+    await ward.deleteOne();
+    // Return success message
     res.status(204).send();
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -248,7 +389,7 @@ const deleteWard = async (req, res) => {
 module.exports = {
   createWard,
   getWards,
-  getWard,
+  getWardById,
   updateWard,
   deleteWard,
 };

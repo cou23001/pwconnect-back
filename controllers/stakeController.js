@@ -2,8 +2,6 @@
 const Stake = require('../models/stake');
 const Ward = require('../models/ward');
 const { validateStake, validateStakeId, validateStakeUpdate } = require('../validators/stake');
-const mongoose = require('mongoose');
-const { message } = require('../validators/user');
 
 
 /**
@@ -62,7 +60,7 @@ const getStakes = async (req, res) => {
     const stakes = await Stake.find();
 
     if (stakes.length === 0) {
-      return res.status(200).json({ message: 'No stakes found', stakes: [] });
+      return res.status(200).json({ message: 'No stakes found' });
     }
 
     res.status(200).json({ message: 'Stakes retrieved successfully', data: stakes });
@@ -156,19 +154,17 @@ const getStakesByCountry = async (req, res) => {
  *           schema:
  *             type: object
  *             required:
- *               - stakeId
  *               - name
  *               - location
  *             properties:
- *               stakeId:
- *                 type: string
- *                 description: The stake's stakeId
  *               name:
  *                 type: string
  *                 description: The stake's name
+ *                 example: "Stake Name"
  *               location:
  *                 type: string
  *                 description: The stake's location
+ *                 example: "Location Name"
  *     responses:
  *       201:
  *         description: Stake created successfully
@@ -404,7 +400,7 @@ const updateStake = async (req, res) => {
     // Find existing stake
     const stake = await Stake.findById(stakeId);
     if (!stake) {
-      return res.status(404).send('Stake not found');
+      return res.status(404).send({ error: 'Stake not found' });
     }
 
     // Validate if changes are actually made
@@ -415,15 +411,13 @@ const updateStake = async (req, res) => {
       return res.status(400).json({ error: 'No changes detected in update' });
     }
 
+    // Modify if there are changes
+    if (name) { stake.name = name;}
+    if (location) { stake.location = location; }
+    
+    await stake.save();
 
-    // Update stake
-    const updatedStake = await Stake.findByIdAndUpdate(
-      stakeId,
-      { name, location },
-      { new: true }
-    );
-
-    res.status(200).json({ message: 'Stake updated successfully', stake: updatedStake });
+    res.status(200).json({ message: 'Stake updated successfully', stake: stake });
   } catch (error) {
     console.error('Error updating stake:', error.message || error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -446,16 +440,8 @@ const updateStake = async (req, res) => {
  *          required: true
  *          description: Stake ID
  *      responses:
- *        200:
- *         description: Stake deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "Stake deleted successfully"
+ *        204:
+ *          description: Stake deleted successfully
  *        400:
  *          description: Bad Request
  *          content:
@@ -468,8 +454,24 @@ const updateStake = async (req, res) => {
  *                    example: "Invalid ID format"
  *        404:
  *          description: Stake not found
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    example: "Stake not found"
  *        500:
  *          description: Internal Server Error
+ *          content:
+ *            application/json:
+ *              schema:
+ *                type: object
+ *                properties:
+ *                  error:
+ *                    type: string
+ *                    example: "Internal Server Error"
  */
 const deleteStake = async (req, res) => {
   try {
@@ -490,7 +492,7 @@ const deleteStake = async (req, res) => {
       return res.status(400).json({ error: 'Stake has wards and cannot be deleted' });
     }
     // Delete stake
-    await Stake.findByIdAndDelete(stakeId);
+    await stake.remove();
     res.status(200).json({ message: 'Stake deleted successfully' });
   } catch (error) {
     console.error('Error deleting stake:', error.message || error);

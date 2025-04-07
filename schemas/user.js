@@ -24,6 +24,11 @@ module.exports = {
           description: 'The user\'s email address',
           example: 'john.doe@example.com',
         },
+        phone: {
+          type: 'string',
+          description: 'The user\'s phone number',
+          example: '123-456-7890',
+        },
         password: {
           type: 'string',
           format: 'password',

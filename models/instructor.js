@@ -8,6 +8,11 @@ const instructorSchema = new Schema({
         ref: 'User',
         required: true
     },
+    wardId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Ward',
+        required: true
+    },
 }, {
     timestamps: true
 });
