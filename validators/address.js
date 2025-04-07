@@ -24,4 +24,6 @@ const addressSchema = Joi.object({
     }),
 });
 
-module.exports = addressSchema;
+module.exports = {
+    addressSchema,
+};

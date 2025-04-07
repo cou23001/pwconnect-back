@@ -21,6 +21,9 @@ const partialStudentSchema = Joi.object({
         avatar: Joi.string().messages({
             'string.base': 'Avatar must be a string',
         }),
+        phone: Joi.string().pattern(/^[0-9\-+() ]{7,15}$/).messages({
+            'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
+        }),
     }),
     address: Joi.object({
         street: Joi.string().messages({
@@ -57,4 +60,6 @@ const partialStudentSchema = Joi.object({
     }),
 }).min(1); // Ensure at least one field is provided
 
-module.exports = partialStudentSchema;
+module.exports = {
+    partialStudentSchema
+};

@@ -4,8 +4,8 @@ const User = require("../models/user");
 const Address = require("../models/address");
 const TokenMetadata = require("../models/tokenMetadata");
 const mongoose = require("mongoose");
-const studentSchema = require("../validators/student");
-const partialStudentSchema = require("../validators/partialStudent");
+const { studentSchema } = require("../validators/student");
+const { partialStudentSchema } = require("../validators/partialStudent");
 const { uploadToS3, deleteFromS3 } = require("../utils/upload");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -162,7 +162,7 @@ const getAllStudents = async (req, res) => {
       .status(200)
       .json({ message: "Students retrieved succesfully", data: students });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json( "Internal server error" );
   }
 };
 
@@ -332,7 +332,7 @@ const getStudentById = async (req, res) => {
       return res.status(400).json({ message: "Invalid student ID" });
     }
     // 2. Find student by ID (404 Not Found if not found)
-    const student = await Student.findById(req.params.id)
+    const student = await Student.findById(id)
       .populate("userId")
       .populate("addressId");
     if (!student) {
@@ -349,7 +349,7 @@ const getStudentById = async (req, res) => {
  * @swagger
  * /api/students:
  *   post:
- *     summary: Create a student
+ *     summary: Create a new student
  *     tags: [Student]
  *     consumes:
  *       - multipart/form-data
@@ -566,7 +566,7 @@ const createStudent = async (req, res) => {
           _id: new mongoose.Types.ObjectId(),
           password: user.password,
           type: 1, // Student type
-          avatar: avatarUrl || defaultAvatarUrl, // Use uploaded avatar or default
+          avatar: avatarUrl || DEFAULT_AVATAR_URL, // Use uploaded avatar or default
         },
       ],
       { session }
