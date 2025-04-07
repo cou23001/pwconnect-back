@@ -1,28 +1,25 @@
 // schemas/group.js
+
 module.exports = {
     Group: {
       type: 'object',
       properties: {
         _id: {
           type: 'string',
-          format: 'ObjectId',
+          format: 'objectid',
           description: 'The auto generated ID of the Group',
           example: '507f1f77bcf86cd799439011',
         },
         name: {
           type: 'string',
           description: 'The name of the Group',
-          example: 'Basic English Group A',
+          example: 'EC1 Group A',
         },
-        stake: {
+        wardId: {
           type: 'string',
-          description: 'The stake where the Group is located',
-          example: 'Stake1',
-        },
-        ward: {
-          type: 'string',
-          description: 'The ward where the Group is located',
-          example: 'Ward1',
+          format: 'objectid',
+          description: 'The ID of the ward associated with the Group',
+          example: '507f1f77bcf86cd799439012',
         },
         start_date: {
           type: 'string',
@@ -41,10 +38,16 @@ module.exports = {
           description: 'The schedule of the Group',
           example: 'Mondays and Wednesdays, 7:00 PM',
         },
-        other_group_data: {
-          type: 'object',
-          description: 'Other relevant data of the Group',
-          example: { teacher: 'John Doe', room: 'Room 101' },
+        room: {
+          type: 'string',
+          description: 'Clssroom information',
+          example: 'Room 101',
+        },
+        instructorId: {
+          type: 'string',
+          format: 'objectid',
+          description: 'The id of the instructor',
+          example: '5f3f9c5f6d7a0f0021e9d4b7',
         },
         createdAt: {
           type: 'string',
