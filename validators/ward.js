@@ -1,3 +1,4 @@
+// validators/ward.js
 const Joi = require("joi");
 
 const wardSchema = Joi.object({

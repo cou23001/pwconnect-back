@@ -1,38 +1,44 @@
 // models/group.js
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const groupSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  stake: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Stake', // Reference to the Stake model
+const groupSchema = new Schema(
+  {
+    name: {
+      type: String,
       required: true,
-  },
-  ward: {
+    },
+    wardId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Ward', // Reference to the Ward model
+      ref: "Ward", // Reference to the Ward model
       required: true,
+    },
+    start_date: {
+      type: Date,
+      required: true,
+    },
+    end_date: {
+      type: Date,
+      required: true,
+    },
+    schedule: {
+      type: String,
+      required: true,
+    },
+    room: {
+      type: String,
+    },
+    instructorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Instructor", // Reference to the Instructor model
+      required: true,
+    },
   },
-  start_date: {
-    type: Date,
-    required: true,
-  },
-  end_date: {
-    type: Date,
-  },
-  schedule: {
-    type: String,
-  },
-  other_group_data: {
-    type: Object,
-  },
-}, {
-  timestamps: true,
-});
+  {
+    timestamps: true,
+  }
+);
 
-const Group = mongoose.model('Group', groupSchema);
+const Group = mongoose.model("Group", groupSchema);
 
 module.exports = Group;

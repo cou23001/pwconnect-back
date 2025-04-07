@@ -1,5 +1,9 @@
 // controllers/groupController.js
 const Group = require('../models/group');
+const mongoose = require('mongoose');
+const Instructor = require('../models/instructor');
+const Ward = require('../models/ward');
+const { groupSchema, groupUpdateSchema } = require('../validators/group');
 
 /**
  * @swagger
@@ -7,72 +11,6 @@ const Group = require('../models/group');
  *   name: Groups
  *   description: Group management
  */
-
-// Create a new Group
-/**
- * @swagger
- * /api/groups:
- *   post:
- *     summary: Create a new Group
- *     tags: [Groups]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - _id
- *               - name
- *               - stake
- *               - ward
- *               - start_date
- *             properties:
-  *               name:
- *                 type: string
- *                 description: The name of the Group
- *               stake:
- *                 type: string
- *                 format: ObjectId
- *                 description: The stake where the Group is located
- *               ward:
- *                 type: string
- *                 format: ObjectId
- *                 description: The ward where the Group is located
- *               start_date:
- *                 type: string
- *                 format: date-time
- *                 description: The start date of the Group
- *               end_date:
- *                 type: string
- *                 format: date-time
- *                 description: The end date of the Group
- *               schedule:
- *                 type: string
- *                 description: The schedule of the Group
- *               other_group_data:
- *                 type: object
- *                 description: Other relevant data of the Group
- *     responses:
- *       201:
- *         description: Group created successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Group'
- *       500:
- *         description: Internal Server Error
- */
-
-const createGroup = async (req, res) => {
-  try {
-    const group = new Group(req.body);
-    await group.save();
-    res.status(201).json({ group });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
 
 // Get all Groups
 /**
@@ -90,14 +28,36 @@ const createGroup = async (req, res) => {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Group'
+ *       204:
+ *         description: No Groups found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No Groups found
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
-
 const getGroups = async (req, res) => {
   try {
-    const groups = await Group.find().populate('stake').populate('ward'); // Populates stake and ward
+    const groups = await Group.find();
+    if (groups.length === 0) {
+      return res.status(204).send(); // No Content
+    }
     res.status(200).json({ groups });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -125,21 +85,159 @@ const getGroups = async (req, res) => {
  *               $ref: '#/components/schemas/Group'
  *       404:
  *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Group not found
  *       500:
  *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
-
-const getGroup = async (req, res) => {
+const getGroupById = async (req, res) => {
   try {
-    const group = await Group.findById(req.params.id).populate('stake').populate('ward'); // Populates stake and ward
-    if (!group) {
-      return res.status(404).send();
+    // Validate Id
+    const { id } = req.params;
+    const isValidId = mongoose.Types.ObjectId.isValid(id);
+    if (!isValidId) {
+      return res.status(400).json({ error: 'Invalid ID format' });
     }
-    res.status(200).json({ group });
+
+    const group = await Group.findById(id).populate('wardId').populate('instructorId'); // Populates stake and ward
+    if (!group) {
+      return res.status(404).json({ message: 'Group not found' });
+    }
+
+    res.status(200).json({ message: 'Group found', group });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
+
+// Create a new Group
+/**
+ * @swagger
+ * /api/groups:
+ *   post:
+ *     summary: Create a new Group
+ *     tags: [Groups]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - _id
+ *               - name
+ *               - wardId
+ *               - start_date
+ *               - end_date
+ *               - schedule
+ *               - room
+ *               - instructorId
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: The name of the Group
+ *                 example: "Group A"
+ *               wardId:
+ *                 type: string
+ *                 format: ObjectId
+ *                 description: The ID of the Ward
+ *                 example: "60d5f484f1a2c8b8f8e4b8c1"
+ *               start_date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The start date of the Group
+ *                 example: "2023-10-01"
+ *               end_date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The end date of the Group
+ *                 example: "2023-12-31"
+ *               schedule:
+ *                 type: string
+ *                 description: The schedule of the Group
+ *                 example: "Monday and Wednesday 10-12"
+ *               room:
+ *                 type: string
+ *                 description: The room where the Group meets
+ *                 example: "Room 101"
+ *               instructorId:
+ *                 type: string
+ *                 format: ObjectId
+ *                 description: The ID of the Instructor
+ *                 example: "60d5f484f1a2c8b8f8e4b8c2"
+ *     responses:
+ *       201:
+ *         description: Group created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Group'
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
+ */
+const createGroup = async (req, res) => {
+  try {
+    // Validate the request body
+    const { error } = groupSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+    
+    // Extract instructorId and wardId from the request body
+    const { instructorId, wardId, name } = req.body;
+
+    // Check the name uniqueness
+    const existingGroup = await Group.findOne({ name: name });
+    if (existingGroup) {
+      return res.status(400).json({ error: 'Group name already exists' });
+    }
+
+    // Check if the instructor exists
+    const instructor = await Instructor.findById(instructorId);
+    if (!instructor) {
+      return res.status(404).json({ error: 'Instructor not found' });
+    }
+
+    // Check if the ward exists
+    const ward = await Ward.findById(wardId);
+    if (!ward) {
+      return res.status(404).json({ error: 'Ward not found' });
+    }
+
+    // Create the group
+    const newGroup = await Group.create({
+      ...req.body,
+    });
+
+    res.status(201).json({ message: 'Group created successfully', newGroup });
+  } catch (error) {
+    console.error('Error creating group:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
 
 // Get Groups by Ward ID
 /**
@@ -165,20 +263,50 @@ const getGroup = async (req, res) => {
  *               type: array
  *               items:
  *                 $ref: '#/components/schemas/Group'
- *       204:
- *         description: No Groups found for the specified Ward
+ *       400:
+ *         description: Invalid Ward ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid Ward ID format
+ *       404:
+ *         description: Ward not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Ward not found
  *       500:
  *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
 
 const getGroupsByWard = async (req, res) => {
   try {
-    const groups = await Group.find({ ward: req.params.wardId })
-      .populate('stake')
-      .populate('ward');
+    // Validate the Ward ID
+    const { wardId } = req.params;
+    const isValidId = mongoose.Types.ObjectId.isValid(wardId);
+    if (!isValidId) {
+      return res.status(400).json({ error: 'Invalid Ward ID format' });
+    }
+    const groups = await Group.find({ wardId: req.params.wardId });
 
     if (groups.length === 0) {
-      return res.status(204).send(); // No Content
+      return res.status(404).json({ message: 'Ward not found' }); 
     }
 
     res.status(200).json({ groups });
@@ -214,28 +342,36 @@ const getGroupsByWard = async (req, res) => {
  *               name:
  *                 type: string
  *                 description: The name of the Group
- *               stake:
- *                 type: string
- *                 format: ObjectId
- *                 description: The stake where the Group is located
- *               ward:
+ *                 example: "EC1-A"
+ *               wardId:
  *                 type: string
  *                 format: ObjectId
  *                 description: The ward where the Group is located
+ *                 example: "60d5f484f1a2c8b8f8e4b8c3"
  *               start_date:
  *                 type: string
  *                 format: date-time
  *                 description: The start date of the Group
+ *                 example: "2023-10-01"
  *               end_date:
  *                 type: string
  *                 format: date-time
  *                 description: The end date of the Group
+ *                 example: "2023-12-31"
  *               schedule:
  *                 type: string
  *                 description: The schedule of the Group
- *               other_group_data:
- *                 type: object
- *                 description: Other relevant data of the Group
+ *                 example: "Monday and Wednesday 10-12"
+ *               room:
+ *                 type: string
+ *                 description: The room where the Group meets
+ *                 example: "Room 101"
+ *               instructorId:
+ *                 type: string
+ *                 format: ObjectId
+ *                 description: The ID of the Instructor
+ *                 example: "60d5f484f1a2c8b8f8e4b8c2"
+
  *     responses:
  *       200:
  *         description: The updated Group object.
@@ -243,21 +379,80 @@ const getGroupsByWard = async (req, res) => {
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Group'
+ *       400:
+ *         description: Invalid request body or Group name already exists.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid request body or Group name already exists
  *       404:
  *         description: Group not found.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Group not found
  *       500:
  *         description: Internal Server Error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
 
 const updateGroup = async (req, res) => {
   try {
-    const group = await Group.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('stake').populate('ward'); // Populates stake and ward
+    // Validat the ID
+    const { id } = req.params;
+
+    const isValidId = mongoose.Types.ObjectId.isValid(id);
+    if (!isValidId) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+    
+    // Validate the request body
+    const { error } = groupUpdateSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+    
+    // Check if the instructor exists
+    const instructor = await Instructor.findById(req.body.instructorId);
+    if (!instructor) {
+      return res.status(404).json({ error: 'Instructor not found' });
+    }
+    
+    // Check if the ward exists
+    const ward = await Ward.findById(req.body.wardId);
+    if (!ward) {
+      return res.status(404).json({ error: 'Ward not found' });
+    }
+    
+    // Check the name uniqueness
+    const existingGroup = await Group.findOne({ name: req.body.name });
+    if (existingGroup) {
+      return res.status(400).json({ error: 'Group name already exists' });
+    }
+    
+    // Check if the group exists and update it
+    const group = await Group.findByIdAndUpdate(req.params.id, req.body, { new: true }); // Populates stake and ward
     if (!group) {
       return res.status(404).send();
     }
-    res.status(200).json({ group });
+    res.status(200).json({ message: 'Group updated successfully', group }); 
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 };
 
@@ -279,14 +474,56 @@ const updateGroup = async (req, res) => {
  *     responses:
  *       204:
  *         description: Group deleted
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Group deleted successfully
+ *       400:
+ *         description: Invalid ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid ID format
  *       404:
  *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Group not found
  *       500:
  *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
 
 const deleteGroup = async (req, res) => {
   try {
+    // Validate the ID
+    const { id } = req.params;
+    const isValidId = mongoose.Types.ObjectId.isValid(id);
+    if (!isValidId) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+
+    // Check if the group exists and delete it
     const group = await Group.findByIdAndDelete(req.params.id);
     if (!group) {
       return res.status(404).send();
@@ -300,7 +537,7 @@ const deleteGroup = async (req, res) => {
 module.exports = {
   createGroup,
   getGroups,
-  getGroup,
+  getGroupById,
   updateGroup,
   deleteGroup,
   getGroupsByWard,
