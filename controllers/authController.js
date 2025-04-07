@@ -6,7 +6,7 @@ const TokenMetadata = require('../models/tokenMetadata');
 const argon2 = require('argon2');
 const { parseEnvTimeToMs } = require('../utils/timeParser'); // Utility function to parse time from environment variables
 const mongoose = require('mongoose');
-const userSchema = require('../validators/user');
+const { userSchema } = require('../validators/user');
 const dotenv = require("dotenv");
 dotenv.config();
 const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL;
