@@ -1,5 +1,7 @@
 const User = require('../models/user');
 const argon2 = require('argon2');
+const { partialUserSchema } = require('../validators/user');
+const mongoose = require('mongoose');
 
 // Hash a password
 const hashPassword = async (password) => {
@@ -211,10 +213,21 @@ const getUserById = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const { firstName, lastName, email, password, currentPassword, type } = req.body;
-    const userId = req.params.id;
+    const { id } = req.params;
+
+    // Validate the user ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+          return res.status(400).send({ error: 'Invalid ID format' });
+    }
+
+    // Validate the request body
+    const { error } = partialUserSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ message: error.details[0].message });
+    }
 
     // Find the user by ID
-    const user = await User.findById(userId);
+    const user = await User.findById(id);
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
@@ -301,14 +314,21 @@ const updateUser = async (req, res) => {
  */
 const deleteUser = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
+    // Validate the user ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({ error: 'Invalid ID format' });
+    }
+
+    // Find the user by ID and delete
+    const user = await User.findByIdAndDelete(id);
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      return res.status(404).send({ error: 'User not found' });
     }
     res.json(user);
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error' });
+    res.status(500).send({ error: 'Internal Server Error' });
   }
 }
 

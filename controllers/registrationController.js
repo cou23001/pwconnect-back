@@ -216,19 +216,27 @@ exports.createRegistration = async (req, res) => {
 // Update a registration
 exports.updateRegistration = async (req, res) => {
     try {
-        const registration = await Registration.findById(req.params.id);
+        const { id } = req.params;
+        // Validate ID format
+        const isValidId = mongoose.Types.ObjectId.isValid(id);
+        if (!isValidId) {
+            return res.status(400).send({ error: 'Invalid ID format' });
+        }
+
+        // Find the registration by ID
+        const registration = await Registration.findById(id);
         if (!registration) {
-            return res.status(404).json({ message: 'Registration not found' });
+            return res.status(404).json({ error: 'Registration not found' });
         }
 
         const student = await Student.findById(req.body.studentId);
         if (!student) {
-            return res.status(404).json({ message: 'Student not found' });
+            return res.status(404).json({ error: 'Student not found' });
         }
 
         const group = await Group.findById(req.body.groupId);
         if (!group) {
-            return res.status(404).json({ message: 'Group not found' });
+            return res.status(404).json({ error: 'Group not found' });
         }
 
         registration.studentId = req.body.studentId;
@@ -239,7 +247,7 @@ exports.updateRegistration = async (req, res) => {
         const updatedRegistration = await registration.save();
         res.status(200).json(updatedRegistration);
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 

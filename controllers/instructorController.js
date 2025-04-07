@@ -611,8 +611,15 @@ const updateInstructor = async (req, res) => {
   session.startTransaction();
 
   try {
+    const { id } = req.params;
+    // Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).send("Invalid instructor ID");
+    }
     // Find the instructor
-    const instructor = await Instructor.findById(req.params.id)
+    const instructor = await Instructor.findById(id)
       .populate("userId")
       .populate("wardId")
       .session(session);
@@ -747,23 +754,24 @@ const updateInstructor = async (req, res) => {
  *                   example: "The instructor was not found"
  */
 const deleteInstructor = async (req, res) => {
-  const { id } = req.params;
-
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).send("Invalid instructor ID");
-  }
 
   let avatarToDelete = null;
-
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
+    const { id } = req.params;
+    // Validate ID format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({ error: "Invalid ID format" });
+    }
+    
+    // Find the instructor
     const instructor = await Instructor.findById(id).session(session);
     if (!instructor) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).send("Instructor not found");
+      return res.status(404).send({ error: "Instructor not found" });
     }
 
     const user = await User.findById(instructor.userId).session(session);
@@ -793,7 +801,7 @@ const deleteInstructor = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.error("Error deleting instructor:", error);
-    return res.status(500).send("Internal Server Error");
+    return res.status(500).send({ error: "Internal Server Error" });
   }
 };
 

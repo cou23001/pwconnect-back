@@ -191,10 +191,26 @@ const createAddress = async (req, res) => {
  */
 const updateAddress = async (req, res) => {
   try {
-    const address = await Address.findByIdAndUpdate(req.params.id, req.body, {
+    const { id } = req.params;
+    // Validate ID format
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ message: "Invalid address ID" });
+    }
+    // Validate request body
+    const { error } = Address.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    // Check if address exists
+    const address = await Address.findById(id);
+    if (!address) {
+      return res.status(404).json({ message: "Address not found" });
+    }
+    // Update address
+    const newAddress = await Address.findByIdAndUpdate(id, req.body, {
       new: true,
     });
-    res.status(200).json({ message: "Success", data: address });
+    res.status(200).json({ message: "Success", data: newAddress });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
