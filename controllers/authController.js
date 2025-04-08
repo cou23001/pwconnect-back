@@ -212,10 +212,12 @@ const register = async (req, res) => {
  *                 type: string
  *                 format: email
  *                 description: The user's email address
+ *                 example: 'john@example.com'
  *               password:
  *                 type: string
  *                 format: password
  *                 description: The user's password
+ *                 example: 'password123'
  *     responses:
  *       200:
  *         description: Login successful
@@ -412,7 +414,7 @@ const validate = async (req, res) => {
     if (!existingUser) {
       return res.status(401).json({ error: 'User not found' });
     }
-    
+
     // 4. Return user information from the access token
     res.status(200).json({ message: 'User found', user})
   }

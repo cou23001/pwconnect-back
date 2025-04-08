@@ -7,6 +7,7 @@ const routes = require('./routes/index');
 const BACKEND_PROD_URL = process.env.BACKEND_PROD_URL;
 const FRONTEND_DEV_URL = process.env.FRONTEND_DEV_URL;
 const FRONTEND_PROD_URL = process.env.FRONTEND_PROD_URL;
+const FRONTEND_DEV_URL_ALT = process.env.FRONTEND_DEV_URL_ALT;
 
 // Load environment variables
 require('dotenv').config(); 
@@ -25,6 +26,7 @@ const app = express();
 const allowedOrigins = [
   BACKEND_PROD_URL, // Backend production URL
   FRONTEND_DEV_URL, // Frontend development URL
+  FRONTEND_DEV_URL_ALT, // Frontend development URL Alternative
   FRONTEND_PROD_URL, // Frontend production URL      
 ];
 
