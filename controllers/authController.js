@@ -302,6 +302,11 @@ const login = async (req, res) => {
       success: true,
       message: 'Login successful',
       accessToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'No name set',
+      },
       ...(!isWebClient && { refreshToken }), // Only for non-web clients
     });
 
