@@ -5,7 +5,8 @@ const cookieParser = require('cookie-parser');
 const setupSwagger = require('./config/swaggerConfig');
 const routes = require('./routes/index');
 const BACKEND_PROD_URL = process.env.BACKEND_PROD_URL;
-const BACKEND_DEV_URL = process.env.BACKEND_DEV_URL;
+const FRONTEND_DEV_URL = process.env.FRONTEND_DEV_URL;
+const FRONTEND_PROD_URL = process.env.FRONTEND_PROD_URL;
 
 // Load environment variables
 require('dotenv').config(); 
@@ -23,7 +24,8 @@ const app = express();
 
 const allowedOrigins = [
   BACKEND_PROD_URL, // Backend production URL
-  BACKEND_DEV_URL, // Backend development URL      
+  FRONTEND_DEV_URL, // Frontend development URL
+  FRONTEND_PROD_URL, // Frontend production URL      
 ];
 
 app.use(cors({
