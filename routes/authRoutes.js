@@ -14,6 +14,6 @@ router.get('/validate', validate)
 
 // Protected route
 router.get('/profile', authenticate, profile);
-router.post('/logout', authenticate, logout);
+router.post('/logout', logout);
 
 module.exports = router;
