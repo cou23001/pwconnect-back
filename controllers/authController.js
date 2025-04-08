@@ -251,6 +251,22 @@ const register = async (req, res) => {
  *                   type: string
  *                   description: Short-lived JWT (typically 15-30 minutes)
  *                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+ *                 user:
+ *                   type: object
+ *                   description: User object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: User ID
+ *                       example: '60d5ec49f1b2c8a3f4e8b8c1'
+ *                     email:
+ *                       type: string
+ *                       description: User email
+ *                       example: 'john@example.com'
+ *                     name:
+ *                       type: string
+ *                       description: User name
+ *                       example: 'John Doe'
  *       401:
  *         description: Invalid credentials
  *       500:
