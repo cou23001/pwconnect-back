@@ -310,24 +310,115 @@ const login = async (req, res) => {
 };
 
 // Function to validate an access token
+/**
+ * @swagger
+ * /api/auth/validate:
+ *   get:
+ *     summary: Validate access token
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Access token is valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Access token is valid message
+ *                   example: 'User found'
+ *                 user:
+ *                   type: object
+ *                   description: User object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                       description: User ID
+ *                       example: '60d5ec49f1b2c8a3f4e8b8c1'
+ *                     email:
+ *                       type: string
+ *                       description: User email
+ *                       example: 'john@example.com'
+ *                     type:
+ *                       type: number
+ *                       description: User type (1 = Student, 10 = Admin, 11 = Instructor)
+ *                       example: 1
+ *                     iat:
+ *                       type: number
+ *                       description: Issued at timestamp
+ *                       example: 1633036800
+ *                     exp:
+ *                       type: number
+ *                       description: Expiration timestamp
+ *                       example: 1633040400
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Bad request'
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Unauthorized'
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Internal Server Error'
+*/
 const validate = async (req, res) => {
   try {
-    if (req.headers.authorization?.startsWith('Bearer ')) {
-      token = req.headers.authorization.split(' ')[1];
-    } else {
-      token = req.headers.authorization
+    // 1. Get access token from the Authorization header
+    const authHeader = req.headers['authorization'];
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or malformed Authorization header' });
     }
-    if (!token) {
-      return res.status(401).json({ message: 'No token provided' });
+    
+    const accessToken = authHeader.split(' ')[1];
+    if (!accessToken) {
+      return res.status(401).json({ error: 'Access token is missing' });
     }
 
-    const user = verifyAccessToken(token);
+    // 2. Verify access token
+    let user;
+    try {
+      user = verifyAccessToken(accessToken); // should return decoded token (e.g., { id, email, ... })
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid or expired access token' });
+    }
 
+    // 3. Check if user exists in the database
+    const existingUser = await User.findById(user.id);
+    if (!existingUser) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    // 4. Return user information from the access token
     res.status(200).json({ message: 'User found', user})
   }
   catch(error) {
     console.log(error)
-    res.status(500).json({error: "Error Found"});
+    res.status(500).json({error: "Internal Server Error"});
   }
 };
 
@@ -445,12 +536,6 @@ const refreshToken = async (req, res) => {
     });
 
   } catch (error) {
-    if (user!== null) {
-      console.error(`[RefreshTokenError] UserID: ${user?.id || 'Unknown'} - Error:`, error.message);
-    }
-    else {
-      console.error('[RefreshTokenError] Error:', error.message);
-    }
     res.status(500).json({ error: 'Internal server error' });
   }
 };
