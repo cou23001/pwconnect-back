@@ -309,6 +309,28 @@ const login = async (req, res) => {
   }
 };
 
+// Function to validate an access token
+const validate = async (req, res) => {
+  try {
+    if (req.headers.authorization?.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    } else {
+      token = req.headers.authorization
+    }
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const user = verifyAccessToken(token);
+
+    res.status(200).json({ message: 'User found', user})
+  }
+  catch(error) {
+    console.log(error)
+    res.status(500).json({error: "Error Found"});
+  }
+};
+
 // Function to get access token and refresh token from a refresh token
 /**
  * @swagger
@@ -591,4 +613,4 @@ const profile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, profile, refreshToken, logout };
+module.exports = { register, login, profile, refreshToken, logout, validate };
