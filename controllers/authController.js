@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const { userSchema } = require('../validators/user');
 const dotenv = require("dotenv");
 dotenv.config();
-const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL;
+const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
 
 // Register a new user
 /**
@@ -80,9 +80,13 @@ const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL;
  *                   example: 'User registered successfully'
  *                   description: Confirmation message
  *                 accessToken:
- *                   type: string
+ *                   oneOf:
+ *                     - type: string
+ *                     - type: 'null'
+ *                   description: >-
+ *                     [Mobile clients only] Refresh token for native apps.
+ *                     Web clients receive this via HTTP-only cookie.
  *                   example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
- *                   description: Short-lived access token (typically 15-30 minutes)
  *                 refreshToken:
  *                   type: string
  *                   nullable: true
@@ -136,7 +140,6 @@ const register = async (req, res) => {
       session.endSession();
       return res.status(400).json({ error: 'User already exists' });
     }
-
     // 3.1 Create user with hashed password
     const user = new User({ 
       firstName, 
@@ -144,7 +147,7 @@ const register = async (req, res) => {
       email, 
       password, 
       type, // 1 = Student, 10 = Admin, 11 = Instructor
-      avatar: defaultAvatarUrl, // Default avatar URL
+      avatar: DEFAULT_AVATAR_URL || 'https://www.gravatar.com/avatar/default?d=identicon', // Default avatar URL
     });
     await user.save({ session });
 
