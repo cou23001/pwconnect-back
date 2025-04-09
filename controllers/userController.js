@@ -40,11 +40,27 @@ const comparePassword = async (password, hash) => {
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/User'
+ *                 $ref: '#/components/schemas/UserResponse'
  *       404:
  *         description: No users found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No users found
  *       500:
  *         description: Internal Server
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal Server Error
  */
 const getUsers = async (req, res) => {
   try {
@@ -107,7 +123,7 @@ const getUserById = async (req, res) => {
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
-    res.json(user);
+    res.status(200).json({ message: 'Success', data: user });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal Server Error' });
@@ -310,7 +326,7 @@ const updateUser = async (req, res) => {
       }
     }
 
-    res.json({ message: 'User updated successfully', data: userResponse });
+    res.status(200).json({ message: 'User updated successfully', data: userResponse });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal Server Error' });
@@ -372,7 +388,7 @@ const deleteUser = async (req, res) => {
     if (!user) {
       return res.status(404).send({ error: 'User not found' });
     }
-    res.json(user);
+    res.json(200).send({ message: 'User deleted successfully', data: user });
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: 'Internal Server Error' });

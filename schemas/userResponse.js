@@ -25,12 +25,17 @@ module.exports = {
                 type: 'string',
                 format: 'email',
                 description: 'The user\'s email address',
-                example: 'joe@doe.com'
+                example: 'joe@doe.com',
             },
             type: {
                 type: 'number',
                 description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
                 example: 1,
+            },
+            phone: {
+                type: 'string',
+                description: 'The user\'s phone number',
+                example: '123-456-7890',
             },
             avatar: {
                 type: 'string',
