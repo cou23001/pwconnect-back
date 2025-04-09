@@ -92,8 +92,26 @@ const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL;
  *                   example: 'def50200f2f3d1d4b8b9e6c2...'
  *       400:
  *         description: User already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'User already exists'
  *       500:
  *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Internal server error'
 */
 const register = async (req, res) => {
   const session = await mongoose.startSession();
