@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const TokenMetadata = require('../models/tokenMetadata');
 const argon2 = require('argon2');
 const { partialUserSchema } = require('../validators/user');
 const mongoose = require('mongoose');
@@ -376,23 +377,64 @@ const updateUser = async (req, res) => {
  *                    example: Internal Server Error
  */
 const deleteUser = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     const { id } = req.params;
+
     // Validate the user ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).send({ error: 'Invalid ID format' });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ error: 'Invalid ID format' });
     }
 
-    // Find the user by ID and delete
-    const user = await User.findByIdAndDelete(id);
+    // Find and delete the user
+    const user = await User.findByIdAndDelete(id, { session });
     if (!user) {
-      return res.status(404).send({ error: 'User not found' });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: 'User not found' });
     }
-    res.json(200).send({ message: 'User deleted successfully', data: user });
+
+    // Delete associated token metadata
+    const tkMetaData = await TokenMetadata.deleteMany({ userId: id }).session(session);
+    if (!tkMetaData) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: 'Token metadata not found' });
+    }
+
+    // Delete from S3 if avatar is custom
+    const avatarUrl = user.avatar;
+    const isCustomS3Avatar =
+      avatarUrl &&
+      avatarUrl.startsWith("https://") &&
+      avatarUrl.includes("s3.amazonaws.com") &&
+      !avatarUrl.includes("avatar/default");
+
+    if (isCustomS3Avatar) {
+      try {
+        await deleteFromS3(avatarUrl);
+      } catch (s3Error) {
+        console.error(`Failed to delete avatar for user ${user._id}:`, s3Error);
+        // Non-critical failure: don't rollback DB, just log it
+      }
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json({ message: 'User deleted successfully', data: user });
+
   } catch (error) {
-    console.error(error);
-    res.status(500).send({ error: 'Internal Server Error' });
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Delete user error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-}
+};
+
 
 module.exports = { getUsers, getUserById, deleteUser, updateUser };

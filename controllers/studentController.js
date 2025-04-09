@@ -1055,11 +1055,8 @@ const deleteStudent = async (req, res) => {
         : null;
 
       if (user) {
-        //console.log("User data:", user);
         userAvatarUrl = user?.avatar; // save the avatar URL
       }
-
-      //console.log("User avatar URL before transaction:", userAvatarUrl); // Log avatar URL before session
 
       const tkMetaData = await TokenMetadata.findOne({
         userId: student.userId,
@@ -1092,16 +1089,13 @@ const deleteStudent = async (req, res) => {
       session.endSession();
       done = true;
 
-      // Log before checking the condition
-      //console.log("Checking if we need to delete avatar from S3:");
-
+      //Checking if we need to delete avatar from S3
       if (
         userAvatarUrl &&
         userAvatarUrl.startsWith("https://") &&
         userAvatarUrl.includes("s3.amazonaws.com") &&
         !userAvatarUrl.includes("avatar/default")
       ) {
-        //console.log("Deleting avatar from S3:", userAvatarUrl);
         await deleteFromS3(userAvatarUrl).catch((err) => {
           console.error(`Failed to delete avatar for user ${user._id}:`, err);
         });
@@ -1121,8 +1115,6 @@ const deleteStudent = async (req, res) => {
       await session.abortTransaction();
       session.endSession();
       retryCount++;
-
-      //console.warn(`Transaction attempt ${retryCount} failed:`, error.message);
 
       if (retryCount >= MAX_RETRIES) {
         return res.status(500).json({
