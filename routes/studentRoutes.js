@@ -88,8 +88,7 @@ router.put(
 router.delete(
   "/students/:id",
   authenticate,
-  authorize([1, 10]),
-  validateOwnership,
+  authorize([10]),
   deleteStudent
 );
 
