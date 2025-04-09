@@ -24,6 +24,11 @@ module.exports = {
           description: 'The user\'s email address',
           example: 'john.doe@example.com',
         },
+        type: {
+          type: 'number',
+          description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
+          example: 1,
+        },
         phone: {
           type: 'string',
           description: 'The user\'s phone number',
@@ -33,11 +38,6 @@ module.exports = {
           type: 'string',
           format: 'password',
           description: 'The user\'s password',
-        },
-        type: {
-          type: 'number',
-          description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
-          example: 1,
         },
         avatar: {
           type: 'string',
