@@ -2,6 +2,10 @@ const User = require('../models/user');
 const argon2 = require('argon2');
 const { partialUserSchema } = require('../validators/user');
 const mongoose = require('mongoose');
+const { uploadToS3, deleteFromS3 } = require("../utils/upload");
+const dotenv = require("dotenv");
+dotenv.config();
+const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
 
 // Hash a password
 const hashPassword = async (password) => {
@@ -127,41 +131,43 @@ const getUserById = async (req, res) => {
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file to upload as the user's avatar.
  *               firstName:
  *                 type: string
  *                 description: The user's first name.
+ *                 example: John
  *               lastName:
  *                 type: string
  *                 description: The user's last name.
+ *                 example: Doe
  *               email:
  *                 type: string
  *                 format: email
  *                 description: The user's email address.
+ *                 example: john@example.com
  *               type:
  *                 type: number
  *                 description: The user's type (1 = Student, 10 = Admin, 11 = Instructor).
- *               avatar:
+ *                 example: 1
+ *               phone:
  *                 type: string
- *                 format: url
- *                 description: The URL of the user's avatar image.
- *               password:
+ *                 description: The user's phone number.
+ *                 example: 123-456-7890
+ *               newPassword:
  *                 type: string
  *                 description: The new password.
+ *                 example: newpassword123
  *               currentPassword:
  *                 type: string
  *                 description: The current password (required if updating the password).
- *             example:
- *               firstName: John
- *               lastName: Doe
- *               email: j@doe.com
- *               type: 1
- *               avatar: https://example.com/avatar.jpg
- *               password: newpassword123
- *               currentPassword: oldpassword123
+ *                 example: oldpassword123
  *     responses:
  *       200:
  *         description: The updated user object (password excluded).
@@ -212,18 +218,32 @@ const getUserById = async (req, res) => {
  */
 const updateUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, currentPassword, type } = req.body;
     const { id } = req.params;
-
     // Validate the user ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
           return res.status(400).send({ error: 'Invalid ID format' });
     }
 
-    // Validate the request body
-    const { error } = partialUserSchema.validate(req.body);
-    if (error) {
-      return res.status(400).send({ message: error.details[0].message });
+    // 2. Handle file upload if present
+    let oldAvatarUrl = null;
+    if (req.file) {
+      // Validate type (redundant check)
+      const validTypes = ["image/jpeg", "image/png"];
+      if (!validTypes.includes(req.file.mimetype)) {
+        return res.status(400).json({ message: "Invalid file type" });
+      }
+      // Check if the file is too large
+      if (req.file.size > 2 * 1024 * 1024) {
+        // 2MB limit
+        return res.status(400).json({ message: "File size exceeds limit" });
+      }
+      // Store old avatar URL for cleanup
+      oldAvatarUrl = user.avatar;
+
+      // Upload new avatar
+      const newAvatarUrl = await uploadToS3(req.file);
+      req.body.user = req.body.user || {};
+      req.body.user.avatar = newAvatarUrl;
     }
 
     // Find the user by ID
@@ -232,8 +252,25 @@ const updateUser = async (req, res) => {
       return res.status(404).send({ message: 'User not found' });
     }
 
+    // Validate the request body
+    const { error, value } = partialUserSchema.validate(req.body);
+    if (error) {
+      return res.status(400).send({ message: error.details[0].message });
+    }
+
+    const { firstName, lastName, email, newPassword, currentPassword, type, phone } = value;
+
+
+    // If the user is trying to update their email, check if it already exists
+    if (email && email !== user.email) {
+      const existing = await User.findOne({ email });
+      if (existing) {
+        return res.status(400).send({ message: 'Email already exists' });
+      }
+    }
+
     // If the user wants to change the password, verify the current password
-    if (password) {
+    if (newPassword) {
       if (!currentPassword) {
         return res.status(400).send({ message: 'Current password is required' });
       }
@@ -246,7 +283,7 @@ const updateUser = async (req, res) => {
       }
 
       // Hash the new password
-      const hashedPassword = await hashPassword(password);
+      const hashedPassword = await hashPassword(newPassword);
       user.password = hashedPassword;
     }
 
@@ -255,6 +292,7 @@ const updateUser = async (req, res) => {
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
     if (type) user.type = type;
+    if (phone) user.phone = phone;
 
     // Save the updated user
     const updatedUser = await user.save();
@@ -262,6 +300,15 @@ const updateUser = async (req, res) => {
     // Exclude the hashedPassword from the response
     const userResponse = updatedUser.toObject();
     delete userResponse.password;
+
+    // 8. Cleanup old avatar AFTER successful commit
+    if (oldAvatarUrl && oldAvatarUrl !== DEFAULT_AVATAR_URL) {
+      try {
+        await deleteFromS3(oldAvatarUrl);
+      } catch (err) {
+        console.error("Error deleting old avatar (non-critical):", err);
+      }
+    }
 
     res.json({ message: 'User updated successfully', data: userResponse });
   } catch (error) {

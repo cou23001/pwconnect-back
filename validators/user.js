@@ -1,11 +1,17 @@
 // validators/user.js
 const Joi = require('joi');
+const mongoose = require('mongoose');
+// Load environment variables
+const dotenv = require('dotenv');
+dotenv.config();
+const defaultAvatarUrl = process.env.DEFAULT_AVATAR_URL;
+
 
 // User Schema
 const userSchema = Joi.object({
     firstName: Joi.string().trim().optional(),
     lastName: Joi.string().trim().optional(),
-    email: Joi.string().email().required().messages({
+    email: Joi.string().email().trim().required().messages({
         'string.email': 'Email must be valid',
         'any.required': 'Email is required',
     }),
@@ -22,8 +28,9 @@ const userSchema = Joi.object({
             'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
     }),
     // add a default url value for avatar
-    avatar: Joi.string().default('https://example.com/default-avatar.png').messages({
+    avatar: Joi.string().uri().default(defaultAvatarUrl).messages({
         'string.base': 'Avatar must be a string',
+        'string.uri': 'Avatar must be a valid URL',
     }),
 });
 
@@ -31,11 +38,14 @@ const userSchema = Joi.object({
 const partialUserSchema = Joi.object({
     firstName: Joi.string().trim().optional(),
     lastName: Joi.string().trim().optional(),
-    email: Joi.string().email().optional().messages({
+    email: Joi.string().email().trim().optional().messages({
         'string.email': 'Email must be valid',
     }),
-    password: Joi.string().min(8).optional().messages({
-        'string.min': 'Password must be at least 8 characters',
+    currentPassword: Joi.string().min(8).optional().messages({
+        'string.min': 'Current password must be at least 8 characters',
+    }),
+    newPassword: Joi.string().min(8).optional().messages({
+        'string.min': 'New password must be at least 8 characters',
     }),
     type: Joi.number().valid(1, 10, 11).default(1).messages({
         'number.base': 'Type must be a number',
@@ -46,8 +56,9 @@ const partialUserSchema = Joi.object({
             'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
     }),
     // add a default url value for avatar
-    avatar: Joi.string().default('https://example.com/default-avatar.png').messages({
+    avatar: Joi.string().uri().default(defaultAvatarUrl).messages({
         'string.base': 'Avatar must be a string',
+        'string.uri': 'Avatar must be a valid URL',
     }),
 });
 
