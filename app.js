@@ -24,7 +24,6 @@ if (process.env.NODE_ENV === 'development') {
 const app = express();
 
 const allowedOrigins = [
-  BACKEND_PROD_URL, // Backend production URL
   FRONTEND_DEV_URL, // Frontend development URL
   FRONTEND_DEV_URL_ALT, // Frontend development URL Alternative
   FRONTEND_PROD_URL, // Frontend production URL      
