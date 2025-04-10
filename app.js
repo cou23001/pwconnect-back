@@ -26,7 +26,8 @@ const app = express();
 const allowedOrigins = [
   FRONTEND_DEV_URL, // Frontend development URL
   FRONTEND_DEV_URL_ALT, // Frontend development URL Alternative
-  FRONTEND_PROD_URL, // Frontend production URL      
+  FRONTEND_PROD_URL, // Frontend production URL   
+  BACKEND_PROD_URL, // Backend production URL   
 ];
 
 app.use(cors({
