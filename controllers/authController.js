@@ -526,15 +526,20 @@ const refreshToken = async (req, res) => {
   }
 
   try {
-    let user;
+    let decoded;
     try {
-      user = verifyRefreshToken(refreshToken);
+      decoded = verifyRefreshToken(refreshToken);
     } catch (error) {
-      console.error('Token verification failed:', error.message || error);
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ error: 'Invalid or expired token--' });
     }
-    if (!user?.id) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+    if (!decoded?.id) {
+      return res.status(401).json({ error: 'Invalid or expired token**' });
+    }
+
+    // Fetch full user info to include in new access token
+    const user = await User.findById(decoded.id).select('id email type');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
     // Validate against hashed DB token
