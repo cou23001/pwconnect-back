@@ -983,9 +983,31 @@ const updateStudent = async (req, res, next) => {
  *             schema:
  *               type: object
  *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Student deleted"
+ *                   example: "Student and linked data deleted"
+ *                 deletedIds:
+ *                   type: object
+ *                   properties:
+ *                     studentId:
+ *                       type: string
+ *                       description: The ID of the deleted student
+ *                       example: "5f3f9c5f6d7a0f0021e9d4b7"
+ *                     userId:
+ *                       type: string
+ *                       description: The ID of the deleted user
+ *                       example: "5f3f9c5f6d7a0f0021e9d4b7"
+ *                     addressId:
+ *                       type: string
+ *                       description: The ID of the deleted address
+ *                       example: "5f3f9c5f6d7a0f0021e9d4b7"
+ *                     tokenMetadataId:
+ *                       type: string
+ *                       description: The ID of the deleted token metadata
+ *                       example: "5f3f9c5f6d7a0f0021e9d4b7"
  *       400:
  *         description: Invalid student ID
  *         content:
