@@ -63,8 +63,8 @@ router.get(
   getInstructorsByWardId
 );
 
-// PATCH /users/:id
-router.patch(
+// PUT /users/:id
+router.put(
   "/users/:id",
   upload.single("avatar"),
   uploadErrors,
