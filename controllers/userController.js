@@ -412,7 +412,7 @@ const updateUser = async (req, res) => {
       return res.status(400).send({ message: error.details[0].message });
     }
 
-    const { firstName, lastName, email, newPassword, currentPassword, type, phone } = value;
+    const { firstName, lastName, email, newPassword, currentPassword, wardId, type, phone } = value;
 
 
     // If the user is trying to update their email, check if it already exists
@@ -445,6 +445,7 @@ const updateUser = async (req, res) => {
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
+    if (wardId) user.wardId = wardId;
     if (type) user.type = type;
     if (phone) user.phone = phone;
 
