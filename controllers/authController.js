@@ -343,6 +343,7 @@ const login = async (req, res) => {
         id: user._id,
         email: user.email,
         name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'No name set',
+        type: user.type,
       },
       ...(!isWebClient && { refreshToken }), // Only for non-web clients
     });
@@ -703,19 +704,10 @@ const logout = async (req, res) => {
 // Get the user profile when authenticated
 /** 
  * @swagger
- * components:
- *   securitySchemes:
- *     bearerAuth:
- *       type: http
- *       scheme: bearer
- *       bearerFormat: JWT
- *
  * /api/auth/profile:
  *   get:
  *     summary: Get user profile
  *     tags: [Auth]
- *     security:
- *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: User profile retrieved successfully
@@ -727,23 +719,77 @@ const logout = async (req, res) => {
  *                 message:
  *                   type: string
  *                   description: User profile retrieved successfully message
+ *                   example: 'You are authenticated'
  *                 user:
  *                   type: object
  *                   description: User object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: User ID
+ *                       example: '60d5ec49f1b2c8a3f4e8b8c1'
+ *                     email:
+ *                       type: string
+ *                       description: User email
+ *                       example: user@example.com
+ *                     type:
+ *                       type: number
+ *                       description: User type (1 = Student, 10 = Admin, 11 = Instructor)
+ *                       example: 1
+ *                     avatar:
+ *                       type: string
+ *                       description: User avatar URL
+ *                       example: 'https://example.com/avatar.jpg'
+ *                     createdAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: User creation date
+ *                       example: '2023-10-01T12:00:00Z'
+ *                     updatedAt:
+ *                       type: string
+ *                       format: date-time
+ *                       description: User update date
+ *                       example: '2023-10-01T12:00:00Z'
  *       401:
  *         description: Unauthorized
 */
 const profile = async (req, res) => {
-  const userType = req.user.type;
-  // If user type is 1, return only the student profile
-  if (userType === 1) {
-    // Populate the student data
-    const student = await Student.findOne({ userId: req.user.id }).populate('userId').populate('addressId');
-    return res.json({ message: 'You are authenticated', student });
-  }
-  // If user type is 10 or 11, return the full user profile
-  if (userType === 10 || userType === 11) {
-    return res.json({ message: 'You are authenticated', user: req.user });
+  try {
+    // 1. Get access token from the Authorization header
+    const authHeader = req.headers['authorization'];
+    if (!authHeader?.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Missing or malformed Authorization header' });
+    }
+    
+    const accessToken = authHeader.split(' ')[1];
+    if (!accessToken) {
+      return res.status(401).json({ error: 'Access token is missing' });
+    }
+
+    // 2. Verify access token and extract user ID
+    let userId;
+    try {
+      const decoded = verifyAccessToken(accessToken);
+      userId = decoded.id;
+    } catch (err) {
+      console.error('Profile retrieval failed: Invalid access token', err);
+      return res.status(401).json({ error: 'Invalid access token' });
+    }
+
+    // 3. Find user in the database
+    const user = await User.findById(userId).select('-password'); // Exclude password field
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // 4. Respond with user profile
+    res.status(200).json({
+      message: 'You are authenticated',
+      user,
+    });
+  } catch (error) {
+    console.error('Profile retrieval error:', error.message || error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };
 

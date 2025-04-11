@@ -25,13 +25,18 @@ function authenticate(req, res, next) {
 function authorize(types = []) {
   return async (req, res, next) => {
     try {
+      // 1. Check if user is authenticated
       if (!req.user?.id) {
         return res.status(401).json({ message: "Authentication required" });
       }
       // 1. Check if user exists in the database by ObjectId
       const user = await User.findById(req.user.id);
       
-      if (!user || !types.includes(user.type)) {
+      if (!user) {
+        return res.status(403).json({ message: "User doesn't exist" });
+      }
+
+      if (!types.includes(user.type)) {
         return res.status(403).json({ message: "Unauthorized access" });
       }
 
