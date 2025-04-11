@@ -133,6 +133,74 @@ const getUserById = async (req, res) => {
 
 /**
  * @swagger
+ * /api/users/wards/{wardId}:
+ *   get:
+ *     summary: Get users by ward ID
+ *     description: Retrieve all users associated with a specific ward ID.
+ *     tags: [Users, Wards]
+ *     parameters:
+ *       - in: path
+ *         name: wardId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the ward to retrieve users from
+ *     responses:
+ *       200:
+ *         description: List of users in the specified ward
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Users found for this ward
+ *                 users:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid ward ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid ward ID format
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal Server Error
+ */
+
+const getUsersByWardId = async (req, res) => {
+  try {
+    const { wardId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(wardId)) {
+      return res.status(400).send({ error: 'Invalid ward ID format' });
+    }
+
+    const users = await User.find({ wardId: wardId }).select('-hashedPassword');
+
+    res.status(200).json({ message: 'Users found for this ward', users });
+  } catch (error) {
+    console.error("Error fetching users by ward:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
+/**
+ * @swagger
  * /api/users/{id}:
  *   put:
  *     summary: Update a user by ID
@@ -437,4 +505,4 @@ const deleteUser = async (req, res) => {
 };
 
 
-module.exports = { getUsers, getUserById, deleteUser, updateUser };
+module.exports = { getUsers, getUserById, deleteUser, updateUser, getUsersByWardId };

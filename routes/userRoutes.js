@@ -4,6 +4,7 @@ const {
   getUserById,
   deleteUser,
   updateUser,
+  getUsersByWardId
 } = require("../controllers/userController");
 const { authenticate, authorize } = require("../middleware/authenticate");
 const validateOwnership = require("../middleware/validateOwnership");
@@ -41,6 +42,15 @@ router.get(
   authorize([10]),
   validateOwnership,
   getUserById
+);
+
+// GET /users/ward/:wardId
+router.get(
+  "/users/ward/:wardId",
+  authenticate,
+  authorize([10]),
+  validateOwnership,
+  getUsersByWardId
 );
 
 // PUT /users/:id
