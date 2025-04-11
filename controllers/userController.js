@@ -199,6 +199,75 @@ const getUsersByWardId = async (req, res) => {
   }
 };
 
+
+/**
+ * @swagger
+ * /api/instructors/wards/{wardId}:
+ *   get:
+ *     summary: Get instructors by ward ID
+ *     description: Retrieve all instructors (users with type 11) associated with a specific ward ID.
+ *     tags: [Instructors, Wards]
+ *     parameters:
+ *       - in: path
+ *         name: wardId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: ID of the ward to retrieve instructors from
+ *     responses:
+ *       200:
+ *         description: List of instructors in the specified ward
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Instructors found for this ward
+ *                 instructors:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       400:
+ *         description: Invalid ward ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid ward ID format
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Internal Server Error
+ */
+
+const getInstructorsByWardId = async (req, res) => {
+  try {
+    const { wardId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(wardId)) {
+      return res.status(400).send({ error: 'Invalid ward ID format' });
+    }
+
+    const instructors = await User.find({ wardId: wardId, type: 11 }).select('-hashedPassword');
+
+    res.status(200).json({ message: 'Instructors found for this ward', instructors });
+  } catch (error) {
+    console.error("Error fetching instructors by ward:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 /**
  * @swagger
  * /api/users/{id}:
@@ -505,4 +574,4 @@ const deleteUser = async (req, res) => {
 };
 
 
-module.exports = { getUsers, getUserById, deleteUser, updateUser, getUsersByWardId };
+module.exports = { getUsers, getUserById, deleteUser, updateUser, getUsersByWardId, getInstructorsByWardId };

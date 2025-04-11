@@ -29,6 +29,9 @@ module.exports = {
           description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
           example: 1,
         },
+        ward: {
+            $ref: '#/components/schemas/Ward',
+        },
         phone: {
           type: 'string',
           description: 'The user\'s phone number',

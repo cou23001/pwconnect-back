@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
     enum: [1, 10, 11],
     required: true,
   },
+  wardId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ward',
+  },
   avatar: {
     type: String,
   },

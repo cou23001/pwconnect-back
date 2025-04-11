@@ -53,6 +53,15 @@ router.get(
   getUsersByWardId
 );
 
+// GET /users/instructor/ward/:wardId
+router.get(
+  "/users/instructor/ward/:wardId",
+  authenticate,
+  authorize([10]),
+  validateOwnership,
+  getInstructorsByWardId
+);
+
 // PUT /users/:id
 router.put(
   "/users/:id",
