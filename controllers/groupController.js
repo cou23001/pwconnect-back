@@ -113,7 +113,20 @@ const getGroupById = async (req, res) => {
       return res.status(400).json({ error: 'Invalid ID format' });
     }
 
-    const group = await Group.findById(id).populate('wardId').populate('instructorId'); // Populates stake and ward
+    const group = await Group.findById(id).populate({
+      path: 'wardId',
+      populate: {
+        path: 'stakeId'
+      }
+    })
+    .populate({
+      path: 'instructorId',
+      populate: {
+        path: 'userId', 
+        model: 'User'   
+      }
+    });
+
     if (!group) {
       return res.status(404).json({ message: 'Group not found' });
     }
