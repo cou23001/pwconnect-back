@@ -531,10 +531,10 @@ const refreshToken = async (req, res) => {
     try {
       decoded = verifyRefreshToken(refreshToken);
     } catch (error) {
-      return res.status(401).json({ error: 'Invalid or expired token--' });
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
     if (!decoded?.id) {
-      return res.status(401).json({ error: 'Invalid or expired token**' });
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
     // Fetch full user info to include in new access token

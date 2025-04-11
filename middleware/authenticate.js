@@ -17,7 +17,7 @@ function authenticate(req, res, next) {
     req.user = verifyAccessToken(token); // Attach decoded user
     next(); // Proceed if valid
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired tokenXX' });
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
 }
 
