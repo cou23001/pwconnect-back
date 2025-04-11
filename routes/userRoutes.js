@@ -4,7 +4,8 @@ const {
   getUserById,
   deleteUser,
   updateUser,
-  getUsersByWardId
+  getUsersByWardId,
+  getInstructorsByWardId
 } = require("../controllers/userController");
 const { authenticate, authorize } = require("../middleware/authenticate");
 const validateOwnership = require("../middleware/validateOwnership");
