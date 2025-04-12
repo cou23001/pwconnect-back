@@ -3,6 +3,7 @@ const express = require("express");
 const {
   getAllStudents,
   getStudentById,
+  getStudentsByWard,
   createStudent,
   updateStudent,
   deleteStudent,
@@ -43,6 +44,17 @@ router.get(
   authorize([1, 10]),
   validateOwnership,
   getStudentById
+);
+
+// GET /students/wards/:wardId
+// Route requires authentication and authorization for types 1 and 10.
+// It checks if the user owns the data (or is admin).
+router.get(
+  "/students/wards/:wardId",
+  authenticate,
+  authorize([1, 10]),
+  validateOwnership,
+  getStudentsByWard
 );
 
 // POST /students

@@ -177,10 +177,10 @@ const getAttendanceByGroup = async (req, res) => {
       .populate('studentId');
 
     if (!attendances || attendances.length === 0) {
-      return res.status(404).json({ message: 'Not found' });
+      return res.status(200).json({ data: [], message: 'Not found' });
     }
 
-    res.status(200).json(attendances);
+    res.status(200).json({data: attendances, message: "Success"});
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
