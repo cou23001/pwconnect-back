@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const Instructor = require('../models/instructor');
 const Ward = require('../models/ward');
 const { groupSchema, groupUpdateSchema } = require('../validators/group');
+const { updateSessionSchema } = require('../validators/session');
 
 /**
  * @swagger
@@ -239,9 +240,13 @@ const createGroup = async (req, res) => {
       return res.status(404).json({ error: 'Ward not found' });
     }
 
+    // Generate sessions
+    const sessions = generateSessions();
+
     // Create the group
     const newGroup = await Group.create({
       ...value,
+      sessions,
     });
 
     res.status(201).json({ message: 'Group created successfully', newGroup });
@@ -541,6 +546,220 @@ const deleteGroup = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/groups/sessions/{groupId}/{sessionNumber}:
+ *   patch:
+ *     summary: Update a session for a Group
+ *     tags: [Groups]
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Group ID
+ *       - in: path
+ *         name: sessionNumber
+ *         schema:
+ *           type: integer
+ *         required: true
+ *         description: Session number (1-25)
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The date of the session
+ *                 example: "2025-05-10"
+ *               topic:
+ *                 type: string
+ *                 description: The topic covered in the session
+ *                 example: "Introduction to verb conjugation"
+ *               completed:
+ *                 type: boolean
+ *                 description: Whether the session was completed
+ *                 example: true
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes about the session
+ *                 example: "Students struggled with verb conjugation"
+ *     responses:
+ *       200:
+ *         description: Session updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Session updated successfully
+ *                 session:
+ *                   $ref: '#/components/schemas/Session'
+ *       400:
+ *         description: Invalid Group ID or Session Number
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid Group ID or Session Number
+ *       404:
+ *         description: Group or Session not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Group or Session not found
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to update session
+ */
+const updateSession = async (req, res) => {
+  const { groupId, sessionNumber } = req.params;
+
+  // Validate the groupId and sessionNumber
+  const isValidGroupId = mongoose.Types.ObjectId.isValid(groupId);
+  const isValidSessionNumber = !isNaN(sessionNumber) && parseInt(sessionNumber) > 0 && parseInt(sessionNumber) <= 25;
+  if (!isValidGroupId || !isValidSessionNumber) {
+    return res.status(400).json({ error: 'Invalid groupId or sessionNumber' });
+  }
+  // Validate the request body
+  const { value, error } = updateSessionSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ error: error.details[0].message });
+  }
+
+  try {
+    const group = await Group.findById(groupId);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    const session = group.sessions.find(s => s.number === parseInt(sessionNumber));
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+
+    Object.assign(session, value); // merge changes
+    await group.save();
+
+    res.status(200).json(session);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update session' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/groups/sessions/{groupId}:
+ *   get:
+ *     summary: Get all sessions for a Group
+ *     tags: [Groups]
+ *     parameters:
+ *       - in: path
+ *         name: groupId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Group ID
+ *     responses:
+ *       200:
+ *         description: A list of sessions for the specified Group
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Sessions found
+ *                 sessions:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Session'
+ *       400:
+ *         description: Invalid Group ID format
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Invalid Group ID format
+ *       404:
+ *         description: Group not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Group not found
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to fetch sessions
+ */
+const getGroupSessions = async (req, res) => {
+  try {
+    // Validate the Group ID
+    const { groupId } = req.params;
+    const isValidId = mongoose.Types.ObjectId.isValid(groupId);
+    if (!isValidId) {
+      return res.status(400).json({ error: 'Invalid Group ID format' });
+    }
+
+    // Find the group by ID
+    const group = await Group.findById(req.params.groupId);
+    if (!group) return res.status(404).json({ error: 'Group not found' });
+
+    res.status(200).json({ message: 'Sessions found', sessions: group.sessions });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch sessions' });
+  }
+};
+
+
+const generateSessions = () => {
+  const sessions = [];
+  const sessionCount = 25;
+
+  for (let i = 0; i < sessionCount; i++) {
+    sessions.push({
+      number: i + 1,
+      date: null,
+      completed: false,
+      topic: '',
+      notes: ''
+    });
+  }
+
+  return sessions;
+};
+
 module.exports = {
   createGroup,
   getGroups,
@@ -548,4 +767,6 @@ module.exports = {
   updateGroup,
   deleteGroup,
   getGroupsByWard,
+  updateSession,
+  getGroupSessions,
 };

@@ -1,5 +1,7 @@
 // schemas/group.js
 
+const session = require("./session");
+
 module.exports = {
     Group: {
       type: 'object',
@@ -48,6 +50,11 @@ module.exports = {
           format: 'objectid',
           description: 'The id of the instructor',
           example: '5f3f9c5f6d7a0f0021e9d4b7',
+        },
+        sessions: {
+          type: 'array',
+          items: session.Session,
+          description: 'The list of sessions associated with the Group',
         },
         createdAt: {
           type: 'string',

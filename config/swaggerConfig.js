@@ -15,6 +15,7 @@ const studentSchema = require('../schemas/student');
 const attendanceSchema = require('../schemas/attendance');
 const registrationSchema = require('../schemas/registration');
 const termSchema = require('../schemas/term');
+const sessionSchema = require('../schemas/session');
 
 const swaggerOptions = {
   definition: {
@@ -50,7 +51,8 @@ const swaggerOptions = {
         Address: addressSchema.Address,
         Student: studentSchema.Student,
         Attendance: attendanceSchema.Attendance,
-        Registration: registrationSchema.Registration
+        Registration: registrationSchema.Registration,
+        Session: sessionSchema.Session,
       },
     },
     security: [{ bearerAuth: [] }]
