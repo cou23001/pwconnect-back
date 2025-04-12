@@ -33,6 +33,15 @@ const groupSchema = new Schema(
       ref: "Instructor", // Reference to the Instructor model
       required: true,
     },
+    sessions: [
+      {
+        number: { type: Number, required: true, min: 1, max: 25}, // 1 to 25
+        date: { type: Date },
+        topic: { type: String }, 
+        completed: { type: Boolean, default: false }, 
+        notes: { type: String }, 
+      }
+    ]
   },
   {
     timestamps: true,

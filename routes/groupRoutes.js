@@ -1,7 +1,13 @@
 // routes/groupRoutes.js
 const express = require('express');
 const router = express.Router();
-const { getGroups, getGroupById, createGroup, updateGroup, deleteGroup, getGroupsByWard } = require('../controllers/groupController');
+const { getGroups, 
+    getGroupById, 
+    createGroup, updateGroup, deleteGroup, 
+    getGroupsByWard,
+    updateSession,
+    getGroupSessions,
+} = require('../controllers/groupController');
 const { authenticate, authorize } = require('../middleware/authenticate');
 
 // GET /groups
@@ -21,5 +27,14 @@ router.put('/groups/:id', authenticate, authorize([10]), updateGroup);
 
 // DELETE /groups/:id
 router.delete('/groups/:id', authenticate, authorize([10]), deleteGroup);
+
+// GET /groups/sessions
+router.get('/groups/sessions/:groupId', authenticate, authorize([10]), getGroupSessions);
+
+// PATCH /groups/sessions/:groupId/:sessionNumber
+router.patch('/groups/sessions/:groupId/:sessionNumber', authenticate, authorize([10]), updateSession);
+
+// Get All Sessions for a Group
+router.get('/groups/sessions/:groupId', authenticate, authorize([10]), getGroupSessions);
 
 module.exports = router;

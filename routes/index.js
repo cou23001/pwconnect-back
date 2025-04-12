@@ -14,6 +14,7 @@ const termRoutes = require('./termRoutes');
 const studentRoutes = require('./studentRoutes');
 const attendanceRoutes = require('./attendanceRoutes');
 const registrationRoutes = require('./registrationRoutes');
+const statRoutes = require('./statRoutes');
 
 const router = express.Router();
 
@@ -30,5 +31,6 @@ router.use('/api', addressRoutes);
 router.use('/api', studentRoutes);
 router.use('/api', attendanceRoutes);
 router.use('/api', registrationRoutes);
+router.use('/api', statRoutes);
 
 module.exports = router;
