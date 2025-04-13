@@ -13,6 +13,15 @@ const connectToDatabase = async () => {
   try {
     await mongoose.connect(uri);
     console.log('Connected to MongoDB');
+
+    mongoose.connection.on('disconnected', () => {
+      console.warn('MongoDB disconnected');
+    });
+
+    mongoose.connection.on('error', err => {
+      console.error('MongoDB connection error:', err);
+    });
+
   } catch (error) {
     console.error('Failed to connect to MongoDB:', error);
     process.exit(1);

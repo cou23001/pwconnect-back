@@ -378,6 +378,12 @@ const updateUser = async (req, res) => {
           return res.status(400).send({ error: 'Invalid ID format' });
     }
 
+    // Find the user by ID
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).send({ message: 'User not found' });
+    }
+
     // 2. Handle file upload if present
     let oldAvatarUrl = null;
     if (req.file) {
@@ -396,14 +402,8 @@ const updateUser = async (req, res) => {
 
       // Upload new avatar
       const newAvatarUrl = await uploadToS3(req.file);
-      req.body.user = req.body.user || {};
-      req.body.user.avatar = newAvatarUrl;
-    }
-
-    // Find the user by ID
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      req.body = req.body || {};
+      req.body.avatar = newAvatarUrl;
     }
 
     // Validate the request body
@@ -412,7 +412,7 @@ const updateUser = async (req, res) => {
       return res.status(400).send({ message: error.details[0].message });
     }
 
-    const { firstName, lastName, email, newPassword, currentPassword, wardId, type, phone } = value;
+    const { firstName, lastName, email, newPassword, currentPassword, wardId, type, avatar, phone } = value;
 
 
     // If the user is trying to update their email, check if it already exists
@@ -431,7 +431,6 @@ const updateUser = async (req, res) => {
 
       // Compare the provided current password with the stored hashed password
       const isPasswordValid = await comparePassword(currentPassword, user.password);
-      //const isPasswordValid = await bcrypt.compare(currentPassword, user.hashedPassword);
       if (!isPasswordValid) {
         return res.status(401).send({ message: 'Invalid current password' });
       }
@@ -440,7 +439,6 @@ const updateUser = async (req, res) => {
       const hashedPassword = await hashPassword(newPassword);
       user.password = hashedPassword;
     }
-
     // Update other fields
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
@@ -448,6 +446,7 @@ const updateUser = async (req, res) => {
     if (wardId) user.wardId = wardId;
     if (type) user.type = type;
     if (phone) user.phone = phone;
+    if (avatar) user.avatar = avatar;
 
     // Save the updated user
     const updatedUser = await user.save();

@@ -11,6 +11,8 @@ const { authenticate, authorize } = require("../middleware/authenticate");
 const validateOwnership = require("../middleware/validateOwnership");
 const router = express.Router();
 const uploadErrors = require("../middleware/uploadErrors");
+const formDataToJson = require("../middleware/formDataParser");
+
 
 const multer = require("multer");
 const memoryStorage = multer.memoryStorage(); // Store file in memory
@@ -71,6 +73,7 @@ router.put(
   authenticate,
   authorize([10]),
   validateOwnership,
+  formDataToJson,
   updateUser
 );
 
