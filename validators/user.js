@@ -47,7 +47,7 @@ const partialUserSchema = Joi.object({
     newPassword: Joi.string().min(8).optional().messages({
         'string.min': 'New password must be at least 8 characters',
     }),
-    type: Joi.number().valid(1, 10, 11).default(1).messages({
+    type: Joi.number().valid(1, 10, 11).optional().messages({
         'number.base': 'Type must be a number',
         'any.only': 'Type must be one of the following values: 1 (student), 10 (admin), 11(instructor)',
         'any.required': 'Type is required',
@@ -56,7 +56,7 @@ const partialUserSchema = Joi.object({
             'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
     }),
     // add a default url value for avatar
-    avatar: Joi.string().uri().default(defaultAvatarUrl).messages({
+    avatar: Joi.string().uri().optional().messages({
         'string.base': 'Avatar must be a string',
         'string.uri': 'Avatar must be a valid URL',
     }),
