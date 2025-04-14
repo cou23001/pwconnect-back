@@ -1480,7 +1480,6 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
-// GET /students/user/:userId
 /**
  * @swagger
  * /api/students/user/{userId}:
@@ -1532,6 +1531,7 @@ const getStudentByUserId = async (req, res) => {
       }
     })
     .populate('addressId');
+    
     if (!student) {
       return res.status(404).json({ error: 'Student not found' });
     }

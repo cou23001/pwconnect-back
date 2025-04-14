@@ -48,13 +48,12 @@ router.get(
 );
 
 // GET /students/user/:userId
-// Route requires authentication and authorization for types 1 and 10.
-// It checks if the user owns the data (or is admin).
 router.get(
   "/students/user/:userId",
   authenticate,
   authorize([1, 10]),
   getStudentByUserId
+);
 
 // GET /students/wards/:wardId
 // Route requires authentication and authorization for types 1 and 10.
@@ -107,11 +106,6 @@ router.put(
 
 // DELETE /students/:id
 // Route requires authentication and authorization for type 10 (admin).
-router.delete(
-  "/students/:id",
-  authenticate,
-  authorize([10]),
-  deleteStudent
-);
+router.delete("/students/:id", authenticate, authorize([10]), deleteStudent);
 
 module.exports = router;
