@@ -26,11 +26,11 @@ function authorize(types = []) {
   return async (req, res, next) => {
     try {
       // 1. Check if user is authenticated
-      if (!req.user?.id) {
+      if (!req.user?._id) {
         return res.status(401).json({ message: "Authentication required" });
       }
       // 1. Check if user exists in the database by ObjectId
-      const user = await User.findById(req.user.id);
+      const user = await User.findById(req.user._id);
       
       if (!user) {
         return res.status(403).json({ message: "User doesn't exist" });

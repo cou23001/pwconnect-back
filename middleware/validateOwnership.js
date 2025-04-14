@@ -6,7 +6,7 @@ async function validateStudentOwnership(req, res, next) {
   if (req.user.type === 10) return next(); // Admin bypass
   try {
     const resourceId = req.params.id;
-    const userId = req.user.id;
+    const userId = req.user._id;
 
     // Single query that checks both existence and ownership
     const student = await Student.findOne({
