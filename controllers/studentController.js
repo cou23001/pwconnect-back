@@ -347,6 +347,133 @@ const getStudentById = async (req, res) => {
 
 /**
  * @swagger
+ * /api/students/ward/{wardId}:
+ *   get:
+ *     summary: Get students by Ward ID (via User relationship)
+ *     description: Retrieve a list of students belonging to a specific ward by matching the wardId on the associated User document.
+ *     tags: [Student]
+ *     parameters:
+ *       - in: path
+ *         name: wardId
+ *         schema:
+ *           type: string
+ *           format: objectid
+ *         required: true
+ *         description: The ID of the Ward associated with the Students' User record
+ *     responses:
+ *       200:
+ *         description: A list of students associated with the ward via their user record
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Students retrieved successfully"
+ *                 data:
+ *                   type: array
+ *                   description: An array of student objects (potentially with populated user/address info)
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         format: objectid
+ *                       birthDate:
+ *                         type: string
+ *                         format: date
+ *                       language:
+ *                         type: string
+ *                       level:
+ *                         type: string
+ *                       churchMembership:
+ *                         type: string
+ *                       user:
+ *                         type: object
+ *                       address:
+ *                         type: object
+ *                       createdAt:
+ *                         type: string
+ *                         format: date-time
+ *                       updatedAt:
+ *                         type: string
+ *                         format: date-time
+ *       400:
+ *         description: Invalid Ward ID provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid Ward ID provided"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Internal server error"
+ */
+const getStudentsByWard = async (req, res) => {
+  try {
+    const { wardId } = req.params;
+
+    if (!wardId) {
+      return res.status(400).json({ message: "Ward ID parameter is required" });
+    }
+    if (!mongoose.isValidObjectId(wardId)) {
+      return res.status(400).json({ message: "Invalid Ward ID provided" });
+    }
+
+    const wardObjectId = new mongoose.Types.ObjectId(wardId);
+
+    const students = await Student.aggregate([
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'userId',
+          foreignField: '_id',
+          as: 'userDetails'
+        }
+      },
+      {
+        $match: {
+          'userDetails.wardId': wardObjectId
+        }
+      },
+      {
+        $unwind: '$userDetails'
+      },
+      {
+        $project: {
+          _id: 1,
+          birthDate: 1,
+          language: 1,
+          level: 1,
+          churchMembership: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          user: '$userDetails',
+        }
+      }
+    ]);
+
+    res.status(200).json({ message: "Students retrieved successfully", data: students });
+  } catch (error) {
+    console.error("Error fetching students by ward:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+
+/**
+ * @swagger
  * /api/students:
  *   post:
  *     summary: Create a new student
@@ -1419,6 +1546,7 @@ const getStudentByUserId = async (req, res) => {
 module.exports = {
   getAllStudents,
   getStudentById,
+  getStudentsByWard,
   createStudent,
   updateStudent,
   deleteStudent,
