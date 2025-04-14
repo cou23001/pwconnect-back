@@ -53,6 +53,7 @@ router.get(
   authenticate,
   authorize([1, 10]),
   getStudentByUserId
+);
 
 // GET /students/wards/:wardId
 // Route requires authentication and authorization for types 1 and 10.
