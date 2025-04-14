@@ -120,7 +120,13 @@ const getUsers = async (req, res) => {
  */
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-hashedPassword');
+    const user = await User.findById(req.params.id).select('-hashedPassword').populate({
+      path: 'wardId',
+      populate: {
+        path: 'stakeId'  // This populates the stake within the ward
+      }
+    });
+    
     if (!user) {
       return res.status(404).send({ message: 'User not found' });
     }
@@ -310,6 +316,10 @@ const getInstructorsByWardId = async (req, res) => {
  *                 type: number
  *                 description: The user's type (1 = Student, 10 = Admin, 11 = Instructor).
  *                 example: 1
+ *               wardId:
+ *                 type: string
+ *                 description: The ID of the ward associated with the user.
+ *                 example: 507f1f77bcf86cd799439011
  *               phone:
  *                 type: string
  *                 description: The user's phone number.
@@ -414,7 +424,6 @@ const updateUser = async (req, res) => {
 
     const { firstName, lastName, email, newPassword, currentPassword, wardId, type, avatar, phone } = value;
 
-
     // If the user is trying to update their email, check if it already exists
     if (email && email !== user.email) {
       const existing = await User.findOne({ email });
@@ -451,9 +460,12 @@ const updateUser = async (req, res) => {
     // Save the updated user
     const updatedUser = await user.save();
 
-    // Exclude the hashedPassword from the response
-    const userResponse = updatedUser.toObject();
-    delete userResponse.password;
+    const result = await User.findById(id).populate({
+      path: 'wardId',
+      populate: {
+        path: 'stakeId'  // This populates the stake within the ward
+      }
+    });
 
     // 8. Cleanup old avatar AFTER successful commit
     if (oldAvatarUrl && oldAvatarUrl !== DEFAULT_AVATAR_URL) {
@@ -464,7 +476,7 @@ const updateUser = async (req, res) => {
       }
     }
 
-    res.status(200).json({ message: 'User updated successfully', data: userResponse });
+    res.status(200).json({ message: 'User updated successfully', data: result });
   } catch (error) {
     console.error(error);
     res.status(500).send({ message: 'Internal Server Error' });

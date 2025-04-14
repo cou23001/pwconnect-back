@@ -147,6 +147,7 @@ const register = async (req, res) => {
       email, 
       password, 
       type, // 1 = Student, 10 = Admin, 11 = Instructor
+      wardId: null, // Set to null for now
       avatar: DEFAULT_AVATAR_URL || 'https://www.gravatar.com/avatar/default?d=identicon', // Default avatar URL
     });
     await user.save({ session });

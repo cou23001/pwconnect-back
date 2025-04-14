@@ -1,4 +1,3 @@
-const { deleteOne } = require("../models/user");
 const { example } = require("../validators/user");
 
 module.exports = {
@@ -27,15 +26,18 @@ module.exports = {
                 description: 'The user\'s email address',
                 example: 'joe@doe.com',
             },
+            phone: {
+                type: 'string',
+                description: 'The user\'s phone number',
+                example: '123-456-7890',
+            },
             type: {
                 type: 'number',
                 description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
                 example: 1,
             },
-            phone: {
-                type: 'string',
-                description: 'The user\'s phone number',
-                example: '123-456-7890',
+            wardId: {
+                $ref: '#/components/schemas/Ward',
             },
             avatar: {
                 type: 'string',

@@ -8,6 +8,7 @@ const {
   updateStudent,
   deleteStudent,
   uploadAvatar,
+  getStudentByUserId,
 } = require("../controllers/studentController");
 const { authenticate, authorize } = require("../middleware/authenticate");
 const validateOwnership = require("../middleware/validateOwnership");
@@ -45,6 +46,15 @@ router.get(
   validateOwnership,
   getStudentById
 );
+
+// GET /students/user/:userId
+// Route requires authentication and authorization for types 1 and 10.
+// It checks if the user owns the data (or is admin).
+router.get(
+  "/students/user/:userId",
+  authenticate,
+  authorize([1, 10]),
+  getStudentByUserId
 
 // GET /students/wards/:wardId
 // Route requires authentication and authorization for types 1 and 10.
