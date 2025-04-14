@@ -1542,6 +1542,104 @@ const getStudentByUserId = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/students/{studentId}/address:
+ *   put:
+ *     summary: Update a student's address ID
+ *     tags: [Student]
+ *     parameters:
+ *       - in: path
+ *         name: studentId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Student ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               addressId:
+ *                 type: string
+ *                 description: The new address ID to associate with the student.
+ *                 example: "507f1f77bcf86cd799439011"
+ *     responses:
+ *       200:
+ *         description: Student address updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student address updated"
+ *                 data:
+ *                   $ref: '#/components/schemas/Student'
+ *       400:
+ *         description: Invalid request body or missing fields
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid address ID"
+ *       404:
+ *         description: Student not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Error message"
+ */
+const updateStudentAddressId = async (req, res) => {
+  const { studentId } = req.params;
+  const { addressId } = req.body;
+
+  if (!mongoose.isValidObjectId(addressId)) {
+    return res.status(400).json({ message: 'Invalid address ID' });
+  }
+
+  if (!mongoose.isValidObjectId(studentId)) {
+    return res.status(400).json({ message: 'Invalid student ID' });
+  }
+
+  try {
+    const updatedStudent = await Student.findByIdAndUpdate(
+      studentId,
+      { addressId },
+      { new: true }
+    );
+
+    if (!updatedStudent) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+
+    res.json({ message: 'Student address updated', data: updatedStudent });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 
 module.exports = {
   getAllStudents,
@@ -1552,4 +1650,5 @@ module.exports = {
   deleteStudent,
   uploadAvatar,
   getStudentByUserId,
+  updateStudentAddressId,
 };
