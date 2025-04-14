@@ -277,7 +277,7 @@ const register = async (req, res) => {
  *                   type: object
  *                   description: User object
  *                   properties:
- *                     id:
+ *                     _id:
  *                       type: string
  *                       description: User ID
  *                       example: '60d5ec49f1b2c8a3f4e8b8c1'
@@ -359,7 +359,7 @@ const login = async (req, res) => {
       message: 'Login successful',
       accessToken,
       user: {
-        id: user._id,
+        _id: user._id,
         email: user.email,
         name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'No name set',
         type: user.type,
@@ -396,7 +396,7 @@ const login = async (req, res) => {
  *                   type: object
  *                   description: User object
  *                   properties:
- *                     id:
+ *                     _id:
  *                       type: string
  *                       description: User ID
  *                       example: '60d5ec49f1b2c8a3f4e8b8c1'
@@ -466,13 +466,13 @@ const validate = async (req, res) => {
     // 2. Verify access token
     let user;
     try {
-      user = verifyAccessToken(accessToken); // should return decoded token (e.g., { id, email, ... })
+      user = verifyAccessToken(accessToken); // should return decoded token (e.g., { _id, email, ... })
     } catch (err) {
       return res.status(401).json({ error: 'Invalid or expired access token' });
     }
 
     // 3. Check if user exists in the database
-    const existingUser = await User.findById(user.id);
+    const existingUser = await User.findById(user._id);
     if (!existingUser) {
       return res.status(401).json({ error: 'User not found' });
     }
@@ -493,8 +493,6 @@ const validate = async (req, res) => {
  *   post:
  *     summary: Refresh access and refresh token
  *     tags: [Auth]
- *     security:
- *       - bearerAuth: []  # Require Bearer Authentication
  *     responses:
  *       200:
  *         description: Access token refreshed successfully
@@ -574,18 +572,18 @@ const refreshToken = async (req, res) => {
     } catch (error) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
-    if (!decoded?.id) {
+    if (!decoded?._id) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
     // Fetch full user info to include in new access token
-    const user = await User.findById(decoded.id).select('id email type');
+    const user = await User.findById(decoded._id).select('id email type');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Validate against hashed DB token
-    const tokenMetadata = await TokenMetadata.findOne({ userId: user.id });
+    const tokenMetadata = await TokenMetadata.findOne({ userId: user._id });
     if (!tokenMetadata || !(await argon2.verify(tokenMetadata.refreshToken, refreshToken))) {
       return res.status(403).json({ error: 'Invalid or revoked tokens' });
     }
@@ -638,8 +636,6 @@ const refreshToken = async (req, res) => {
  *   post:
  *     summary: Logout user
  *     tags: [Auth]
- *     security:
- *       - bearerAuth: []  # Require Bearer Authentication
  *     responses:
  *       200:
  *         description: User logged out successfully
@@ -707,7 +703,7 @@ const logout = async (req, res) => {
     let userId;
     try {
       const decoded = verifyAccessToken(accessToken);
-      userId = decoded.id;
+      userId = decoded._id;
     } catch (err) {
       console.error('Logout failed: Invalid access token', err);
       return res.status(401).json({ error: 'Invalid access token' });
@@ -811,7 +807,7 @@ const profile = async (req, res) => {
     let userId;
     try {
       const decoded = verifyAccessToken(accessToken);
-      userId = decoded.id;
+      userId = decoded._id;
     } catch (err) {
       console.error('Profile retrieval failed: Invalid access token', err);
       return res.status(401).json({ error: 'Invalid access token' });

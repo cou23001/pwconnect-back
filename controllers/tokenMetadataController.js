@@ -17,8 +17,6 @@ const argon2 = require('argon2');
  *       - Retrieves token metadata by its ID and validates the refresh token.
  *       - Requires both a valid access token (Bearer) and refresh token.
  *     tags: [TokenMetadata]
- *     security:
- *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
