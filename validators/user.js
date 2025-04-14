@@ -36,30 +36,28 @@ const userSchema = Joi.object({
 
 // User Schema for partial updates
 const partialUserSchema = Joi.object({
-    firstName: Joi.string().trim().optional(),
-    lastName: Joi.string().trim().optional(),
-    email: Joi.string().email().trim().optional().messages({
+    firstName: Joi.string().trim().empty('').optional(),
+    lastName: Joi.string().trim().empty('').optional(),
+    email: Joi.string().email().trim().empty('').optional().messages({
         'string.email': 'Email must be valid',
     }),
-    currentPassword: Joi.string().min(8).optional().messages({
+    currentPassword: Joi.string().min(8).empty('').optional().messages({
         'string.min': 'Current password must be at least 8 characters',
     }),
-    newPassword: Joi.string().min(8).optional().messages({
+    newPassword: Joi.string().min(8).empty('').optional().messages({
         'string.min': 'New password must be at least 8 characters',
     }),
-    type: Joi.number().valid(1, 10, 11).optional().messages({
+    type: Joi.number().valid(1, 10, 11).empty('').optional().messages({
         'number.base': 'Type must be a number',
         'any.only': 'Type must be one of the following values: 1 (student), 10 (admin), 11(instructor)',
-        'any.required': 'Type is required',
     }),
-    phone: Joi.string().pattern(/^[0-9\-+() ]{7,15}$/).optional().messages({
-            'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
+    phone: Joi.string().pattern(/^[0-9\-+() ]{7,15}$/).empty('').optional().messages({
+        'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
     }),
-    // add a default url value for avatar
-    avatar: Joi.string().uri().optional().messages({
-        'string.base': 'Avatar must be a string',
+    avatar: Joi.string().uri().empty('').optional().messages({
         'string.uri': 'Avatar must be a valid URL',
     }),
+    wardId: Joi.string().empty('').optional(),
 });
 
 module.exports = {

@@ -1353,6 +1353,69 @@ const uploadAvatar = async (req, res) => {
   }
 };
 
+// GET /students/user/:userId
+/**
+ * @swagger
+ * /api/students/user/{userId}:
+ *   get:
+ *     summary: Get a student by user ID
+ *     tags: [Student]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Student found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                       description: The ID of the student.
+ *                       example: "67def8dc21d7683620e7b62c"
+ *                     userId:
+ *                       $ref: '#/components/schemas/UserResponse'
+ *                     addressId:
+ *                       $ref: '#/components/schemas/Address'
+ */
+const getStudentByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    // Validate ID format
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    const student = await Student.findOne({ userId })
+    .populate({
+      path: 'userId',
+      populate: {
+        path: 'wardId',
+        populate: {
+          path: 'stakeId'
+        }
+      }
+    })
+    .populate('addressId');
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    res.json({ message: 'Student found', data: student });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+
 module.exports = {
   getAllStudents,
   getStudentById,
@@ -1360,4 +1423,5 @@ module.exports = {
   updateStudent,
   deleteStudent,
   uploadAvatar,
+  getStudentByUserId,
 };

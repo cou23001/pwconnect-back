@@ -24,18 +24,18 @@ module.exports = {
           description: 'The user\'s email address',
           example: 'john.doe@example.com',
         },
+        phone: {
+          type: 'string',
+          description: 'The user\'s phone number',
+          example: '123-456-7890',
+        },
         type: {
           type: 'number',
           description: 'The user\'s type (1 = Student, 10 = Admin, 11 = Instructor)',
           example: 1,
         },
-        ward: {
+        wardId: {
             $ref: '#/components/schemas/Ward',
-        },
-        phone: {
-          type: 'string',
-          description: 'The user\'s phone number',
-          example: '123-456-7890',
         },
         password: {
           type: 'string',
