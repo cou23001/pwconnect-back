@@ -984,7 +984,7 @@ const updateStudent = async (req, res, next) => {
     const student = await Student.findById(id)
       .populate("userId")
       .session(session);
-
+    
     if (!student || !student.userId) {
       await session.abortTransaction();
       session.endSession();
@@ -1015,9 +1015,10 @@ const updateStudent = async (req, res, next) => {
     }
 
     // 3. Validate request body
-    const { error } = partialStudentSchema.validate(req.body, {
+    const { error, value } = partialStudentSchema.validate(req.body, {
       abortEarly: false,
     });
+    console.log("Validation result:", error, value);
     if (error) {
       await session.abortTransaction();
       session.endSession();
@@ -1027,19 +1028,19 @@ const updateStudent = async (req, res, next) => {
     }
 
     // 4. Update User (including new avatar if uploaded)
-    if (req.body.user) {
+    if (value.user) {
       await User.findByIdAndUpdate(
         student.userId._id,
-        { $set: req.body.user },
+        { $set: value.user },
         { session }
       );
     }
 
     // 5. Update Address
-    if (req.body.address) {
+    if (value.address) {
       const address = await Address.findOneAndUpdate(
         { _id: student.addressId || new mongoose.Types.ObjectId() },
-        { $set: req.body.address },
+        { $set: value.address },
         { upsert: true, session, new: true }
       );
       student.addressId = address._id;
@@ -1047,7 +1048,7 @@ const updateStudent = async (req, res, next) => {
     }
 
     // 6. Update Student
-    const { user, address, ...studentFields } = req.body;
+    const { user, address, ...studentFields } = value;
     const updatedStudent = await Student.findByIdAndUpdate(
       req.params.id,
       { $set: studentFields },
