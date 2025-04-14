@@ -291,8 +291,26 @@ const register = async (req, res) => {
  *                       example: 'John Doe'
  *       401:
  *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Invalid credentials'
  *       500:
  *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Internal Server Error'
 */
 const login = async (req, res) => {
   try {
@@ -514,6 +532,28 @@ const validate = async (req, res) => {
  *                   type: string
  *                   description: Error message
  *                   example: 'Unauthorized'
+ *       403:
+ *         description: Forbidden
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Invalid or revoked tokens'
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: 'Internal Server Error'
 */
 const refreshToken = async (req, res) => {
   let refreshToken;
@@ -547,7 +587,7 @@ const refreshToken = async (req, res) => {
     // Validate against hashed DB token
     const tokenMetadata = await TokenMetadata.findOne({ userId: user.id });
     if (!tokenMetadata || !(await argon2.verify(tokenMetadata.refreshToken, refreshToken))) {
-      return res.status(403).json({ error: 'Invalid or revoked token' });
+      return res.status(403).json({ error: 'Invalid or revoked tokens' });
     }
 
     // Generate new tokens
