@@ -29,7 +29,7 @@ const partialStudentSchema = Joi.object({
         street: Joi.string().messages({
             'string.empty': 'Street is required',
         }),
-        neighborhood: Joi.string().messages({
+        neighborhood: Joi.string().empty('').messages({
             'string.empty': 'Neighborhood is required',
         }),
         city: Joi.string().messages({
@@ -55,9 +55,9 @@ const partialStudentSchema = Joi.object({
     language: Joi.string().valid('Spanish', 'Portuguese', 'French', 'Italian').messages({
         'any.only': 'Language must be one of: Spanish, Portuguese, French or Italian',
     }),
-    level: Joi.forbidden().messages({
-        'any.unknown': 'Level cannot be modified',
-    }),
+    // level: Joi.forbidden().messages({
+    //     'any.unknown': 'Level cannot be modified',
+    // }),
 }).min(1); // Ensure at least one field is provided
 
 module.exports = {

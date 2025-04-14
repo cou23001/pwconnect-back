@@ -42,8 +42,8 @@ router.get("/users",
 router.get(
   "/users/:id",
   authenticate,
-  authorize([10]),
-  validateOwnership,
+  authorize([1,10]),
+  //validateOwnership,
   getUserById
 );
 
@@ -51,8 +51,8 @@ router.get(
 router.get(
   "/users/ward/:wardId",
   authenticate,
-  authorize([10]),
-  validateOwnership,
+  authorize([1,10]),
+  //validateOwnership,
   getUsersByWardId
 );
 
@@ -60,8 +60,8 @@ router.get(
 router.get(
   "/users/instructor/ward/:wardId",
   authenticate,
-  authorize([10]),
-  validateOwnership,
+  authorize([1,10]),
+  //validateOwnership,
   getInstructorsByWardId
 );
 
@@ -71,8 +71,8 @@ router.put(
   upload.single("avatar"),
   uploadErrors,
   authenticate,
-  authorize([10]),
-  validateOwnership,
+  authorize([1,10]),
+  //validateOwnership,
   formDataToJson,
   updateUser
 );

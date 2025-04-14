@@ -7,7 +7,7 @@ const addressSchema = Joi.object({
         'any.required': 'Street is required',
         'string.empty': 'Street cannot be empty',
     }),
-    neighborhood: Joi.string().trim().required().messages({
+    neighborhood: Joi.string().trim().empty('').messages({
         'any.required': 'Neighborhood is required',
     }),
     city: Joi.string().trim().required().messages({
@@ -31,22 +31,22 @@ const addressSchema = Joi.object({
 
 // Partial Address Schema
 const partialAddressSchema = Joi.object({
-    street: Joi.string().trim().messages({
+    street: Joi.string().trim().optional().empty('').messages({
         'string.empty': 'Street cannot be empty',
     }),
-    neighborhood: Joi.string().trim().messages({
+    neighborhood: Joi.string().trim().optional().empty('').messages({
         'string.empty': 'Neighborhood cannot be empty',
     }),
-    city: Joi.string().trim().messages({
+    city: Joi.string().trim().optional().empty('').messages({
         'string.empty': 'City cannot be empty',
     }),
-    state: Joi.string().trim().messages({
+    state: Joi.string().trim().optional().empty('').messages({
         'string.empty': 'State cannot be empty',
     }),
-    country: Joi.string().trim().messages({
+    country: Joi.string().trim().optional().empty('').messages({
         'string.empty': 'Country cannot be empty',
     }),
-    postalCode: Joi.string().trim().pattern(/^\d{5}$/).messages({
+    postalCode: Joi.string().trim().optional().empty('').pattern(/^\d{5}$/).messages({
         'string.pattern.base': 'Postal Code must be a 5-digit number',
     }),
 }).min(1).messages({

@@ -13,9 +13,9 @@ const studentSchema = Joi.object({
     language: Joi.string().valid('Spanish', 'Portuguese', 'French', 'Italian').optional().messages({
         'any.only': 'Language must be one of: Spanish, Portuguese, French or Italian',
     }),
-    level: Joi.string().valid('EC1', 'EC2').optional().messages({
-        'any.only': 'Level must be one of: EC1 or EC2',
-    }),
+    // level: Joi.string().valid('EC1', 'EC2').optional().messages({
+    //     'any.only': 'Level must be one of: EC1 or EC2',
+    // }),
 });
 
 module.exports = {
