@@ -266,6 +266,137 @@ const getInstructorById = async (req, res) => {
   }
 };
 
+
+/**
+ * @swagger
+ * /api/instructors/wards/{wardId}:
+ *   get:
+ *     summary: Get all instructors for a specific ward
+ *     tags: [Instructors]
+ *     parameters:
+ *       - in: path
+ *         name: wardId
+ *         schema:
+ *           type: string
+ *           format: objectid
+ *         required: true
+ *         description: The ID of the ward to fetch instructors for.
+ *     responses:
+ *       200:
+ *         description: A list of instructors in the specified ward.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Instructors found for this ward"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                         format: objectid
+ *                         description: The ID of the instructor.
+ *                         example: "507f1f77bcf86cd799439011"
+ *                       userId:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                             format: objectid
+ *                             description: The id of the user associated with the instructor
+ *                             example: "5f3f9c5f6d7a0f0021e9d4b7"
+ *                           firstName:
+ *                             type: string
+ *                             description: The first name of the user
+ *                             example: "Jane"
+ *                           lastName:
+ *                             type: string
+ *                             description: The last name of the user
+ *                             example: "Smith"
+ *                           email:
+ *                             type: string
+ *                             description: The email of the user
+ *                             example: "jane@smith.com"
+ *                           type:
+ *                             type: number
+ *                             description: The type of the user (1 = Student, 10 = Admin, 11 = Instructor)
+ *                             example: 11
+ *                           avatar:
+ *                             type: string
+ *                             description: The URL of the user's avatar
+ *                             example: "https://example.com/jane_avatar.jpg"
+ *                       wardId:
+ *                         $ref: '#/components/schemas/Ward'
+ *       400:
+ *         description: Invalid ward ID format.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Invalid ward ID"
+ *       404:
+ *         description: No instructors found for the specified ward.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "No instructors found for this ward"
+ *       500:
+ *         description: Internal server error.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Internal Server Error"
+ */
+
+
+const getInstructorsByWard = async (req, res) => {
+  try {
+    const { wardId } = req.params;
+
+    // Validate the wardId
+    if (!mongoose.Types.ObjectId.isValid(wardId)) {
+      return res.status(400).json({ error: "Invalid ward ID" });
+    }
+
+    // Fetch instructors
+    const instructors = await Instructor.find({ wardId })
+      .populate("userId", "-password")
+      .populate("wardId");
+
+    if (!instructors || instructors.length === 0) {
+      return res.status(404).json({ error: "No instructors found for this ward" });
+    }
+
+    res.status(200).json({
+      message: "Instructors found for this ward",
+      data: instructors,
+    });
+  } catch (error) {
+    console.error("Error fetching instructors by ward:", error);
+    res.status(500).json({
+      error: "Internal Server Error",
+      details: error.message,
+    });
+  }
+};
+
+
 /**
  * @swagger
  * /api/instructors:
@@ -810,6 +941,7 @@ module.exports = {
   getInstructors,
   createInstructor,
   getInstructorById,
+  getInstructorsByWard,
   updateInstructor,
   deleteInstructor,
 };

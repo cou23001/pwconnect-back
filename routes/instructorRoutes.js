@@ -4,6 +4,7 @@ const {
   getInstructors,
   createInstructor,
   getInstructorById,
+  getInstructorsByWard,
   updateInstructor,
   deleteInstructor,
 } = require("../controllers/instructorController");
@@ -38,6 +39,14 @@ router.get(
   authenticate,
   authorize([10]),
   getInstructorById
+);
+
+// GET /instructors/wards/{wardId}
+router.get(
+  "/instructors/wards/:wardId",
+  authenticate,
+  authorize([10]),
+  getInstructorsByWard
 );
 
 // POST /instructors
