@@ -2,11 +2,6 @@ const multer = require('multer');
 
 /**
  * Handles file upload errors
- * @param {Error} err - Error object
- * @param {Request} req - Express request object
- * @param {Response} res - Express response object
- * @param {NextFunction} next - Express next middleware
- * @returns {Response|void} Returns error response or passes to next middleware
  */
 const handleUploadErrors = (err, req, res, next) => {
   // Multer-specific errors
