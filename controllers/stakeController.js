@@ -388,7 +388,7 @@ const getStakeById = async (req, res) => {
  */
 const updateStake = async (req, res) => {
   try {
-    const { stakeId } = req.params;
+    const { id } = req.params;
     const { name, location } = req.body;
 
     // Validate input with stake validator
@@ -398,7 +398,7 @@ const updateStake = async (req, res) => {
     }
 
     // Find existing stake
-    const stake = await Stake.findById(stakeId);
+    const stake = await Stake.findById(id);
     if (!stake) {
       return res.status(404).send({ error: 'Stake not found' });
     }
