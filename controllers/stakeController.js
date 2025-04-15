@@ -505,12 +505,18 @@ const deleteStake = async (req, res) => {
 // Get all wards in a stake
 /**
  * @swagger
- * /api/stakes/wards:
+ * /api/stakes/wards/{id}:
  *   get:
  *     summary: Get a list of wards in a stake
  *     tags: [Stakes]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *           example: "507f1f77bcf86cd799439011"
  *     responses:
- *       200:
+ *       200: 
  *         description: A list of wards in a stake
  *         content:
  *           application/json:
@@ -554,6 +560,7 @@ const getWardsInStake = async (req, res) => {
     // Validate stake ID
     const stakeId = req.params.id;
     const { error } = validateStakeId(stakeId);
+
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
@@ -563,8 +570,8 @@ const getWardsInStake = async (req, res) => {
       return res.status(404).json({ error: 'Stake not found' });
     }
     // Find wards in the stake
-    const wards = await Ward.find({ stakeId });
-    res.status(200).json({ message: 'Wards retrieved successfully', wards });
+    const wards = await Ward.find({ stakeId }).populate('stakeId');
+    res.status(200).json({ message: 'Wards retrieved successfully', wards: wards });
   } catch (error) {
     console.error('Error fetching wards:', error.message || error);
     res.status(500).json({ error: 'Internal server error' });
