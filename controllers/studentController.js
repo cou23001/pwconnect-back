@@ -3,6 +3,7 @@ const Student = require("../models/student");
 const User = require("../models/user");
 const Address = require("../models/address");
 const TokenMetadata = require("../models/tokenMetadata");
+const Attendance = require('../models/attendance');
 const mongoose = require("mongoose");
 const { studentSchema } = require("../validators/student");
 const { partialStudentSchema } = require("../validators/partialStudent");
@@ -1686,6 +1687,147 @@ const updateStudentAddressId = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/students/{userId}/attendance:
+ *   get:
+ *     summary: Get attendance records for a student
+ *     tags: [Student]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: User ID
+ *     responses:
+ *       200:
+ *         description: Attendance records found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 summary:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                       description: Total number of attendance records
+ *                       example: 10
+ *                     attended:
+ *                       type: integer
+ *                       description: Number of attended sessions
+ *                       example: 7
+ *                     missed:
+ *                       type: integer
+ *                       description: Number of missed sessions
+ *                       example: 3
+ *                     percentage:
+ *                       type: integer
+ *                       description: Attendance percentage
+ *                       example: 70
+ *                 sessions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       date:
+ *                         type: string
+ *                         format: date
+ *                         description: Date of the session
+ *                         example: "2023-10-01"
+ *                       status:
+ *                         type: string
+ *                         description: Attendance status (attended/missed)
+ *                         example: "attended"
+ *                       groupName:
+ *                         type: string
+ *                         description: Name of the group
+ *                         example: "Group A"
+ *                       notes:
+ *                         type: string
+ *                         description: Notes for the attendance record
+ *                         example: "Arrived on time"
+ *       404:
+ *         description: Student not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Student not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "Error message"
+ */
+const getStudentAttendance = async (req, res) => {
+  try {
+    // Validate ID format
+    const { userId } = req.params;
+    
+    if (!mongoose.isValidObjectId(userId)) {
+      return res.status(400).json({ error: 'Invalid user ID' });
+    }
+    // Find the studentId with the userId
+    const student = await Student.findOne({ userId }).populate('userId');
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+    // Get all attendance records for the student
+    const attendanceRecords = await Attendance.find({ studentId: student._id })
+      .populate('groupId', 'name') // Only get the group name
+      .sort({ date: 1 });
+
+    if (!attendanceRecords.length) {
+      return res.json({
+        summary: {
+          total: 0,
+          attended: 0,
+          missed: 0,
+          percentage: 0,
+        },
+        sessions: [],
+      });
+    }
+
+    const sessions = attendanceRecords.map((record) => ({
+      date: record.date,
+      status: record.isPresent ? 'attended' : 'missed',
+      groupName: record.groupId?.name || 'Unknown Group',
+      notes: record.notes,
+    }));
+
+    const total = sessions.length;
+    const attended = sessions.filter((s) => s.status === 'attended').length;
+    const missed = total - attended;
+    const percentage = Math.round((attended / total) * 100);
+
+    res.json({
+      summary: {
+        total,
+        attended,
+        missed,
+        percentage,
+      },
+      sessions,
+    });
+
+  } catch (error) {
+    console.error('Error getting student attendance:', error);
+    res.status(500).json({ error: 'Server error fetching attendance' });
+  }
+};
+
 
 module.exports = {
   getAllStudents,
@@ -1697,4 +1839,5 @@ module.exports = {
   uploadAvatar,
   getStudentByUserId,
   updateStudentAddressId,
+  getStudentAttendance,
 };
