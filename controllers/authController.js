@@ -778,6 +778,22 @@ const logout = async (req, res) => {
  *                       type: number
  *                       description: User type (1 = Student, 10 = Admin, 11 = Instructor)
  *                       example: 1
+ *                     firstName:
+ *                       type: string
+ *                       description: User first name
+ *                       example: 'John'
+ *                     lastName:
+ *                       type: string
+ *                       description: User last name
+ *                       example: 'Doe'
+ *                     phone:
+ *                       type: string
+ *                       description: User phone number
+ *                       example: '123-456-7890'
+ *                     wardId:
+ *                       type: object
+ *                       description: Ward object
+ *                       $ref: '#/components/schemas/Ward'
  *                     avatar:
  *                       type: string
  *                       description: User avatar URL
@@ -819,7 +835,14 @@ const profile = async (req, res) => {
     }
 
     // 3. Find user in the database
-    const user = await User.findById(userId).select('-password'); // Exclude password field
+    const user = await User.findById(userId)
+      .select('-password')
+      .populate({
+        path: 'wardId',
+        populate: {
+          path: 'stakeId',
+        },
+      });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }

@@ -10,16 +10,10 @@ module.exports = {
                 example: '5f3f9c5f6d7a0f0021e9d4b7',
             },
             userId: {
-                type: 'string',
-                format: 'objectid',
-                description: 'The id of the user associated with the student',
-                example: '5f3f9c5f6d7a0f0021e9d4b7',
+                $ref: '#/components/schemas/User'
             },
             addressId: {
-                type: 'string',
-                format: 'objectid',
-                description: 'The id of the address associated with the student',
-                example: '5f3f9c5f6d7a0f0021e9d4b7',
+                $ref: '#/components/schemas/Address'
             },
             birthDate: {
                 type: 'string',
