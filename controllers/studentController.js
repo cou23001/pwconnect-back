@@ -1096,13 +1096,6 @@ const updateStudent = async (req, res, next) => {
     if (location) {
       country = getCountry(location);
     }
-    //console.log("StakeId:", updatedStudent.userId.wardId?.stakeId?._id.toString());
-    //console.log("Country:", country);
-    //console.log("User", updatedStudent.userId);
-    const newUser = updatedStudent.userId;
-    const newAccessToken = generateAccessToken(newUser);
-    //console.log("Access Token:", accessToken);
-
 
     // 7. Commit transaction
     await session.commitTransaction();
@@ -1116,6 +1109,9 @@ const updateStudent = async (req, res, next) => {
         console.error("Error deleting old avatar (non-critical):", err);
       }
     }
+
+    const newUser = updatedStudent.userId;
+    const newAccessToken = generateAccessToken(newUser);
 
     return res.status(200).json({
       message: "Student updated successfully",
