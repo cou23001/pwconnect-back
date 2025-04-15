@@ -6,7 +6,10 @@ const TokenMetadata = require("../models/tokenMetadata");
 const mongoose = require("mongoose");
 const { studentSchema } = require("../validators/student");
 const { partialStudentSchema } = require("../validators/partialStudent");
+const { generateAccessToken, generateRefreshToken } = require("../config/jwt");
+const getCountry = require("../utils/getCountry");
 const { uploadToS3, deleteFromS3 } = require("../utils/upload");
+
 const dotenv = require("dotenv");
 dotenv.config();
 const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
@@ -1054,13 +1057,52 @@ const updateStudent = async (req, res, next) => {
 
     // 6. Update Student
     const { user, address, ...studentFields } = value;
-    const updatedStudent = await Student.findByIdAndUpdate(
+    // const updatedStudent = await Student.findByIdAndUpdate(
+    //   req.params.id,
+    //   { $set: studentFields },
+    //   { new: true, session }
+    // )
+    //   .populate("userId")
+    //   .populate("addressId");
+
+    // Step 1: Update the student
+    await Student.findByIdAndUpdate(
       req.params.id,
       { $set: studentFields },
-      { new: true, session }
-    )
-      .populate("userId")
-      .populate("addressId");
+      { session }
+    );
+
+    // Step 2: Fetch fully populated student
+    const updatedStudent = await Student.findById(req.params.id)
+      .populate({
+        path: "userId",
+        populate: {
+          path: "wardId",
+          populate: {
+            path: "stakeId",
+          },
+        },
+      })
+      .populate("addressId")
+      .session(session);
+
+    // Regenerating accessToken
+    // Print the updated student for debugging
+    //console.log("User Details:", updatedStudent.userId);
+    //console.log("Stake Details:", updatedStudent.userId.wardId?.stakeId?.location);
+    const location =  updatedStudent.userId.wardId?.stakeId?.location;
+    let country = null;
+    //country = getCountry(location);
+    if (location) {
+      country = getCountry(location);
+    }
+    //console.log("StakeId:", updatedStudent.userId.wardId?.stakeId?._id.toString());
+    //console.log("Country:", country);
+    //console.log("User", updatedStudent.userId);
+    const newUser = updatedStudent.userId;
+    const newAccessToken = generateAccessToken(newUser);
+    //console.log("Access Token:", accessToken);
+
 
     // 7. Commit transaction
     await session.commitTransaction();
@@ -1078,8 +1120,10 @@ const updateStudent = async (req, res, next) => {
     return res.status(200).json({
       message: "Student updated successfully",
       data: updatedStudent,
+      accessToken: newAccessToken,
     });
   } catch (error) {
+    console.log("Error in updateStudent:", error);
     await session.abortTransaction();
     session.endSession();
 

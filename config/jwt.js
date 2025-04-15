@@ -1,10 +1,18 @@
 // config/jwt.js
 const jwt = require('jsonwebtoken');
+const getCountry = require("../utils/getCountry");
+
 
 // Generate an access token
 const generateAccessToken = (user) => {
+  const location =  user.wardId?.stakeId?.location;
+  let country = null;
+  if (location) {
+    country = getCountry(location);
+  }
+
   return jwt.sign(
-    { _id: user.id, email: user.email, type: user.type }, // Payload
+    { _id: user._id, email: user.email, type: user.type, stakeId: user.wardId?.stakeId?._id ?? null, country: country }, // Payload
     process.env.JWT_SECRET, // Secret key
     { expiresIn: process.env.JWT_EXPIRATION } // Access token expiration (e.g., '15m')
   );

@@ -317,7 +317,12 @@ const login = async (req, res) => {
     const { email, password } = req.body;
 
     // 1. Find user and validate credentials
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).populate({
+      path: 'wardId',
+      populate: {
+        path: 'stakeId'
+      }
+    });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
