@@ -1021,11 +1021,9 @@ const updateStudent = async (req, res, next) => {
     }
 
     // 3. Validate request body
-    console.log("Request body before validation:", req.body);
     const { error, value } = partialStudentSchema.validate(req.body, {
       abortEarly: false,
     });
-    console.log("Validation result:", error, value);
     if (error) {
       await session.abortTransaction();
       session.endSession();
