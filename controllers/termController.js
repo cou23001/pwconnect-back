@@ -195,7 +195,6 @@ const createTerm = async (req, res) => {
 const getTermById = async (req, res) => {
   try {
     const { id } = req.params;
-    console.log("ID:", id);
     // Validate ID format
     const isValidId = mongoose.Types.ObjectId.isValid(id);
     if (!isValidId) {
