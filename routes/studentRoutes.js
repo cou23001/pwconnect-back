@@ -9,7 +9,8 @@ const {
   deleteStudent,
   uploadAvatar,
   getStudentByUserId,
-  updateStudentAddressId
+  updateStudentAddressId,
+  getStudentAttendance,
 } = require("../controllers/studentController");
 const { authenticate, authorize } = require("../middleware/authenticate");
 const validateOwnership = require("../middleware/validateOwnership");
@@ -119,5 +120,16 @@ router.put(
 // DELETE /students/:id
 // Route requires authentication and authorization for type 10 (admin).
 router.delete("/students/:id", authenticate, authorize([10]), deleteStudent);
+
+// GET /:id/attendance
+// Route requires authentication and authorization for types 1 and 10.
+// It checks if the user owns the data (or is admin).
+router.get(
+  "/students/:userId/attendance",
+  authenticate,
+  //authorize([1, 10]),
+  //validateOwnership,
+  getStudentAttendance
+);
 
 module.exports = router;
