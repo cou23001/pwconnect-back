@@ -28,7 +28,7 @@ const registrationSchema = Joi.object({
     "date.iso": "Registration date must be in ISO format (YYYY-MM-DD)",
     "any.required": "Registration date is required",
   }),
-  notes: Joi.string().trim().optional().messages({
+  notes: Joi.string().trim().optional().empty('').messages({
     "string.base": "Notes must be a string",
     "string.empty": "Notes cannot be empty",
   }),
@@ -57,7 +57,7 @@ const registrationUpdateSchema = Joi.object({
     "date.base": "Registration date must be a valid date",
     "date.iso": "Registration date must be in ISO format (YYYY-MM-DD)",
   }),
-  notes: Joi.string().trim().optional().messages({
+  notes: Joi.string().trim().empty('').optional().messages({
     "string.base": "Notes must be a string",
     "string.empty": "Notes cannot be empty",
   }),
