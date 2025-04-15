@@ -122,7 +122,13 @@ const getInstructors = async (req, res) => {
   try {
     const instructors = await Instructor.find()
       .populate("userId")
-      .populate("wardId");
+      .populate({
+        path: 'wardId',
+        populate: {
+          path: 'stakeId', 
+        },
+      });
+
     if (instructors.length === 0) {
       return res.status(404).send({
         error: "No instructors found",
@@ -237,20 +243,21 @@ const getInstructors = async (req, res) => {
  */
 const getInstructorById = async (req, res) => {
   try {
-    //Validate body
-    const { error } = instructorSchema.validate(req.body, {
-      abortEarly: false,
-    });
-    if (error) {
-      return res.status(400).json({
-        message: error.details.map((err) => err.message).join(", "),
-      });
+    //Validate ID format
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({ error: "Invalid instructor ID" });
     }
 
     // Find the instructor by ID and populate the userId, wardId field
     const instructor = await Instructor.findById(id)
       .populate("userId")
-      .populate("wardId");
+      .populate({
+        path: 'wardId',
+        populate: {
+          path: 'stakeId', 
+        },
+      });;
 
     if (!instructor) {
       return res.status(404).send({ error: "Instructor not found" });

@@ -840,7 +840,7 @@ const profile = async (req, res) => {
       .populate({
         path: 'wardId',
         populate: {
-          path: 'stakeId', // assumes ward.stakeId exists and references Stake
+          path: 'stakeId',
         },
       });
     if (!user) {
