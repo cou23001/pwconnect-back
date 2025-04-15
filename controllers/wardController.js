@@ -22,9 +22,49 @@ const mongoose = require('mongoose');
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Ward'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   description: Success message
+ *                   example: "Wards found"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Ward'
+ *       400:
+ *         description: Bad Request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: "Invalid ID format"
+ *       404:
+ *         description: Wards not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: "No wards found"
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   description: Error message
+ *                   example: "Internal Server Error"
  */
 const getWards = async (req, res) => {
   try {
@@ -34,7 +74,7 @@ const getWards = async (req, res) => {
       return res.status(404).send('No wards found');
     }
     // Return the wards
-    res.status(200).json({ wards });
+    res.status(200).json({ message: 'Wards found', data: wards });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -53,6 +93,7 @@ const getWards = async (req, res) => {
  *          name: id
  *          schema:
  *            type: string
+ *            example: 507f1f77bcf86cd799439011
  *          required: true
  *          description: Ward ID
  *      responses:
