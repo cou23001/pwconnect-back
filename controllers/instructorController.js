@@ -384,7 +384,12 @@ const getInstructorsByWard = async (req, res) => {
     // Fetch instructors
     const instructors = await Instructor.find({ wardId })
       .populate("userId", "-password")
-      .populate("wardId");
+      .populate({
+        path: 'wardId',
+        populate: {
+          path: 'stakeId', // assumes ward.stakeId exists and references Stake
+        },
+      });
 
     if (!instructors || instructors.length === 0) {
       return res.status(404).json({ error: "No instructors found for this ward" });
