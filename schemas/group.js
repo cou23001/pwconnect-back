@@ -42,7 +42,7 @@ module.exports = {
         },
         room: {
           type: 'string',
-          description: 'Clssroom information',
+          description: 'Classroom information',
           example: 'Room 101',
         },
         instructorId: {

@@ -5,7 +5,8 @@ const {
   deleteUser,
   updateUser,
   getUsersByWardId,
-  getInstructorsByWardId
+  getInstructorsByWardId,
+  getUsersAdmin,
 } = require("../controllers/userController");
 const { authenticate, authorize } = require("../middleware/authenticate");
 const validateOwnership = require("../middleware/validateOwnership");
@@ -32,6 +33,20 @@ const upload = multer({
 });
 
 // GET /users
+router.get("/users",
+  authenticate,
+  authorize([10]), 
+  getUsers
+);
+
+// GET /users/admin
+router.get("/users/admin",
+  authenticate,
+  authorize([10]), 
+  getUsersAdmin
+);
+
+
 router.get("/users",
   authenticate,
   authorize([10]), 

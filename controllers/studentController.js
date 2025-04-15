@@ -801,7 +801,8 @@ const createStudent = async (req, res) => {
  *                   {
  *                     "firstName": "Jane",
  *                     "lastName": "Smith",
- *                     "phone": "123-456-7890"
+ *                     "phone": "123-456-7890",
+ *                     "wardId": "5f3f9c5f6d7a0f0021e9d4b7"
  *                   }
  *               address:
  *                 type: string
@@ -887,6 +888,11 @@ const createStudent = async (req, res) => {
  *                               type: string
  *                               description: The URL of the user's avatar
  *                               example: https://example.com/avatar.jpg
+ *                             wardId:
+ *                               type: string
+ *                               format: objectid
+ *                               description: The id of the ward associated with the user
+ *                               example: 5f3f9c5f6d7a0f0021e9d4b7
  *                        address:
  *                          type: object
  *                          properties:
@@ -1015,6 +1021,7 @@ const updateStudent = async (req, res, next) => {
     }
 
     // 3. Validate request body
+    console.log("Request body before validation:", req.body);
     const { error, value } = partialStudentSchema.validate(req.body, {
       abortEarly: false,
     });

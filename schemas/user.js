@@ -35,7 +35,10 @@ module.exports = {
           example: 1,
         },
         wardId: {
-            $ref: '#/components/schemas/Ward',
+          type: 'string',
+          format: 'objectid',
+          description: 'The id of the ward associated with the user',
+          example: '5f3f9c5f6d7a0f0021e9d4b7',
         },
         password: {
           type: 'string',

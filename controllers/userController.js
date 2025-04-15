@@ -39,9 +39,15 @@ const comparePassword = async (password, hash) => {
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/UserResponse'
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/UserResponse'
  *       404:
  *         description: No users found
  *         content:
@@ -75,6 +81,82 @@ const getUsers = async (req, res) => {
     res.status(500).send({ message: 'Internal Server Error' });
   }
 };
+
+/**
+ * @swagger
+ * /api/users/admin:
+ *   get:
+ *     summary: Get a list of admin users
+ *     tags: [Users]
+ *     responses:
+ *       200:
+ *         description: A list of admin users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Success
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/UserResponse'
+ *       400:
+ *         description: Bad request
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Bad request
+ *       401:
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Unauthorized
+ *       404:
+ *         description: No admin users found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No admin users found
+ *       500:
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal Server Error
+ */
+const getUsersAdmin = async (req, res) => {
+  try {
+    // Find users type 10 only
+    const users = await User.find({ type: 10 }).select('-hashedPassword');
+    if (users.length === 0) {
+      return res.status(404).send({ message: 'No users found' });
+    } 
+    res.status(200).json({ message: 'Success', data: users });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({ message: 'Internal Server Error' });
+  }
+}
 
 /**
  * @swagger
@@ -586,4 +668,4 @@ const deleteUser = async (req, res) => {
 };
 
 
-module.exports = { getUsers, getUserById, deleteUser, updateUser, getUsersByWardId, getInstructorsByWardId };
+module.exports = { getUsers, getUserById, deleteUser, updateUser, getUsersByWardId, getInstructorsByWardId, getUsersAdmin };

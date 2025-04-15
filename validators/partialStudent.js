@@ -24,6 +24,9 @@ const partialStudentSchema = Joi.object({
         phone: Joi.string().pattern(/^[0-9\-+() ]{7,15}$/).messages({
             'string.pattern.base': 'Phone number must be valid (7-15 digits, dashes, or spaces)',
         }),
+        wardId: Joi.string().trim().empty('').pattern(/^[0-9a-fA-F]{24}$/).messages({
+            'string.pattern.base': 'Ward ID must be a valid ObjectId',
+        }),
     }),
     address: Joi.object({
         street: Joi.string().trim().empty('').messages({
