@@ -129,22 +129,55 @@ Frontend production server: https://english-connect-admin.onrender.com/
 | DELETE | /api/stakes/{id}                          | Delete a stake by ID                |
 | GET    | /api/stakes/wards/{id}                    | Get a list of wards in a stake      |
 
+---
+
+### Term
+
+| Method | Endpoint                         | Description                         |
+|--------|----------------------------------|-------------------------------------|
+| GET    | /api/terms                        | Get a list of terms                 |
+| POST   | /api/terms                        | Create a new term                   |
+| GET    | /api/terms/{id}                   | Get a term by ID                    |
+| PUT    | /api/terms/{id}                   | Update a term                       |
+| DELETE | /api/terms/{id}                   | Delete a term                       |
 
 
-### User Management
-| Method | Endpoint            | Description                  |
-|--------|---------------------|------------------------------|
-| GET    | `/api/users`        | Retrieve all users           |
-| GET    | `/api/users/:id`    | Get a single user by ID      |
-| POST   | `/api/users`        | Create a new user            |
-| PUT    | `/api/users/:id`    | Update user details          |
-| DELETE | `/api/users/:id`    | Delete a user                |
+### Token Metadata
 
-### Additional Endpoints
-| Method | Endpoint                | Description                   |
-|--------|-------------------------|-------------------------------|
-| GET    | `/api/dashboard/stats`  | Retrieve system statistics    |
-| GET    | `/api/logs`             | Get system logs               |
+| Method | Endpoint                           | Description                                  |
+|--------|------------------------------------|----------------------------------------------|
+| GET    | /api/token-metadata/{id}           | Get token metadata by ID (validates refresh token) |
+
+### User
+
+| Method | Endpoint                           | Description                               |
+|--------|------------------------------------|-------------------------------------------|
+| GET    | /api/users                          | Get a list of users                       |
+| GET    | /api/users/admin                    | Get a list of admin users                 |
+| GET    | /api/users/{id}                     | Get a user by ID                          |
+| PUT    | /api/users/{id}                     | Update a user by ID                       |
+| DELETE | /api/users/{id}                     | Delete a user by ID                       |
+| GET    | /api/users/wards/{wardId}           | Get users by ward ID                      |
+
+### Ward
+
+| Method | Endpoint                                 | Description                             |
+|--------|------------------------------------------|-----------------------------------------|
+| GET    | /api/instructors/wards/{wardId}          | Get instructors by ward ID              |
+| GET    | /api/users/wards/{wardId}                | Get users by ward ID                    |
+| GET    | /api/wards                                | Get a list of wards                     |
+| POST   | /api/wards                               | Create a new ward                       |
+| GET    | /api/wards/{id}                          | Get a ward by ID                        |
+| PUT    | /api/wards/{id}                          | Update a ward by ID                     |
+| DELETE | /api/wards/{id}                          | Delete a ward by ID                     |
+
+### Statistics
+
+| Method | Endpoint                                          | Description                                            |
+|--------|---------------------------------------------------|--------------------------------------------------------|
+| GET    | /stats/stake/{stakeId}/groups-sessions            | Get all group sessions for a specific stake            |
+| GET    | /stats/stake/{stakeId}/group-students             | Get student counts for all groups in a specific stake  |
+| GET    | /stats/stake/{stakeId}/group-attendance           | Get attendance statistics for all groups in a specific stake |
 
 
 ### Support
