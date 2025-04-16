@@ -62,9 +62,9 @@ router.get(
   getUserById
 );
 
-// GET /users/ward/:wardId
+// GET /users/wards/:wardId
 router.get(
-  "/users/ward/:wardId",
+  "/users/wards/:wardId",
   authenticate,
   authorize([1,10]),
   //validateOwnership,
