@@ -475,27 +475,31 @@ const updateStake = async (req, res) => {
  */
 const deleteStake = async (req, res) => {
   try {
-          
-    const { id } = req.params.id;
+    const { id } = req.params;
+
     // Validate stake ID
     const { error } = validateStakeId(id);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-    
+
     // Check if stake exists
     const stake = await Stake.findById(id);
     if (!stake) {
       return res.status(404).json({ error: 'Stake not found' });
     }
+
     // Check if stake has wards
-    const wards = await Ward.find({ id });
+    const wards = await Ward.find({ stakeId: id });
+
     if (wards.length > 0) {
       return res.status(400).json({ error: 'Stake has wards and cannot be deleted' });
     }
+
     // Delete stake
-    await stake.remove();
+    await stake.deleteOne({ _id: id }); // Use the correct way to delete by ID
     res.status(200).json({ message: 'Stake deleted successfully' });
+
   } catch (error) {
     console.error('Error deleting stake:', error.message || error);
     res.status(500).json({ error: 'Internal server error' });
