@@ -2,7 +2,8 @@
 
 The English Connect Backend Admin is a backend system built with **Node.js** and **MongoDB** in the cloud. It provides authentication, user management, and administrative tools for the English Connect courses.
 
-Production server: https://pwconnect-back.onrender.com/api-docs
+Backend production server: https://pwconnect-back.onrender.com/api-docs
+Frontend production server: https://english-connect-admin.onrender.com/
 
 ## Features
 - User authentication and JWT-based authorization
@@ -31,11 +32,38 @@ Production server: https://pwconnect-back.onrender.com/api-docs
 
 ## API Endpoints
 
+### Address
+
+| Method | Endpoint             | Description              |
+|--------|----------------------|--------------------------|
+| GET    | /api/address         | Get all addresses        |
+| POST   | /api/address         | Create a new address     |
+| GET    | /api/address/{id}    | Get an address by ID     |
+| PUT    | /api/address/{id}    | Update an address by ID  |
+| DELETE | /api/address/{id}    | Delete an address by ID  |
+
+### Attendance
+
+| Method | Endpoint                         | Description                       |
+|--------|----------------------------------|-----------------------------------|
+| POST   | /api/attendance                  | Create a new Attendance record    |
+| GET    | /api/attendance                  | Get all Attendance records        |
+| GET    | /api/attendance/{id}             | Get Attendance record by ID       |
+| PUT    | /api/attendance/{id}             | Update Attendance record by ID    |
+| DELETE | /api/attendance/{id}             | Delete Attendance record by ID    |
+| GET    | /api/attendance/group/{groupId}  | Get Attendances by Group ID       |
+
+
 ### Authentication
-| Method | Endpoint            | Description             |
-|--------|---------------------|-------------------------|
-| POST   | `/api/auth/login`   | Admin login            |
-| POST   | `/api/auth/register` | Register a new admin  |
+| Method | Endpoint                   | Description                         |
+|--------|----------------------------|-------------------------------------|
+| POST   | /api/auth/register         | Register a new user                 |
+| POST   | /api/auth/login            | Login user                          |
+| GET    | /api/auth/validate         | Validate access token               |
+| POST   | /api/auth/refresh-token    | Refresh access and refresh token    |
+| POST   | /api/auth/logout           | Logout user                         |
+| GET    | /api/auth/profile          | Get user profile                    |
+
 
 ### User Management
 | Method | Endpoint            | Description                  |
