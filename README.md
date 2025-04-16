@@ -1,19 +1,19 @@
-# The Pathway Connect Backend Admin
+# The English Connect Backend Admin
 
-The Pathway Connect Backend Admin is a backend system built with **Node.js** and **MongoDB** in the cloud. It provides authentication, user management, and administrative tools.
+The English Connect Backend Admin is a backend system built with **Node.js** and **MongoDB** in the cloud. It provides authentication, user management, and administrative tools for the English Connect courses.
 
 Production server: https://pwconnect-back.onrender.com/api-docs
 
 ## Features
 - User authentication and JWT-based authorization
-- Type-based access control (Admin, User, etc.)
+- Type-based access control (Admin, Instructor, and Student.)
 - RESTful API for managing users and data
 - Cloud-hosted MongoDB integration
 
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/pwconnect-back.git
+   git clone https://github.com/cou23001/pwconnect-back.git
 2. Navigate to the project folder:
    ```bash
     cd pwconnect-back
@@ -76,7 +76,7 @@ If you encounter any issues or have questions, feel free to open an issue on the
 1. Fork the repository.
 2. Clone your forked repository to your local machine:
     ```bash
-    git clone https://github.com/your-username/pwconnect-back.git
+    git clone https://github.com/cou23001/pwconnect-back.git
 3. Create a new branch for your feature or bugfix:
     ```bash
     git checkout -b feature/your-feature-name
