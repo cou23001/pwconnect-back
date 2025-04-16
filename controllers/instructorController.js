@@ -948,6 +948,205 @@ const deleteInstructor = async (req, res) => {
   }
 };
 
+// function to upload avatar to S3
+/**
+ * @swagger
+ * /api/instructors/upload/{id}:
+ *   put:
+ *     summary: Upload an avatar
+ *     tags: [Instructors]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Instructor ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: Image file to upload as avatar
+ *     responses:
+ *       200:
+ *         description: Avatar uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Avatar uploaded successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     url:
+ *                       type: string
+ *                       description: The URL of the uploaded avatar
+ *                       example: "https://example.com/avatar.jpg"
+ *                     size:
+ *                       type: integer
+ *                       description: The size of the uploaded file in bytes
+ *                       example: 204800
+ *                     type:
+ *                       type: string
+ *                       description: The MIME type of the uploaded file
+ *                       example: "image/jpeg"
+ *       400:
+ *         description: Invalid file type or size
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Invalid file type or size"
+ *       404:
+ *         description: Instructor not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Instructor not found"
+ *       500:
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Avatar upload failed"
+ *                 error:
+ *                   type: string
+ *                   example: "Error message"
+ *                 allowedTypes:
+ *                   type: array
+ *                   items:
+ *                     type: string
+ *                   example: ["image/jpeg", "image/png", "image/webp"]
+ *                 maxSize:
+ *                   type: string
+ *                   example: "2MB"
+ */
+const uploadAvatar = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const avatar = req.file;
+    const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+    const validTypes = ["image/jpeg", "image/png", "image/webp"];
+
+    // Validate if instructor exists
+    const instructor = await Instructor.findById(id)
+      .populate("userId")
+      .session(session);
+    console.log("Instructor found:", instructor);
+    if (!instructor?.userId) {
+      return res.status(404).json({
+        success: false,
+        message: "Instructor not found",
+      });
+    }
+
+    // Validate file exists
+    if (!avatar) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
+
+    // Validate file type
+    if (!validTypes.includes(avatar.mimetype)) {
+      return res.status(400).json({
+        success: false,
+        message: "Only JPEG, PNG, or WebP images allowed",
+      });
+    }
+
+    // Validate file size
+    if (avatar.size > MAX_SIZE) {
+      return res.status(413).json({
+        success: false,
+        message: "File exceeds 2MB limit",
+      });
+    }
+
+    // Upload new avatar
+    const avatarUrl = await uploadToS3(avatar);
+    // Validate upload success
+    if (!avatarUrl) {
+      return res.status(500).json({
+        success: false,
+        message: "Avatar upload failed",
+      });
+    }
+
+    // Save old avatar URL for cleanup
+    const oldAvatar = instructor.userId.avatar;
+
+    // Update user's avatar
+    await User.updateOne(
+      { _id: instructor.userId._id },
+      { avatar: avatarUrl },
+      { session }
+    );
+
+    await session.commitTransaction();
+
+    if (oldAvatar) {
+      const isDefaultAvatar =
+        new URL(oldAvatar).pathname === new URL(DEFAULT_AVATAR_URL).pathname;
+
+      if (!isDefaultAvatar) {
+        try {
+          await deleteFromS3(oldAvatar);
+        } catch (err) {
+          return res.status(500).json({
+            success: false,
+            message: `Failed to delete avatar (${oldAvatar}):`,
+            error: err.message,
+          });
+        }
+      }
+    }
+    res.status(200).json({
+      success: true,
+      message: "Avatar uploaded successfully",
+      data: {
+        url: avatarUrl,
+        size: avatar.size,
+        type: avatar.mimetype,
+      },
+    });
+  } catch (error) {
+    await session.abortTransaction();
+
+    res.status(500).json({
+      success: false,
+      message: "Avatar upload failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  } finally {
+    session.endSession();
+  }
+};
+
 
 module.exports = {
   getInstructors,
@@ -956,4 +1155,5 @@ module.exports = {
   getInstructorsByWard,
   updateInstructor,
   deleteInstructor,
+  uploadAvatar,
 };

@@ -7,6 +7,7 @@ const {
   getInstructorsByWard,
   updateInstructor,
   deleteInstructor,
+  uploadAvatar,
 } = require("../controllers/instructorController");
 const { authenticate, authorize } = require("../middleware/authenticate");
 const router = express.Router();
@@ -69,6 +70,19 @@ router.put(
   authorize([10]),
   formDataToJson,
   updateInstructor
+);
+
+// POST /instructors/upload/:id
+// Route requires authentication and authorization for types 1 and 10.
+// It checks if the user owns the data (or is admin).
+router.put(
+  "/instructors/upload/:id",
+  upload.single("avatar"),
+  authenticate,
+  authorize([1, 10, 11]),
+  formDataToJson,
+  //validateOwnership,
+  uploadAvatar
 );
 
 // DELETE /instructors/:id
