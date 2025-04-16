@@ -63,7 +63,7 @@ Frontend production server: https://english-connect-admin.onrender.com/
 | POST   | /api/auth/logout           | Logout user                         |
 | GET    | /api/auth/profile          | Get user profile                    |
 
-# Group
+### Group
 
 | Method | Endpoint                                           | Description                        |
 |--------|----------------------------------------------------|------------------------------------|
@@ -76,7 +76,25 @@ Frontend production server: https://english-connect-admin.onrender.com/
 | PATCH  | /api/groups/sessions/{groupId}/{sessionNumber}     | Update a session for a Group       |
 | GET    | /api/groups/sessions/{groupId}                     | Get all sessions for a Group       |
 
-# Instructor
+---
+
+## Student
+
+| Method | Endpoint                                         | Description                                      |
+|--------|--------------------------------------------------|--------------------------------------------------|
+| GET    | /api/students                                    | Get all students with user and address information |
+| POST   | /api/students                                    | Create a new student                             |
+| GET    | /api/students/{id}                               | Get a student by ID                              |
+| PUT    | /api/students/{id}                               | Update a student by ID                           |
+| DELETE | /api/students/{id}                               | Delete a student by ID                           |
+| GET    | /api/students/ward/{wardId}                      | Get students by Ward ID (via User relationship)  |
+| PUT    | /api/students/upload/{id}                        | Upload an avatar                                 |
+| GET    | /api/students/user/{userId}                      | Get a student by user ID                         |
+| PUT    | /api/students/{studentId}/address                | Update a student's address ID                    |
+| GET    | /api/students/{userId}/attendance                | Get attendance records for a student             |
+
+
+### Instructor
 
 | Method | Endpoint                                 | Description                                 |
 |--------|------------------------------------------|---------------------------------------------|
@@ -88,7 +106,7 @@ Frontend production server: https://english-connect-admin.onrender.com/
 | GET    | /api/instructors/wards/{wardId}          | Get instructors by ward ID                  |
 | PUT    | /api/instructors/upload/{id}             | Upload an avatar                            |
 
-# Registration
+### Registration
 
 | Method | Endpoint                                         | Description                              |
 |--------|--------------------------------------------------|------------------------------------------|
@@ -98,6 +116,19 @@ Frontend production server: https://english-connect-admin.onrender.com/
 | PUT    | /api/registrations/{id}                          | Update a registration                    |
 | DELETE | /api/registrations/{id}                          | Delete a registration                    |
 | GET    | /api/registrations/group/{groupId}/students      | Get all students registered in a group   |
+
+### Stake
+
+| Method | Endpoint                                  | Description                         |
+|--------|-------------------------------------------|-------------------------------------|
+| GET    | /api/stakes                               | Get a list of stakes                |
+| POST   | /api/stakes                               | Create a new stake                  |
+| GET    | /api/stakes/country/{countryName}         | Get a list of stakes by country     |
+| GET    | /api/stakes/{id}                          | Get a stake by ID                   |
+| PUT    | /api/stakes/{id}                          | Update a stake by ID                |
+| DELETE | /api/stakes/{id}                          | Delete a stake by ID                |
+| GET    | /api/stakes/wards/{id}                    | Get a list of wards in a stake      |
+
 
 
 ### User Management
