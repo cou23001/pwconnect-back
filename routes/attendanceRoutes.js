@@ -8,6 +8,7 @@ const {
   getAttendanceByGroup,
   updateAttendance,
   deleteAttendance,
+  getAttendanceByGroupByStake,
 } = require('../controllers/attendanceController');
 const { authenticate, authorize } = require('../middleware/authenticate');
 
@@ -20,8 +21,11 @@ router.get('/attendance', authenticate, authorize([10,11]), getAttendances);
 // GET /attendance/:id
 router.get('/attendance/:id', authenticate, authorize([10,11]), getAttendance);
 
-// GET /attendance/:groupId
+// GET /attendance/group/:groupId
 router.get('/attendance/group/:groupId', authenticate, authorize([10,11]), getAttendanceByGroup);
+
+// GET //attendance/stake/:stakeId
+router.get('/attendance/stake/:stakeId', authenticate, authorize([10,11]), getAttendanceByGroupByStake);
 
 // PUT /attendance/:id
 router.put('/attendance/:id', authenticate, authorize([10,11]), updateAttendance);

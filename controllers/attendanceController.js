@@ -1,5 +1,7 @@
 // controllers/attendanceController.js
 const Attendance = require('../models/attendance');
+const Group = require('../models/group');
+const Ward = require('../models/ward');
 
 /**
  * @swagger
@@ -186,6 +188,95 @@ const getAttendanceByGroup = async (req, res) => {
   }
 };
 
+// Get Attendances by Group ID within a Stake
+/**
+ * @swagger
+ * /api/attendance/stake/{stakeId}:
+ *   get:
+ *     summary: Get Attendances by Group ID within a Stake
+ *     tags:
+ *       - Attendance
+ *     parameters:
+ *       - in: path
+ *         name: stakeId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Stake ID to retrieve attendances for groups within
+ *     responses:
+ *       200:
+ *         description: Attendances found for groups within the specified stake
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   groupId:
+ *                     type: string
+ *                     description: The ID of the group
+ *                   groupName:
+ *                     type: string
+ *                     description: The name of the group
+ *                   attendances:
+ *                     type: array
+ *                     items:
+ *                       $ref: '#/components/schemas/Attendance'
+ *       404:
+ *         description: No attendances found for groups within the specified stake
+ *       500:
+ *         description: Internal server error
+ */
+
+
+const getAttendanceByGroupByStake = async (req, res) => {
+  try {
+    const stakeId = req.params.stakeId;
+
+    const wards = await Ward.find({ stakeId: stakeId });
+
+    if (!wards || wards.length === 0) {
+      return res.status(200).json({ data: [], message: 'No wards found within this stake.' });
+    }
+
+    const wardIds = wards.map(ward => ward._id);
+
+    const groups = await Group.find({ wardId: { $in: wardIds } });
+
+    if (!groups || groups.length === 0) {
+      return res.status(200).json({ data: [], message: 'No groups found within the wards of this stake.' });
+    }
+
+    const attendanceData = [];
+
+    for (const group of groups) {
+      const attendances = await Attendance.find({ groupId: group._id })
+          .populate('studentId')
+          .select('date -_id');
+
+      const uniqueDates = [...new Set(attendances.map(attendance => attendance.date.toISOString().split('T')[0]))];
+      const numberOfClassesTaken = uniqueDates.length;
+
+    attendanceData.push({
+      groupId: group._id,
+      groupName: group.name,
+      numberOfClassesTaken: numberOfClassesTaken,
+    });
+    }
+
+    if (attendanceData.length === 0) {
+      return res.status(200).json({ data: [], message: 'No attendance records found for any group within the wards of this stake.' });
+    }
+
+    res.status(200).json({ data: attendanceData, message: 'Success' });
+
+  } catch (error) {
+    console.error('Error fetching attendance by group for stake:', error);
+    res.status(500).json({ error: error.message || 'Internal server error' });
+  }
+};
+
 // Update Attendance record by ID
 /**
  * @swagger
@@ -292,6 +383,7 @@ module.exports = {
   getAttendances,
   getAttendance,
   getAttendanceByGroup,
+  getAttendanceByGroupByStake,
   updateAttendance,
   deleteAttendance,
 };
