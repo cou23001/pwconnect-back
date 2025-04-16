@@ -33,7 +33,6 @@ Frontend production server: https://english-connect-admin.onrender.com/
 ## API Endpoints
 
 ### Address
-
 | Method | Endpoint             | Description              |
 |--------|----------------------|--------------------------|
 | GET    | /api/address         | Get all addresses        |
@@ -63,6 +62,42 @@ Frontend production server: https://english-connect-admin.onrender.com/
 | POST   | /api/auth/refresh-token    | Refresh access and refresh token    |
 | POST   | /api/auth/logout           | Logout user                         |
 | GET    | /api/auth/profile          | Get user profile                    |
+
+# Group
+
+| Method | Endpoint                                           | Description                        |
+|--------|----------------------------------------------------|------------------------------------|
+| GET    | /api/groups                                        | Get a list of Groups               |
+| POST   | /api/groups                                        | Create a new Group                 |
+| GET    | /api/groups/{id}                                   | Get a Group by ID                  |
+| PUT    | /api/groups/{id}                                   | Update a Group by ID               |
+| DELETE | /api/groups/{id}                                   | Delete a Group by ID               |
+| GET    | /api/groups/ward/{wardId}                          | Get Groups by Ward ID              |
+| PATCH  | /api/groups/sessions/{groupId}/{sessionNumber}     | Update a session for a Group       |
+| GET    | /api/groups/sessions/{groupId}                     | Get all sessions for a Group       |
+
+# Instructor
+
+| Method | Endpoint                                 | Description                                 |
+|--------|------------------------------------------|---------------------------------------------|
+| GET    | /api/instructors                         | Get a list of instructors with user details |
+| POST   | /api/instructors                         | Create a new instructor                     |
+| GET    | /api/instructors/{id}                    | Get an instructor by ID                     |
+| PUT    | /api/instructors/{id}                    | Update an instructor by ID                  |
+| DELETE | /api/instructors/{id}                    | Delete an instructor                        |
+| GET    | /api/instructors/wards/{wardId}          | Get instructors by ward ID                  |
+| PUT    | /api/instructors/upload/{id}             | Upload an avatar                            |
+
+# Registration
+
+| Method | Endpoint                                         | Description                              |
+|--------|--------------------------------------------------|------------------------------------------|
+| GET    | /api/registrations                               | Retrieve a list of registrations         |
+| POST   | /api/registrations                               | Create a new registration                |
+| GET    | /api/registrations/{id}                          | Retrieve a registration by ID            |
+| PUT    | /api/registrations/{id}                          | Update a registration                    |
+| DELETE | /api/registrations/{id}                          | Delete a registration                    |
+| GET    | /api/registrations/group/{groupId}/students      | Get all students registered in a group   |
 
 
 ### User Management
