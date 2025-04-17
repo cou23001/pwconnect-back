@@ -120,21 +120,24 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  */
 const getInstructors = async (req, res) => {
   try {
+    // Fetch all instructors and populate userId and wardId fields
     const instructors = await Instructor.find()
       .populate("userId")
       .populate({
-        path: 'wardId',
+        path: "wardId",
         populate: {
-          path: 'stakeId', 
+          path: "stakeId",
         },
       });
 
+    // Check if any instructors were found
     if (instructors.length === 0) {
       return res.status(404).send({
         error: "No instructors found",
       });
     }
 
+    // Send the response
     res.status(200).json({ message: "Instructors found", data: instructors });
   } catch (error) {
     res
@@ -253,11 +256,11 @@ const getInstructorById = async (req, res) => {
     const instructor = await Instructor.findById(id)
       .populate("userId")
       .populate({
-        path: 'wardId',
+        path: "wardId",
         populate: {
-          path: 'stakeId', 
+          path: "stakeId",
         },
-      });;
+      });
 
     if (!instructor) {
       return res.status(404).send({ error: "Instructor not found" });
@@ -272,7 +275,6 @@ const getInstructorById = async (req, res) => {
       .json({ error: "Internal Server Error", details: error.message });
   }
 };
-
 
 /**
  * @swagger
@@ -371,7 +373,6 @@ const getInstructorById = async (req, res) => {
  *                   example: "Internal Server Error"
  */
 
-
 const getInstructorsByWard = async (req, res) => {
   try {
     const { wardId } = req.params;
@@ -381,18 +382,21 @@ const getInstructorsByWard = async (req, res) => {
       return res.status(400).json({ error: "Invalid ward ID" });
     }
 
-    // Fetch instructors
+    // Fetch instructors for the specified ward and populate userId and wardId fields
+    // don't include password in the userId field
     const instructors = await Instructor.find({ wardId })
       .populate("userId", "-password")
       .populate({
-        path: 'wardId',
+        path: "wardId",
         populate: {
-          path: 'stakeId', // assumes ward.stakeId exists and references Stake
+          path: "stakeId", // assumes ward.stakeId exists and references Stake
         },
       });
 
     if (!instructors || instructors.length === 0) {
-      return res.status(404).json({ error: "No instructors found for this ward" });
+      return res
+        .status(404)
+        .json({ error: "No instructors found for this ward" });
     }
 
     res.status(200).json({
@@ -407,7 +411,6 @@ const getInstructorsByWard = async (req, res) => {
     });
   }
 };
-
 
 /**
  * @swagger
@@ -612,6 +615,7 @@ const createInstructor = async (req, res) => {
       await session.abortTransaction();
     }
 
+    // End the session
     const status = error.message.includes("already exists") ? 409 : 500;
     res.status(status).json({
       success: false,
@@ -897,7 +901,6 @@ const updateInstructor = async (req, res) => {
  *                   example: "The instructor was not found"
  */
 const deleteInstructor = async (req, res) => {
-
   let avatarToDelete = null;
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -908,7 +911,7 @@ const deleteInstructor = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).send({ error: "Invalid ID format" });
     }
-    
+
     // Find the instructor
     const instructor = await Instructor.findById(id).session(session);
     if (!instructor) {
@@ -917,6 +920,7 @@ const deleteInstructor = async (req, res) => {
       return res.status(404).send({ error: "Instructor not found" });
     }
 
+    // Check if the instructor has a user
     const user = await User.findById(instructor.userId).session(session);
     if (user?.avatar && user.avatar !== DEFAULT_AVATAR_URL) {
       avatarToDelete = user.avatar; // defer deletion
@@ -933,13 +937,15 @@ const deleteInstructor = async (req, res) => {
       try {
         await deleteFromS3(avatarToDelete);
       } catch (s3Err) {
-        console.warn("S3 deletion failed, but DB is consistent:", s3Err.message);
+        console.warn(
+          "S3 deletion failed, but DB is consistent:",
+          s3Err.message
+        );
         // Optionally log this somewhere for cleanup later
       }
     }
 
     return res.status(200).json({ message: "Instructor deleted successfully" });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -1146,7 +1152,6 @@ const uploadAvatar = async (req, res) => {
     session.endSession();
   }
 };
-
 
 module.exports = {
   getInstructors,

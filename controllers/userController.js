@@ -1,8 +1,8 @@
-const User = require('../models/user');
-const TokenMetadata = require('../models/tokenMetadata');
-const argon2 = require('argon2');
-const { partialUserSchema } = require('../validators/user');
-const mongoose = require('mongoose');
+const User = require("../models/user");
+const TokenMetadata = require("../models/tokenMetadata");
+const argon2 = require("argon2");
+const { partialUserSchema } = require("../validators/user");
+const mongoose = require("mongoose");
 const { uploadToS3, deleteFromS3 } = require("../utils/upload");
 const dotenv = require("dotenv");
 dotenv.config();
@@ -26,7 +26,6 @@ const comparePassword = async (password, hash) => {
  *   name: Users
  *   description: User management
  */
-
 /**
  * @swagger
  * /api/users:
@@ -71,14 +70,18 @@ const comparePassword = async (password, hash) => {
  */
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select('-hashedPassword');
+    // Find all users and exclude hashedPassword
+    const users = await User.find().select("-hashedPassword");
+
+    // Check if users exist
     if (users.length === 0) {
-      return res.status(404).send({ message: 'No users found' });
-    } 
-    res.status(200).json({ message: 'Success', data: users });
+      return res.status(404).send({ message: "No users found" });
+    }
+    // Send the response
+    res.status(200).json({ message: "Success", data: users });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error' });
+    res.status(500).send({ message: "Internal Server Error" });
   }
 };
 
@@ -146,17 +149,21 @@ const getUsers = async (req, res) => {
  */
 const getUsersAdmin = async (req, res) => {
   try {
-    // Find users type 10 only
-    const users = await User.find({ type: 10 }).select('-hashedPassword');
+    // Find users type 10 only and exclude hashedPassword
+    const users = await User.find({ type: 10 }).select("-hashedPassword");
+
+    // Check if users exist
     if (users.length === 0) {
-      return res.status(404).send({ message: 'No users found' });
-    } 
-    res.status(200).json({ message: 'Success', data: users });
+      return res.status(404).send({ message: "No users found" });
+    }
+
+    // Send the response
+    res.status(200).json({ message: "Success", data: users });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error' });
+    res.status(500).send({ message: "Internal Server Error" });
   }
-}
+};
 
 /**
  * @swagger
@@ -202,22 +209,34 @@ const getUsersAdmin = async (req, res) => {
  */
 const getUserById = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select('-hashedPassword').populate({
-      path: 'wardId',
-      populate: {
-        path: 'stakeId'  // This populates the stake within the ward
-      }
-    });
-    
-    if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+    // Validate the user ID format
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).send({ error: "Invalid ID format" });
     }
-    res.status(200).json({ message: 'Success', data: user });
+
+    // Find user by ID and exclude hashedPassword
+    const user = await User.findById(req.params.id)
+      .select("-hashedPassword")
+      .populate({
+        path: "wardId",
+        populate: {
+          path: "stakeId", // This populates the stake within the ward
+        },
+      });
+
+    // Check if user exists
+    if (!user) {
+      return res.status(404).send({ message: "User not found" });
+    }
+
+    // Send the response
+    res.status(200).json({ message: "Success", data: user });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error' });
+    res.status(500).send({ message: "Internal Server Error" });
   }
-}
+};
 
 /**
  * @swagger
@@ -272,21 +291,23 @@ const getUserById = async (req, res) => {
 
 const getUsersByWardId = async (req, res) => {
   try {
+    // Validate the ward ID format
     const { wardId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(wardId)) {
-      return res.status(400).send({ error: 'Invalid ward ID format' });
+      return res.status(400).send({ error: "Invalid ward ID format" });
     }
 
-    const users = await User.find({ wardId: wardId }).select('-hashedPassword');
+    // Find users by ward ID and exclude hashedPassword
+    const users = await User.find({ wardId: wardId }).select("-hashedPassword");
 
-    res.status(200).json({ message: 'Users found for this ward', users });
+    // Check if users exist
+    res.status(200).json({ message: "Users found for this ward", users });
   } catch (error) {
     console.error("Error fetching users by ward:", error);
     res.status(500).json({ error: error.message });
   }
 };
-
 
 /**
  * @swagger
@@ -338,18 +359,24 @@ const getUsersByWardId = async (req, res) => {
  *                   type: string
  *                   example: Internal Server Error
  */
-
 const getInstructorsByWardId = async (req, res) => {
   try {
+    // Validate the ward ID format
     const { wardId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(wardId)) {
-      return res.status(400).send({ error: 'Invalid ward ID format' });
+      return res.status(400).send({ error: "Invalid ward ID format" });
     }
 
-    const instructors = await User.find({ wardId: wardId, type: 11 }).select('-hashedPassword');
+    // Find instructors by ward ID and exclude hashedPassword
+    const instructors = await User.find({ wardId: wardId, type: 11 }).select(
+      "-hashedPassword"
+    );
 
-    res.status(200).json({ message: 'Instructors found for this ward', instructors });
+    // Check if instructors exist
+    res
+      .status(200)
+      .json({ message: "Instructors found for this ward", instructors });
   } catch (error) {
     console.error("Error fetching instructors by ward:", error);
     res.status(500).json({ error: error.message });
@@ -464,19 +491,20 @@ const getInstructorsByWardId = async (req, res) => {
  */
 const updateUser = async (req, res) => {
   try {
-    const { id } = req.params;
     // Validate the user ID format
+    const { id } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
-          return res.status(400).send({ error: 'Invalid ID format' });
+      return res.status(400).send({ error: "Invalid ID format" });
     }
 
     // Find the user by ID
     const user = await User.findById(id);
     if (!user) {
-      return res.status(404).send({ message: 'User not found' });
+      return res.status(404).send({ message: "User not found" });
     }
 
-    // 2. Handle file upload if present
+    // Handle file upload if present
     let oldAvatarUrl = null;
     if (req.file) {
       // Validate type (redundant check)
@@ -504,26 +532,41 @@ const updateUser = async (req, res) => {
       return res.status(400).send({ message: error.details[0].message });
     }
 
-    const { firstName, lastName, email, newPassword, currentPassword, wardId, type, avatar, phone } = value;
+    const {
+      firstName,
+      lastName,
+      email,
+      newPassword,
+      currentPassword,
+      wardId,
+      type,
+      avatar,
+      phone,
+    } = value;
 
     // If the user is trying to update their email, check if it already exists
     if (email && email !== user.email) {
       const existing = await User.findOne({ email });
       if (existing) {
-        return res.status(400).send({ message: 'Email already exists' });
+        return res.status(400).send({ message: "Email already exists" });
       }
     }
 
     // If the user wants to change the password, verify the current password
     if (newPassword) {
       if (!currentPassword) {
-        return res.status(400).send({ message: 'Current password is required' });
+        return res
+          .status(400)
+          .send({ message: "Current password is required" });
       }
 
       // Compare the provided current password with the stored hashed password
-      const isPasswordValid = await comparePassword(currentPassword, user.password);
+      const isPasswordValid = await comparePassword(
+        currentPassword,
+        user.password
+      );
       if (!isPasswordValid) {
-        return res.status(401).send({ message: 'Invalid current password' });
+        return res.status(401).send({ message: "Invalid current password" });
       }
 
       // Hash the new password
@@ -543,13 +586,13 @@ const updateUser = async (req, res) => {
     const updatedUser = await user.save();
 
     const result = await User.findById(id).populate({
-      path: 'wardId',
+      path: "wardId",
       populate: {
-        path: 'stakeId'  // This populates the stake within the ward
-      }
+        path: "stakeId", // This populates the stake within the ward
+      },
     });
 
-    // 8. Cleanup old avatar AFTER successful commit
+    // Cleanup old avatar AFTER successful commit
     if (oldAvatarUrl && oldAvatarUrl !== DEFAULT_AVATAR_URL) {
       try {
         await deleteFromS3(oldAvatarUrl);
@@ -558,12 +601,14 @@ const updateUser = async (req, res) => {
       }
     }
 
-    res.status(200).json({ message: 'User updated successfully', data: result });
+    res
+      .status(200)
+      .json({ message: "User updated successfully", data: result });
   } catch (error) {
     console.error(error);
-    res.status(500).send({ message: 'Internal Server Error' });
+    res.status(500).send({ message: "Internal Server Error" });
   }
-}
+};
 
 /**
  * @swagger
@@ -612,13 +657,13 @@ const deleteUser = async (req, res) => {
   session.startTransaction();
 
   try {
+    // Validate the user ID format
     const { id } = req.params;
 
-    // Validate the user ID format
     if (!mongoose.Types.ObjectId.isValid(id)) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ error: 'Invalid ID format' });
+      return res.status(400).json({ error: "Invalid ID format" });
     }
 
     // Find and delete the user
@@ -626,15 +671,17 @@ const deleteUser = async (req, res) => {
     if (!user) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     // Delete associated token metadata
-    const tkMetaData = await TokenMetadata.deleteMany({ userId: id }).session(session);
+    const tkMetaData = await TokenMetadata.deleteMany({ userId: id }).session(
+      session
+    );
     if (!tkMetaData) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(404).json({ error: 'Token metadata not found' });
+      return res.status(404).json({ error: "Token metadata not found" });
     }
 
     // Delete from S3 if avatar is custom
@@ -657,15 +704,21 @@ const deleteUser = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.status(200).json({ message: 'User deleted successfully', data: user });
-
+    res.status(200).json({ message: "User deleted successfully", data: user });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    console.error('Delete user error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Delete user error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-
-module.exports = { getUsers, getUserById, deleteUser, updateUser, getUsersByWardId, getInstructorsByWardId, getUsersAdmin };
+module.exports = {
+  getUsers,
+  getUserById,
+  deleteUser,
+  updateUser,
+  getUsersByWardId,
+  getInstructorsByWardId,
+  getUsersAdmin,
+};

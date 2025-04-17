@@ -1,10 +1,10 @@
 // controllers/groupController.js
-const Group = require('../models/group');
-const mongoose = require('mongoose');
-const Instructor = require('../models/instructor');
-const Ward = require('../models/ward');
-const { groupSchema, groupUpdateSchema } = require('../validators/group');
-const { updateSessionSchema } = require('../validators/session');
+const Group = require("../models/group");
+const mongoose = require("mongoose");
+const Instructor = require("../models/instructor");
+const Ward = require("../models/ward");
+const { groupSchema, groupUpdateSchema } = require("../validators/group");
+const { updateSessionSchema } = require("../validators/session");
 
 /**
  * @swagger
@@ -52,10 +52,15 @@ const { updateSessionSchema } = require('../validators/session');
  */
 const getGroups = async (req, res) => {
   try {
+    // Fetch all groups
     const groups = await Group.find();
+
+    // Check if groups exist
     if (groups.length === 0) {
       return res.status(204).send(); // No Content
     }
+
+    // Populate the instructorId and wardId fields
     res.status(200).json({ groups });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -111,28 +116,33 @@ const getGroupById = async (req, res) => {
     const { id } = req.params;
     const isValidId = mongoose.Types.ObjectId.isValid(id);
     if (!isValidId) {
-      return res.status(400).json({ error: 'Invalid ID format' });
+      return res.status(400).json({ error: "Invalid ID format" });
     }
 
-    const group = await Group.findById(id).populate({
-      path: 'wardId',
-      populate: {
-        path: 'stakeId'
-      }
-    })
-    .populate({
-      path: 'instructorId',
-      populate: {
-        path: 'userId', 
-        model: 'User'   
-      }
-    });
+    // Fetch the group by ID
+    // Populate the instructorId and wardId fields
+    const group = await Group.findById(id)
+      .populate({
+        path: "wardId",
+        populate: {
+          path: "stakeId",
+        },
+      })
+      .populate({
+        path: "instructorId",
+        populate: {
+          path: "userId",
+          model: "User",
+        },
+      });
 
+    // Check if the group exists
     if (!group) {
-      return res.status(404).json({ message: 'Group not found' });
+      return res.status(404).json({ message: "Group not found" });
     }
 
-    res.status(200).json({ message: 'Group found', group });
+    // Return the group details
+    res.status(200).json({ message: "Group found", group });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -225,19 +235,19 @@ const createGroup = async (req, res) => {
     // Check the name uniqueness
     const existingGroup = await Group.findOne({ name: name });
     if (existingGroup) {
-      return res.status(400).json({ error: 'Group name already exists' });
+      return res.status(400).json({ error: "Group name already exists" });
     }
 
     // Check if the instructor exists
     const instructor = await Instructor.findById(instructorId);
     if (!instructor) {
-      return res.status(404).json({ error: 'Instructor not found' });
+      return res.status(404).json({ error: "Instructor not found" });
     }
 
     // Check if the ward exists
     const ward = await Ward.findById(wardId);
     if (!ward) {
-      return res.status(404).json({ error: 'Ward not found' });
+      return res.status(404).json({ error: "Ward not found" });
     }
 
     // Generate sessions
@@ -249,10 +259,10 @@ const createGroup = async (req, res) => {
       sessions,
     });
 
-    res.status(201).json({ message: 'Group created successfully', newGroup });
+    res.status(201).json({ message: "Group created successfully", newGroup });
   } catch (error) {
-    console.error('Error creating group:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Error creating group:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -317,18 +327,22 @@ const getGroupsByWard = async (req, res) => {
     const { wardId } = req.params;
     const isValidId = mongoose.Types.ObjectId.isValid(wardId);
     if (!isValidId) {
-      return res.status(400).json({ error: 'Invalid Ward ID format' });
+      return res.status(400).json({ error: "Invalid Ward ID format" });
     }
+
+    // Fetch groups by Ward ID
     const groups = await Group.find({ wardId: wardId });
 
+    // Check if groups exist
     if (groups.length === 0) {
-      return res.status(404).json({ message: 'Ward not found' }); 
+      return res.status(404).json({ message: "Ward not found" });
     }
 
-    res.status(200).json({ message: 'Groups found', groups });
+    // Populate the instructorId and wardId fields
+    res.status(200).json({ message: "Groups found", groups });
   } catch (error) {
-    console.error('Error retrieving groups by ward:', error.message || error);
-    res.status(500).json({ error: error.message || 'Internal server error' });
+    console.error("Error retrieving groups by ward:", error.message || error);
+    res.status(500).json({ error: error.message || "Internal server error" });
   }
 };
 
@@ -431,39 +445,39 @@ const updateGroup = async (req, res) => {
     const { id } = req.params;
     const isValidId = mongoose.Types.ObjectId.isValid(id);
     if (!isValidId) {
-      return res.status(400).json({ error: 'Invalid ID format' });
+      return res.status(400).json({ error: "Invalid ID format" });
     }
-    
+
     // Validate the request body
     const { value, error } = groupUpdateSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ error: error.details[0].message });
     }
-    
+
     // Check if the instructor exists
     const instructor = await Instructor.findById(value.instructorId);
     if (!instructor) {
-      return res.status(404).json({ error: 'Instructor not found' });
+      return res.status(404).json({ error: "Instructor not found" });
     }
-    
+
     // Check if the ward exists
     const ward = await Ward.findById(value.wardId);
     if (!ward) {
-      return res.status(404).json({ error: 'Ward not found' });
+      return res.status(404).json({ error: "Ward not found" });
     }
-    
+
     // Check the name uniqueness
     const existingGroup = await Group.findOne({ name: value.name });
     if (existingGroup) {
-      return res.status(400).json({ error: 'Group name already exists' });
+      return res.status(400).json({ error: "Group name already exists" });
     }
-    
+
     // Check if the group exists and update it
     const group = await Group.findByIdAndUpdate(id, value, { new: true }); // Populates stake and ward
     if (!group) {
       return res.status(404).send();
     }
-    res.status(200).json({ message: 'Group updated successfully', group }); 
+    res.status(200).json({ message: "Group updated successfully", group });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -532,7 +546,7 @@ const deleteGroup = async (req, res) => {
     const { id } = req.params;
     const isValidId = mongoose.Types.ObjectId.isValid(id);
     if (!isValidId) {
-      return res.status(400).json({ error: 'Invalid ID format' });
+      return res.status(400).json({ error: "Invalid ID format" });
     }
 
     // Check if the group exists and delete it
@@ -638,9 +652,12 @@ const updateSession = async (req, res) => {
 
   // Validate the groupId and sessionNumber
   const isValidGroupId = mongoose.Types.ObjectId.isValid(groupId);
-  const isValidSessionNumber = !isNaN(sessionNumber) && parseInt(sessionNumber) > 0 && parseInt(sessionNumber) <= 25;
+  const isValidSessionNumber =
+    !isNaN(sessionNumber) &&
+    parseInt(sessionNumber) > 0 &&
+    parseInt(sessionNumber) <= 25;
   if (!isValidGroupId || !isValidSessionNumber) {
-    return res.status(400).json({ error: 'Invalid groupId or sessionNumber' });
+    return res.status(400).json({ error: "Invalid groupId or sessionNumber" });
   }
   // Validate the request body
   const { value, error } = updateSessionSchema.validate(req.body);
@@ -650,17 +667,19 @@ const updateSession = async (req, res) => {
 
   try {
     const group = await Group.findById(groupId);
-    if (!group) return res.status(404).json({ error: 'Group not found' });
+    if (!group) return res.status(404).json({ error: "Group not found" });
 
-    const session = group.sessions.find(s => s.number === parseInt(sessionNumber));
-    if (!session) return res.status(404).json({ error: 'Session not found' });
+    const session = group.sessions.find(
+      (s) => s.number === parseInt(sessionNumber)
+    );
+    if (!session) return res.status(404).json({ error: "Session not found" });
 
     Object.assign(session, value); // merge changes
     await group.save();
 
     res.status(200).json(session);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update session' });
+    res.status(500).json({ error: "Failed to update session" });
   }
 };
 
@@ -729,19 +748,20 @@ const getGroupSessions = async (req, res) => {
     const { groupId } = req.params;
     const isValidId = mongoose.Types.ObjectId.isValid(groupId);
     if (!isValidId) {
-      return res.status(400).json({ error: 'Invalid Group ID format' });
+      return res.status(400).json({ error: "Invalid Group ID format" });
     }
 
     // Find the group by ID
     const group = await Group.findById(req.params.groupId);
-    if (!group) return res.status(404).json({ error: 'Group not found' });
+    if (!group) return res.status(404).json({ error: "Group not found" });
 
-    res.status(200).json({ message: 'Sessions found', sessions: group.sessions });
+    res
+      .status(200)
+      .json({ message: "Sessions found", sessions: group.sessions });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch sessions' });
+    res.status(500).json({ error: "Failed to fetch sessions" });
   }
 };
-
 
 const generateSessions = () => {
   const sessions = [];
@@ -752,8 +772,8 @@ const generateSessions = () => {
       number: i + 1,
       date: null,
       completed: false,
-      topic: '',
-      notes: ''
+      topic: "",
+      notes: "",
     });
   }
 

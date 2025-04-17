@@ -1,12 +1,17 @@
 // controllers/authController.js
-const User = require('../models/user');
-const Student = require('../models/student');
-const { generateAccessToken, generateRefreshToken, verifyAccessToken, verifyRefreshToken } = require('../config/jwt');
-const TokenMetadata = require('../models/tokenMetadata');
-const argon2 = require('argon2');
-const { parseEnvTimeToMs } = require('../utils/timeParser'); // Utility function to parse time from environment variables
-const mongoose = require('mongoose');
-const { userSchema } = require('../validators/user');
+const User = require("../models/user");
+const Student = require("../models/student");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} = require("../config/jwt");
+const TokenMetadata = require("../models/tokenMetadata");
+const argon2 = require("argon2");
+const { parseEnvTimeToMs } = require("../utils/timeParser"); // Utility function to parse time from environment variables
+const mongoose = require("mongoose");
+const { userSchema } = require("../validators/user");
 const dotenv = require("dotenv");
 dotenv.config();
 const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
@@ -18,8 +23,7 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *   name: Auth
  *   description: Authentication management
  */
-
-/** 
+/**
  * @swagger
  * /api/auth/register:
  *   post:
@@ -116,11 +120,11 @@ const DEFAULT_AVATAR_URL = process.env.DEFAULT_AVATAR_URL;
  *                   type: string
  *                   description: Error message
  *                   example: 'Internal server error'
-*/
+ */
 const register = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  
+
   try {
     // 0. Validate request body
     const { error, value } = userSchema.validate(req.body);
@@ -138,29 +142,32 @@ const register = async (req, res) => {
     if (existingUser) {
       await session.abortTransaction();
       session.endSession();
-      return res.status(400).json({ error: 'User already exists' });
+      return res.status(400).json({ error: "User already exists" });
     }
     // 3.1 Create user with hashed password
-    const user = new User({ 
-      firstName, 
-      lastName, 
-      email, 
-      password, 
+    const user = new User({
+      firstName,
+      lastName,
+      email,
+      password,
       type, // 1 = Student, 10 = Admin, 11 = Instructor
       wardId: null, // Set to null for now
-      avatar: DEFAULT_AVATAR_URL || 'https://www.gravatar.com/avatar/default?d=identicon', // Default avatar URL
+      avatar:
+        DEFAULT_AVATAR_URL ||
+        "https://www.gravatar.com/avatar/default?d=identicon", // Default avatar URL
     });
     await user.save({ session });
 
     // 3.2 Create student profile if the type is 1 (Student)
     // Note: The addressId, birthDate, phone, language, and level are set to null for now
-    if (type === 1) { // 1 = Student
+    if (type === 1) {
+      // 1 = Student
       const student = new Student({
         userId: user._id,
-        addressId: null, 
-        birthDate: null, 
-        phone: null, 
-        language: null, 
+        addressId: null,
+        birthDate: null,
+        phone: null,
+        language: null,
         level: null,
         churchMembership: null,
       });
@@ -173,48 +180,55 @@ const register = async (req, res) => {
     const hashedRefreshToken = await argon2.hash(refreshToken);
 
     // 5. Store hashed refresh token
-    await TokenMetadata.create([{
-      userId: user._id,
-      refreshToken: hashedRefreshToken,
-      ipAddress: req.clientIp,
-      userAgent: req.headers['user-agent'],
-      expiresAt: new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)),
-    }], { session });
+    await TokenMetadata.create(
+      [
+        {
+          userId: user._id,
+          refreshToken: hashedRefreshToken,
+          ipAddress: req.clientIp,
+          userAgent: req.headers["user-agent"],
+          expiresAt: new Date(
+            Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)
+          ),
+        },
+      ],
+      { session }
+    );
 
     // 6. Commit transaction
     await session.commitTransaction();
     session.endSession();
 
     // 7. Handle response based on client type
-    const isWebClient = req.headers['user-agent']?.includes('Mozilla');
+    const isWebClient = req.headers["user-agent"]?.includes("Mozilla");
 
     if (isWebClient) {
-      res.cookie('refreshToken', refreshToken, {
+      res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/api/auth',
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/api/auth",
         maxAge: parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION),
       });
     }
 
+    // 8. Send response
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: "User registered successfully",
       accessToken,
       ...(!isWebClient && { refreshToken }), // Only for mobile
     });
-
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    console.error('Registration error:', error.message || error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Registration error:", error.message || error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
 // Login user
-/** 
+/**
  * @swagger
  * /api/auth/login:
  *   post:
@@ -311,20 +325,20 @@ const register = async (req, res) => {
  *                   type: string
  *                   description: Error message
  *                   example: 'Internal Server Error'
-*/
+ */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     // 1. Find user and validate credentials
     const user = await User.findOne({ email }).populate({
-      path: 'wardId',
+      path: "wardId",
       populate: {
-        path: 'stakeId'
-      }
+        path: "stakeId",
+      },
     });
     if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: "Invalid credentials" });
     }
 
     // 2. Generate tokens
@@ -333,13 +347,15 @@ const login = async (req, res) => {
     const hashedRefreshToken = await argon2.hash(refreshToken);
 
     // 3. Update token metadata
-    const expiresAt = new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)); // 7 days
+    const expiresAt = new Date(
+      Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)
+    ); // 7 days
     await TokenMetadata.findOneAndUpdate(
       { userId: user._id },
       {
         refreshToken: hashedRefreshToken,
         ipAddress: req.clientIp,
-        userAgent: req.headers['user-agent'],
+        userAgent: req.headers["user-agent"],
         expiresAt,
         updatedAt: new Date(),
       },
@@ -347,13 +363,13 @@ const login = async (req, res) => {
     );
 
     // 4. Set HTTP-only cookie for web clients
-    const isWebClient = req.headers['user-agent']?.includes('Mozilla');
+    const isWebClient = req.headers["user-agent"]?.includes("Mozilla");
     if (isWebClient) {
-      res.cookie('refreshToken', refreshToken, {
+      res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/api/auth',
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/api/auth",
         maxAge: parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION),
       });
     }
@@ -361,20 +377,22 @@ const login = async (req, res) => {
     // 5. Single response
     res.json({
       success: true,
-      message: 'Login successful',
+      message: "Login successful",
       accessToken,
       user: {
         _id: user._id,
         email: user.email,
-        name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : 'No name set',
+        name:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : "No name set",
         type: user.type,
       },
       ...(!isWebClient && { refreshToken }), // Only for non-web clients
     });
-
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    console.error("Login error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -454,18 +472,20 @@ const login = async (req, res) => {
  *                   type: string
  *                   description: Error message
  *                   example: 'Internal Server Error'
-*/
+ */
 const validate = async (req, res) => {
   try {
     // 1. Get access token from the Authorization header
-    const authHeader = req.headers['authorization'];
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or malformed Authorization header' });
+    const authHeader = req.headers["authorization"];
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or malformed Authorization header" });
     }
-    
-    const accessToken = authHeader.split(' ')[1];
+
+    const accessToken = authHeader.split(" ")[1];
     if (!accessToken) {
-      return res.status(401).json({ error: 'Access token is missing' });
+      return res.status(401).json({ error: "Access token is missing" });
     }
 
     // 2. Verify access token
@@ -473,21 +493,20 @@ const validate = async (req, res) => {
     try {
       user = verifyAccessToken(accessToken); // should return decoded token (e.g., { _id, email, ... })
     } catch (err) {
-      return res.status(401).json({ error: 'Invalid or expired access token' });
+      return res.status(401).json({ error: "Invalid or expired access token" });
     }
 
     // 3. Check if user exists in the database
     const existingUser = await User.findById(user._id);
     if (!existingUser) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(401).json({ error: "User not found" });
     }
 
     // 4. Return user information from the access token
-    res.status(200).json({ message: 'User found', user})
-  }
-  catch(error) {
-    console.log(error)
-    res.status(500).json({error: "Internal Server Error"});
+    res.status(200).json({ message: "User found", user });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -557,40 +576,47 @@ const validate = async (req, res) => {
  *                   type: string
  *                   description: Error message
  *                   example: 'Internal Server Error'
-*/
+ */
 const refreshToken = async (req, res) => {
+  // 1. Get refresh token from the request
+  // Check if the token is in the Authorization header or in cookies
   let refreshToken;
-  if (req.headers.authorization?.startsWith('Bearer ')) {
-    refreshToken = req.headers.authorization.split(' ')[1];
+  if (req.headers.authorization?.startsWith("Bearer ")) {
+    refreshToken = req.headers.authorization.split(" ")[1];
   } else if (req.cookies?.refreshToken) {
     refreshToken = req.cookies.refreshToken;
   }
 
+  // 2. If no refresh token is found, return an error
   if (!refreshToken) {
-    return res.status(401).json({ error: 'Refresh token required' });
+    return res.status(401).json({ error: "Refresh token required" });
   }
 
+  // 3. Verify the refresh token
   try {
     let decoded;
     try {
       decoded = verifyRefreshToken(refreshToken);
     } catch (error) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ error: "Invalid or expired token" });
     }
     if (!decoded?._id) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({ error: "Invalid or expired token" });
     }
 
     // Fetch full user info to include in new access token
-    const user = await User.findById(decoded._id).select('id email type');
+    const user = await User.findById(decoded._id).select("id email type");
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     // Validate against hashed DB token
     const tokenMetadata = await TokenMetadata.findOne({ userId: user._id });
-    if (!tokenMetadata || !(await argon2.verify(tokenMetadata.refreshToken, refreshToken))) {
-      return res.status(403).json({ error: 'Invalid or revoked tokens' });
+    if (
+      !tokenMetadata ||
+      !(await argon2.verify(tokenMetadata.refreshToken, refreshToken))
+    ) {
+      return res.status(403).json({ error: "Invalid or revoked tokens" });
     }
 
     // Generate new tokens
@@ -604,33 +630,36 @@ const refreshToken = async (req, res) => {
       {
         refreshToken: newHashedToken,
         ipAddress: req.clientIp,
-        userAgent: req.headers['user-agent'],
-        expiresAt: new Date(Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)),
+        userAgent: req.headers["user-agent"],
+        expiresAt: new Date(
+          Date.now() + parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION)
+        ),
       },
       { new: true }
     );
 
     // Determine if the request comes from a web client
-    const isWebClient = req.headers['user-agent']?.includes('Mozilla');
+    const isWebClient = req.headers["user-agent"]?.includes("Mozilla");
 
     if (isWebClient) {
-      res.cookie('refreshToken', newRefreshToken, {
+      res.cookie("refreshToken", newRefreshToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production' || req.protocol === 'https',
-        sameSite: 'strict',
-        path: '/api/auth',
+        secure:
+          process.env.NODE_ENV === "production" || req.protocol === "https",
+        sameSite: "strict",
+        path: "/api/auth",
         maxAge: parseEnvTimeToMs(process.env.JWT_REFRESH_EXPIRATION),
       });
     }
 
+    // Send response
     res.json({
       success: true,
       accessToken: newAccessToken,
       ...(!isWebClient && { refreshToken: newRefreshToken }), // Only for mobile
     });
-
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -690,18 +719,20 @@ const refreshToken = async (req, res) => {
  *                   type: string
  *                   description: Error message
  *                   example: 'Internal Server Error'
-*/
+ */
 const logout = async (req, res) => {
   try {
     // 1. Get access token from the Authorization header
-    const authHeader = req.headers['authorization'];
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or malformed Authorization header' });
+    const authHeader = req.headers["authorization"];
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or malformed Authorization header" });
     }
-    
-    const accessToken = authHeader.split(' ')[1];
+
+    const accessToken = authHeader.split(" ")[1];
     if (!accessToken) {
-      return res.status(401).json({ error: 'Access token is missing' });
+      return res.status(401).json({ error: "Access token is missing" });
     }
 
     // 2. Verify access token and extract user ID
@@ -710,41 +741,42 @@ const logout = async (req, res) => {
       const decoded = verifyAccessToken(accessToken);
       userId = decoded._id;
     } catch (err) {
-      console.error('Logout failed: Invalid access token', err);
-      return res.status(401).json({ error: 'Invalid access token' });
+      console.error("Logout failed: Invalid access token", err);
+      return res.status(401).json({ error: "Invalid access token" });
     }
 
     // 3. Remove the token metadata for the user (logout)
     const result = await TokenMetadata.deleteOne({ userId });
 
     if (result.deletedCount === 0) {
-      console.warn(`Logout warning: No active session found for user ${userId}`);
+      console.warn(
+        `Logout warning: No active session found for user ${userId}`
+      );
     }
 
     // 4. Clear refresh token cookie if it's a web client
-    if (req.headers['user-agent']?.includes('Mozilla')) {
-      res.clearCookie('refreshToken', {
+    if (req.headers["user-agent"]?.includes("Mozilla")) {
+      res.clearCookie("refreshToken", {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        path: '/api/auth',
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        path: "/api/auth",
       });
     }
 
     // 5. Respond with success
     res.status(200).json({
       success: true,
-      message: 'User logged out successfully',
+      message: "User logged out successfully",
     });
   } catch (error) {
-    console.error('Logout error:', error.message || error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Logout error:", error.message || error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
-
 // Get the user profile when authenticated
-/** 
+/**
  * @swagger
  * /api/auth/profile:
  *   get:
@@ -810,18 +842,20 @@ const logout = async (req, res) => {
  *                       example: '2023-10-01T12:00:00Z'
  *       401:
  *         description: Unauthorized
-*/
+ */
 const profile = async (req, res) => {
   try {
     // 1. Get access token from the Authorization header
-    const authHeader = req.headers['authorization'];
-    if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Missing or malformed Authorization header' });
+    const authHeader = req.headers["authorization"];
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ error: "Missing or malformed Authorization header" });
     }
-    
-    const accessToken = authHeader.split(' ')[1];
+
+    const accessToken = authHeader.split(" ")[1];
     if (!accessToken) {
-      return res.status(401).json({ error: 'Access token is missing' });
+      return res.status(401).json({ error: "Access token is missing" });
     }
 
     // 2. Verify access token and extract user ID
@@ -830,31 +864,31 @@ const profile = async (req, res) => {
       const decoded = verifyAccessToken(accessToken);
       userId = decoded._id;
     } catch (err) {
-      console.error('Profile retrieval failed: Invalid access token', err);
-      return res.status(401).json({ error: 'Invalid access token' });
+      console.error("Profile retrieval failed: Invalid access token", err);
+      return res.status(401).json({ error: "Invalid access token" });
     }
 
     // 3. Find user in the database
     const user = await User.findById(userId)
-      .select('-password')
+      .select("-password")
       .populate({
-        path: 'wardId',
+        path: "wardId",
         populate: {
-          path: 'stakeId',
+          path: "stakeId",
         },
       });
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ error: "User not found" });
     }
 
     // 4. Respond with user profile
     res.status(200).json({
-      message: 'You are authenticated',
+      message: "You are authenticated",
       user,
     });
   } catch (error) {
-    console.error('Profile retrieval error:', error.message || error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Profile retrieval error:", error.message || error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 

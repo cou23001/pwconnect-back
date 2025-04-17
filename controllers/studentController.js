@@ -3,7 +3,7 @@ const Student = require("../models/student");
 const User = require("../models/user");
 const Address = require("../models/address");
 const TokenMetadata = require("../models/tokenMetadata");
-const Attendance = require('../models/attendance');
+const Attendance = require("../models/attendance");
 const mongoose = require("mongoose");
 const { studentSchema } = require("../validators/student");
 const { partialStudentSchema } = require("../validators/partialStudent");
@@ -166,7 +166,7 @@ const getAllStudents = async (req, res) => {
       .status(200)
       .json({ message: "Students retrieved succesfully", data: students });
   } catch (error) {
-    res.status(500).json( "Internal server error" );
+    res.status(500).json("Internal server error");
   }
 };
 
@@ -428,6 +428,7 @@ const getStudentsByWard = async (req, res) => {
   try {
     const { wardId } = req.params;
 
+    // 1. Validate Ward ID format (400 Bad Request if invalid)
     if (!wardId) {
       return res.status(400).json({ message: "Ward ID parameter is required" });
     }
@@ -437,22 +438,23 @@ const getStudentsByWard = async (req, res) => {
 
     const wardObjectId = new mongoose.Types.ObjectId(wardId);
 
+    // 2. Find students by matching the wardId on the associated User document
     const students = await Student.aggregate([
       {
         $lookup: {
-          from: 'users',
-          localField: 'userId',
-          foreignField: '_id',
-          as: 'userDetails'
-        }
+          from: "users",
+          localField: "userId",
+          foreignField: "_id",
+          as: "userDetails",
+        },
       },
       {
         $match: {
-          'userDetails.wardId': wardObjectId
-        }
+          "userDetails.wardId": wardObjectId,
+        },
       },
       {
-        $unwind: '$userDetails'
+        $unwind: "$userDetails",
       },
       {
         $project: {
@@ -463,18 +465,19 @@ const getStudentsByWard = async (req, res) => {
           churchMembership: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: '$userDetails',
-        }
-      }
+          user: "$userDetails",
+        },
+      },
     ]);
 
-    res.status(200).json({ message: "Students retrieved successfully", data: students });
+    res
+      .status(200)
+      .json({ message: "Students retrieved successfully", data: students });
   } catch (error) {
     console.error("Error fetching students by ward:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
-
 
 /**
  * @swagger
@@ -658,7 +661,7 @@ const createStudent = async (req, res) => {
   let shouldCleanupFile = false;
 
   try {
-    // Validate request body
+    // 1. Validate request body
     const { error } = studentSchema.validate(req.body, { abortEarly: false });
     if (error) {
       return res.status(400).json({
@@ -667,13 +670,14 @@ const createStudent = async (req, res) => {
       });
     }
 
+    // 2. Start a transaction
     session = await mongoose.startSession();
     session.startTransaction();
 
-    // Destructure request body
+    // 3. Destructure request body
     const { user, address, ...studentData } = req.body;
 
-    // Check if the user already exists
+    // 4. Check if the user already exists
     const existingUser = await User.findOne({ email: user.email }).session(
       session
     );
@@ -683,13 +687,13 @@ const createStudent = async (req, res) => {
         .json({ message: `User '${user.email}' already exists` });
     }
 
-    // Handle file upload if present
+    // 5. Handle file upload if present
     if (req.file) {
       avatarUrl = await uploadToS3(req.file);
       shouldCleanupFile = true; // Set cleanup flag
     }
 
-    // Create the user
+    // 6. Create the user
     const newUser = await User.create(
       [
         {
@@ -703,7 +707,7 @@ const createStudent = async (req, res) => {
       { session }
     );
 
-    // Create the address
+    // 7. Create the address
     const newAddress = await Address.create(
       [
         {
@@ -714,7 +718,7 @@ const createStudent = async (req, res) => {
       { session }
     );
 
-    // Create the student
+    // 8. Create the student
     const newStudent = await Student.create(
       [
         {
@@ -727,17 +731,17 @@ const createStudent = async (req, res) => {
       { session }
     );
 
-    // Commit the transaction
+    // 9. Commit the transaction
     await session.commitTransaction();
     shouldCleanupFile = false; // Reset cleanup flag
 
-    // Populate the student data before sending response
+    // 10. Populate the student data before sending response
     const result = await Student.findById(newStudent[0]._id)
       .populate("userId", "-password") // Exclude password field
       .populate("addressId")
       .lean(); // Convert to plain JavaScript object
 
-    // Send response
+    // 11. Send response
     res.status(201).json({
       success: true,
       message: "Student created successfully",
@@ -990,11 +994,12 @@ const updateStudent = async (req, res, next) => {
       session.endSession();
       return res.status(400).json({ message: "Invalid student ID" });
     }
-    // 1. Fetch student with populated user
+    // 2. Fetch student with populated user
     const student = await Student.findById(id)
       .populate("userId")
       .session(session);
-    
+
+    // 3. Check if student exists and has a userId
     if (!student || !student.userId) {
       await session.abortTransaction();
       session.endSession();
@@ -1003,7 +1008,7 @@ const updateStudent = async (req, res, next) => {
 
     let oldAvatarUrl = null;
 
-    // 2. Handle file upload if present
+    // 4. Handle file upload if present
     if (req.file) {
       // Validate type (redundant check)
       const validTypes = ["image/jpeg", "image/png"];
@@ -1024,7 +1029,7 @@ const updateStudent = async (req, res, next) => {
       req.body.user.avatar = newAvatarUrl;
     }
 
-    // 3. Validate request body
+    // 5. Validate request body
     const { error, value } = partialStudentSchema.validate(req.body, {
       abortEarly: false,
     });
@@ -1036,7 +1041,7 @@ const updateStudent = async (req, res, next) => {
       });
     }
 
-    // 4. Update User (including new avatar if uploaded)
+    // 6. Update User (including new avatar if uploaded)
     if (value.user) {
       await User.findByIdAndUpdate(
         student.userId._id,
@@ -1045,7 +1050,7 @@ const updateStudent = async (req, res, next) => {
       );
     }
 
-    // 5. Update Address
+    // 7. Update Address
     if (value.address) {
       const address = await Address.findOneAndUpdate(
         { _id: student.addressId || new mongoose.Types.ObjectId() },
@@ -1058,13 +1063,6 @@ const updateStudent = async (req, res, next) => {
 
     // 6. Update Student
     const { user, address, ...studentFields } = value;
-    // const updatedStudent = await Student.findByIdAndUpdate(
-    //   req.params.id,
-    //   { $set: studentFields },
-    //   { new: true, session }
-    // )
-    //   .populate("userId")
-    //   .populate("addressId");
 
     // Step 1: Update the student
     await Student.findByIdAndUpdate(
@@ -1088,12 +1086,8 @@ const updateStudent = async (req, res, next) => {
       .session(session);
 
     // Regenerating accessToken
-    // Print the updated student for debugging
-    //console.log("User Details:", updatedStudent.userId);
-    //console.log("Stake Details:", updatedStudent.userId.wardId?.stakeId?.location);
-    const location =  updatedStudent.userId.wardId?.stakeId?.location;
+    const location = updatedStudent.userId.wardId?.stakeId?.location;
     let country = null;
-    //country = getCountry(location);
     if (location) {
       country = getCountry(location);
     }
@@ -1111,6 +1105,7 @@ const updateStudent = async (req, res, next) => {
       }
     }
 
+    // 9. Generate new access token
     const newUser = updatedStudent.userId;
     const newAccessToken = generateAccessToken(newUser);
 
@@ -1214,6 +1209,7 @@ const updateStudent = async (req, res, next) => {
  *                   example: "Internal server error"
  */
 const deleteStudent = async (req, res) => {
+  // 1. Validate ID format
   const { id } = req.params;
 
   if (!mongoose.isValidObjectId(id)) {
@@ -1228,6 +1224,7 @@ const deleteStudent = async (req, res) => {
   let done = false;
   let userAvatarUrl = null;
 
+  // 2. Loop until successful or max retries reached
   while (!done && retryCount < MAX_RETRIES) {
     const session = await mongoose.startSession();
 
@@ -1261,16 +1258,19 @@ const deleteStudent = async (req, res) => {
       // Prepare deletion operations
       const deletions = [student.deleteOne({ session })];
 
+      // Check if userId exists before deleting
       if (student.userId) {
         deletions.push(User.deleteOne({ _id: student.userId }, { session }));
       }
 
+      // Check if addressId exists before deleting
       if (student.addressId) {
         deletions.push(
           Address.deleteOne({ _id: student.addressId }, { session })
         );
       }
 
+      // Check if token metadata exists before deleting
       if (tkMetaData) {
         deletions.push(
           TokenMetadata.deleteOne({ userId: student.userId }, { session })
@@ -1326,8 +1326,6 @@ const deleteStudent = async (req, res) => {
     }
   }
 };
-
-
 
 // function to upload avatar to S3
 /**
@@ -1563,29 +1561,35 @@ const uploadAvatar = async (req, res) => {
 const getStudentByUserId = async (req, res) => {
   try {
     const { userId } = req.params;
-    // Validate ID format
+
+    // 1. Validate ID format
     if (!mongoose.isValidObjectId(userId)) {
-      return res.status(400).json({ error: 'Invalid user ID' });
+      return res.status(400).json({ error: "Invalid user ID" });
     }
+
+    // 2. Fetch student with populated user
     const student = await Student.findOne({ userId })
-    .populate({
-      path: 'userId',
-      populate: {
-        path: 'wardId',
+      .populate({
+        path: "userId",
         populate: {
-          path: 'stakeId'
-        }
-      }
-    })
-    .populate('addressId');
-    
+          path: "wardId",
+          populate: {
+            path: "stakeId",
+          },
+        },
+      })
+      .populate("addressId");
+
+    // 3. Check if student exists
     if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+      return res.status(404).json({ error: "Student not found" });
     }
-    res.json({ message: 'Student found', data: student });
+
+    // 4. Send response
+    res.json({ message: "Student found", data: student });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -1658,17 +1662,19 @@ const getStudentByUserId = async (req, res) => {
  *                   example: "Error message"
  */
 const updateStudentAddressId = async (req, res) => {
+  // Validate ID format
   const { studentId } = req.params;
   const { addressId } = req.body;
 
   if (!mongoose.isValidObjectId(addressId)) {
-    return res.status(400).json({ message: 'Invalid address ID' });
+    return res.status(400).json({ message: "Invalid address ID" });
   }
 
   if (!mongoose.isValidObjectId(studentId)) {
-    return res.status(400).json({ message: 'Invalid student ID' });
+    return res.status(400).json({ message: "Invalid student ID" });
   }
 
+  // Find the student
   try {
     const updatedStudent = await Student.findByIdAndUpdate(
       studentId,
@@ -1676,14 +1682,15 @@ const updateStudentAddressId = async (req, res) => {
       { new: true }
     );
 
+    // Check if student exists
     if (!updatedStudent) {
-      return res.status(404).json({ message: 'Student not found' });
+      return res.status(404).json({ message: "Student not found" });
     }
 
-    res.json({ message: 'Student address updated', data: updatedStudent });
+    res.json({ message: "Student address updated", data: updatedStudent });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 };
 
@@ -1774,18 +1781,18 @@ const getStudentAttendance = async (req, res) => {
   try {
     // Validate ID format
     const { userId } = req.params;
-    
+
     if (!mongoose.isValidObjectId(userId)) {
-      return res.status(400).json({ error: 'Invalid user ID' });
+      return res.status(400).json({ error: "Invalid user ID" });
     }
     // Find the studentId with the userId
-    const student = await Student.findOne({ userId }).populate('userId');
+    const student = await Student.findOne({ userId }).populate("userId");
     if (!student) {
-      return res.status(404).json({ error: 'Student not found' });
+      return res.status(404).json({ error: "Student not found" });
     }
     // Get all attendance records for the student
     const attendanceRecords = await Attendance.find({ studentId: student._id })
-      .populate('groupId', 'name') // Only get the group name
+      .populate("groupId", "name") // Only get the group name
       .sort({ date: 1 });
 
     if (!attendanceRecords.length) {
@@ -1800,15 +1807,16 @@ const getStudentAttendance = async (req, res) => {
       });
     }
 
+    // Map attendance records to desired format
     const sessions = attendanceRecords.map((record) => ({
       date: record.date,
-      status: record.isPresent ? 'attended' : 'missed',
-      groupName: record.groupId?.name || 'Unknown Group',
+      status: record.isPresent ? "attended" : "missed",
+      groupName: record.groupId?.name || "Unknown Group",
       notes: record.notes,
     }));
 
     const total = sessions.length;
-    const attended = sessions.filter((s) => s.status === 'attended').length;
+    const attended = sessions.filter((s) => s.status === "attended").length;
     const missed = total - attended;
     const percentage = Math.round((attended / total) * 100);
 
@@ -1821,13 +1829,11 @@ const getStudentAttendance = async (req, res) => {
       },
       sessions,
     });
-
   } catch (error) {
-    console.error('Error getting student attendance:', error);
-    res.status(500).json({ error: 'Server error fetching attendance' });
+    console.error("Error getting student attendance:", error);
+    res.status(500).json({ error: "Server error fetching attendance" });
   }
 };
-
 
 module.exports = {
   getAllStudents,

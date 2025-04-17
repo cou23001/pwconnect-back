@@ -1,5 +1,5 @@
-const TokenMetadata = require('../models/tokenMetadata');
-const argon2 = require('argon2');
+const TokenMetadata = require("../models/tokenMetadata");
+const argon2 = require("argon2");
 
 /**
  * @swagger
@@ -147,42 +147,46 @@ const argon2 = require('argon2');
  */
 const getTokenMetadataById = async (req, res) => {
   try {
+    // Extract the token ID from the request parameters
     const { id } = req.params;
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
+    // Check if the token ID is provided
+    const incomingRefreshToken =
+      req.cookies.refreshToken || req.body.refreshToken;
+
+    // If the refresh token is not provided, return an error
     if (!incomingRefreshToken) {
-      return res.status(401).json({ error: 'Refresh token required' });
+      return res.status(401).json({ error: "Refresh token required" });
     }
 
     // Check token validity in one query
     const tokenMetadata = await TokenMetadata.findOne({
       _id: id,
-      expiresAt: { $gt: new Date() },  // Not expired
-      isRevoked: false                 // Not revoked
-    }).populate('userId', 'firstName lastName email type');
+      expiresAt: { $gt: new Date() }, // Not expired
+      isRevoked: false, // Not revoked
+    }).populate("userId", "firstName lastName email type");
 
     if (!tokenMetadata) {
-      return res.status(403).json({ error: 'Token invalid or expired' });
+      return res.status(403).json({ error: "Token invalid or expired" });
     }
 
     // Verify the incoming token against the hashed version
     const isValid = await argon2.verify(
       tokenMetadata.refreshToken, // Hashed token (from DB)
-      incomingRefreshToken        // Plaintext token (from request)
+      incomingRefreshToken // Plaintext token (from request)
     );
 
     if (!isValid) {
-      return res.status(403).json({ error: 'Invalid refresh token' });
+      return res.status(403).json({ error: "Invalid refresh token" });
     }
 
-    res.status(200).json({ 
-      message: 'Token metadata retrieved successfully', 
-      data: tokenMetadata 
+    res.status(200).json({
+      message: "Token metadata retrieved successfully",
+      data: tokenMetadata,
     });
-
   } catch (error) {
-    console.error('Error retrieving token metadata:', error);
-    res.status(500).json({ error: 'Failed to retrieve token metadata' });
+    console.error("Error retrieving token metadata:", error);
+    res.status(500).json({ error: "Failed to retrieve token metadata" });
   }
 };
 

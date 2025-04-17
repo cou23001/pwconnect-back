@@ -5,7 +5,6 @@ const Ward = require("../models/ward");
 const Registration = require("../models/registration");
 const Attendance = require("../models/attendance");
 
-
 /**
  * @swagger
  * /stats/stake/{stakeId}/groups-sessions:
@@ -88,39 +87,46 @@ const Attendance = require("../models/attendance");
  *                   example: Server error
  */
 const getGroupSessionsByStake = async (req, res) => {
-    try {
-      const { stakeId } = req.params;
-  
-      if (!mongoose.Types.ObjectId.isValid(stakeId)) {
-        return res.status(400).json({ message: "Invalid stake ID" });
-      }
-  
-      // Step 1: Get all wards in the stake
-      const wards = await Ward.find({ stakeId }).select('_id');
-      if (wards.length === 0) {
-        return res.status(404).json({ message: "No wards found for this stake" });
-      }
-      const wardIds = wards.map(w => w._id);
-  
-      // Step 2: Find all groups in those wards
-      const groups = await Group.find({ wardId: { $in: wardIds } }).select('name sessions');
-  
-      // Step 3: Count completed sessions per group
-      const sessionStats = groups.map(group => {
-        const completedCount = group.sessions?.filter(s => s.completed)?.length || 0;
-        return {
-          groupId: group._id,
-          groupName: group.name,
-          sessionCount: completedCount,
-        };
-      });
-  
-      res.status(200).json({ message: "Group sessions retrieved successfully", sessionStats });
-    } catch (error) {
-      console.error("Error in getGroupSessionsByStake:", error);
-      res.status(500).json({ message: "Server error" });
+  try {
+    // Step 1: Get the stake ID from the request parameters
+    const { stakeId } = req.params;
+
+    // Step 2: Validate the stake ID
+    if (!mongoose.Types.ObjectId.isValid(stakeId)) {
+      return res.status(400).json({ message: "Invalid stake ID" });
     }
-  };
+
+    // Step 3: Get all wards in the stake
+    const wards = await Ward.find({ stakeId }).select("_id");
+    if (wards.length === 0) {
+      return res.status(404).json({ message: "No wards found for this stake" });
+    }
+    const wardIds = wards.map((w) => w._id);
+
+    // Step 4: Find all groups in those wards
+    const groups = await Group.find({ wardId: { $in: wardIds } }).select(
+      "name sessions"
+    );
+
+    // Step 5: Count completed sessions per group
+    const sessionStats = groups.map((group) => {
+      const completedCount =
+        group.sessions?.filter((s) => s.completed)?.length || 0;
+      return {
+        groupId: group._id,
+        groupName: group.name,
+        sessionCount: completedCount,
+      };
+    });
+
+    res
+      .status(200)
+      .json({ message: "Group sessions retrieved successfully", sessionStats });
+  } catch (error) {
+    console.error("Error in getGroupSessionsByStake:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 /**
  * @swagger
@@ -203,45 +209,50 @@ const getGroupSessionsByStake = async (req, res) => {
  *                   type: string
  *                   example: Server error
  */
-  const getGroupStudentCountsByStake = async (req, res) => {
-    try {
-      const { stakeId } = req.params;
-  
-      if (!mongoose.Types.ObjectId.isValid(stakeId)) {
-        return res.status(400).json({ message: "Invalid stake ID" });
-      }
-  
-      // Step 1: Get all wards in the stake
-      const wards = await Ward.find({ stakeId }).select('_id');
-      if (wards.length === 0) {
-        return res.status(404).json({ message: "No wards found for this stake" });
-      }
-      const wardIds = wards.map(w => w._id);
-  
-      // Step 2: Get all groups in those wards
-      const groups = await Group.find({ wardId: { $in: wardIds } }).select('_id name');
-  
-      // Step 3: For each group, count how many registrations (students)
-      const studentStats = await Promise.all(
-        groups.map(async (group) => {
-          const studentCount = await Registration.countDocuments({ groupId: group._id });
-  
-          return {
-            groupId: group._id,
-            groupName: group.name,
-            studentCount,
-          };
-        })
-      );
-  
-      res.status(200).json({ message: "Student count retrieved successfully", studentStats });
-    } catch (error) {
-      console.error("Error in getTotalStudentsByGroupByStake:", error);
-      res.status(500).json({ message: "Server error" });
+const getGroupStudentCountsByStake = async (req, res) => {
+  try {
+    // Validate the stake ID
+    const { stakeId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(stakeId)) {
+      return res.status(400).json({ message: "Invalid stake ID" });
     }
-  };
-  
-  
+
+    // Step 1: Get all wards in the stake
+    const wards = await Ward.find({ stakeId }).select("_id");
+    if (wards.length === 0) {
+      return res.status(404).json({ message: "No wards found for this stake" });
+    }
+    const wardIds = wards.map((w) => w._id);
+
+    // Step 2: Get all groups in those wards
+    const groups = await Group.find({ wardId: { $in: wardIds } }).select(
+      "_id name"
+    );
+
+    // Step 3: For each group, count how many registrations (students)
+    const studentStats = await Promise.all(
+      groups.map(async (group) => {
+        const studentCount = await Registration.countDocuments({
+          groupId: group._id,
+        });
+
+        return {
+          groupId: group._id,
+          groupName: group.name,
+          studentCount,
+        };
+      })
+    );
+
+    res
+      .status(200)
+      .json({ message: "Student count retrieved successfully", studentStats });
+  } catch (error) {
+    console.error("Error in getTotalStudentsByGroupByStake:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 /**
  * @swagger
@@ -326,6 +337,7 @@ const getGroupSessionsByStake = async (req, res) => {
  */
 const getGroupAttendanceByStake = async (req, res) => {
   try {
+    // Validate the stake ID
     const { stakeId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(stakeId)) {
@@ -333,28 +345,40 @@ const getGroupAttendanceByStake = async (req, res) => {
     }
 
     // Step 1: Get all ward IDs for this stake
-    const wards = await Ward.find({ stakeId }).select('_id');
+    const wards = await Ward.find({ stakeId }).select("_id");
     if (wards.length === 0) {
       return res.status(404).json({ message: "No wards found for this stake" });
     }
-    const wardIds = wards.map(w => w._id);
+    const wardIds = wards.map((w) => w._id);
 
     // Step 2: Get all groups in these wards
-    const groups = await Group.find({ wardId: { $in: wardIds } }).select('_id name');
+    const groups = await Group.find({ wardId: { $in: wardIds } }).select(
+      "_id name"
+    );
 
     // Step 3: For each group, calculate attendance
-    const attendanceStats = await Promise.all(groups.map(async (group) => {
-      const totalRecords = await Attendance.countDocuments({ groupId: group._id });
-      const presentRecords = await Attendance.countDocuments({ groupId: group._id, isPresent: true });
+    const attendanceStats = await Promise.all(
+      groups.map(async (group) => {
+        const totalRecords = await Attendance.countDocuments({
+          groupId: group._id,
+        });
+        const presentRecords = await Attendance.countDocuments({
+          groupId: group._id,
+          isPresent: true,
+        });
 
-      const averageAttendance = totalRecords === 0 ? 0 : Math.round((presentRecords / totalRecords) * 100);
+        const averageAttendance =
+          totalRecords === 0
+            ? 0
+            : Math.round((presentRecords / totalRecords) * 100);
 
-      return {
-        groupId: group._id,
-        groupName: group.name,
-        averageAttendance
-      };
-    }));
+        return {
+          groupId: group._id,
+          groupName: group.name,
+          averageAttendance,
+        };
+      })
+    );
 
     res.status(200).json(attendanceStats);
   } catch (error) {
@@ -362,10 +386,9 @@ const getGroupAttendanceByStake = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
-  
 
 module.exports = {
-    getGroupSessionsByStake,
-    getGroupStudentCountsByStake,
-    getGroupAttendanceByStake,
+  getGroupSessionsByStake,
+  getGroupStudentCountsByStake,
+  getGroupAttendanceByStake,
 };
