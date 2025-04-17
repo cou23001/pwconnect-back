@@ -2,12 +2,8 @@
 
 The English Connect Backend Admin is a backend system built with **Node.js** and **MongoDB** in the cloud. It provides authentication, user management, and administrative tools for the English Connect courses.
 
-- Backend production server:  
-  <a href="https://pwconnect-back.onrender.com/api-docs" target="_blank" rel="noopener noreferrer">https://pwconnect-back.onrender.com/api-docs</a>
-
-- Frontend production server:  
-  <a href="https://english-connect-admin.onrender.com/" target="_blank" rel="noopener noreferrer">https://english-connect-admin.onrender.com/</a>
-
+- Backend production server: https://pwconnect-back.onrender.com/api-docs
+- Frontend production server: https://english-connect-admin.onrender.com
 
 ## Features
 - User authentication and JWT-based authorization
@@ -27,12 +23,36 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
     npm install
 4. Create a .env file in the root directory and add the following:
     ```bash
+    NODE_ENV='development'
     MONGO_URI=your-mongodb-cloud-url
     JWT_SECRET=your-secret-key
-    PORT=5000
-5. Start the server
+    JWT_REFRESH_SECRET=your-secret-refresh-key
+    SWAGGER_SERVER_URL=http://localhost:3300
+    JWT_EXPIRATION=4h
+    JWT_REFRESH_EXPIRATION=1d
+    AWS_ACCESS_KEY=your-aws-access-key
+    AWS_SECRET_KEY=your-aws-secret-key
+    AWS_REGION=your-aws-region
+    AWS_BUCKET=your-aws-bucket
+    AWS_BUCKET_URL=your-aws-bucket-url
+    DEFAULT_AVATAR_URL=https://www.gravatar.com/avatar/default?d=identicon
+    FRONTEND_DEV_URL=http://localhost:3000
+    FRONTEND_DEV_URL_ALT=http://localhost:3300
+    FRONTEND_PROD_URL=https://english-connect-admin.onrender.com
+    BACKEND_PROD_URL=https://pwconnect-back.onrender.com
+    PORT=3300
+5. Create a .env.production file in the root directory and add the following:
     ```bash
-    npm start
+    NODE_ENV=production
+    SWAGGER_SERVER_URL=https://pwconnect-back.onrender.com/
+    MONGODB_URI=your-mongodb-cloud-url
+    JWT_SECRET=your-jwt-secret 
+    JWT_REFRESH_SECRET=your-jwt-refresh-secret
+    JWT_EXPIRATION=1h
+    JWT_REFRESH_EXPIRATION=1d
+6. Start the server
+    ```bash
+    npm run dev
 
 ## API Endpoints
 
