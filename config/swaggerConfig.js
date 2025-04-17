@@ -1,6 +1,8 @@
 // config/swaggerConfig.js
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
+const PORT = process.env.PORT || 3300;
+const swaggerServerUrl = `http://localhost:${PORT}`;
 
 // Schemas
 const userSchema = require('../schemas/user');
@@ -27,7 +29,7 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.SWAGGER_SERVER_URL,
+        url: swaggerServerUrl,
         description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Local server',
       },
     ],
