@@ -2,12 +2,8 @@
 
 The English Connect Backend Admin is a backend system built with **Node.js** and **MongoDB** in the cloud. It provides authentication, user management, and administrative tools for the English Connect courses.
 
-- Backend production server:  
-  <a href="https://pwconnect-back.onrender.com/api-docs" target="_blank" rel="noopener noreferrer">https://pwconnect-back.onrender.com/api-docs</a>
-
-- Frontend production server:  
-  <a href="https://english-connect-admin.onrender.com/" target="_blank" rel="noopener noreferrer">https://english-connect-admin.onrender.com/</a>
-
+- Backend production server: https://pwconnect-back.onrender.com/api-docs
+- Frontend production server: https://english-connect-admin.onrender.com
 
 ## Features
 - User authentication and JWT-based authorization
