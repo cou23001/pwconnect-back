@@ -11,6 +11,7 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 ---
 
 ## ✨ Features
+
 - ✅ **User Authentication** using JWT (access and refresh tokens)
 - 🔐 **Role-based Authorization** (Admin, Instructor, Student)
 - 📦 **RESTful API** for managing users, courses, and group data
@@ -20,7 +21,7 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 - 📁 **File Uploads** (AWS S3 support for avatars and media)
 - 🌍 **CORS Configuration** for secure cross-origin access
 - 🕵️‍♂️ **IP Logging Middleware** for request tracking and security
-- ⚙️ **Environment-Specific Config** using `.env` and `.env.production`
+- ⚙️ **Environment-Specific Config** using `.env` and `.env`
 
 ---
 
@@ -53,10 +54,12 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 ├── .env                  # Environment variables
 ├── .env.production       # Environment variables
 └── README.md
+```
 
 ---
 
 ## ✅ Future improvements
+
 - 📈 Add analytics or dashboard metrics
 - 🌐 i18n (language support)
 - 📧 Email notifications
@@ -65,6 +68,7 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 ---
 
 ## Installation
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/cou23001/pwconnect-back.git
@@ -106,6 +110,8 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 6. Start the server
     ```bash
     npm run dev
+
+---
 
 ## API Endpoints
 
@@ -256,16 +262,21 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 | GET    | /stats/stake/{stakeId}/group-students             | Get student counts for all groups in a specific stake  |
 | GET    | /stats/stake/{stakeId}/group-attendance           | Get attendance statistics for all groups in a specific stake |
 
+---
 
 ### Support
 
 If you encounter any issues or have questions, feel free to open an issue on the GitHub repository.
+
+---
 
 ### Usage
 
 - Make sure your MongoDB database is running.
 - Use Postman or cURL to test API endpoints.
 - Admin users can manage other users via the API.
+
+---
 
 ### Contributing
 
@@ -284,6 +295,7 @@ If you encounter any issues or have questions, feel free to open an issue on the
     git push origin feature/your-feature-name
 6. Open a Pull Request on the original repository and describe your changes.
     
+---
 
 ### License
 
