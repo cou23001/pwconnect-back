@@ -221,6 +221,7 @@ If you encounter any issues or have questions, feel free to open an issue on the
 - MongoDB - NoSQL database
 - Mongoose - ODM for MongoDB
 - JWT - Authentication mechanism
+- AWT S3 - Store images in the cloud
 
 ### Contributing
 
