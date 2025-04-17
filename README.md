@@ -67,7 +67,7 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 
 ---
 
-## Installation
+## ⚙️ Installation
 
 1. Clone the repository:
    ```bash
@@ -161,7 +161,7 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 
 ---
 
-## Student
+### Student
 
 | Method | Endpoint                                         | Description                                      |
 |--------|--------------------------------------------------|--------------------------------------------------|
@@ -212,8 +212,6 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 | DELETE | /api/stakes/{id}                          | Delete a stake by ID                |
 | GET    | /api/stakes/wards/{id}                    | Get a list of wards in a stake      |
 
----
-
 ### Term
 
 | Method | Endpoint                         | Description                         |
@@ -223,7 +221,6 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 | GET    | /api/terms/{id}                   | Get a term by ID                    |
 | PUT    | /api/terms/{id}                   | Update a term                       |
 | DELETE | /api/terms/{id}                   | Delete a term                       |
-
 
 ### Token Metadata
 
@@ -264,13 +261,13 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 
 ---
 
-### Support
+## 🛎️ Support
 
 If you encounter any issues or have questions, feel free to open an issue on the GitHub repository.
 
 ---
 
-### Usage
+## 🧰 Usage
 
 - Make sure your MongoDB database is running.
 - Use Postman or cURL to test API endpoints.
@@ -278,7 +275,7 @@ If you encounter any issues or have questions, feel free to open an issue on the
 
 ---
 
-### Contributing
+## 👨‍💻 Contributing
 
 1. Fork the repository.
 2. Clone your forked repository to your local machine:
@@ -297,6 +294,6 @@ If you encounter any issues or have questions, feel free to open an issue on the
     
 ---
 
-### License
+## 📄 License
 
 This project is licensed under the MIT License.
