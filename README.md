@@ -20,7 +20,7 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 - 📁 **File Uploads** (AWS S3 support for avatars and media)
 - 🌍 **CORS Configuration** for secure cross-origin access
 - 🕵️‍♂️ **IP Logging Middleware** for request tracking and security
-- ⚙️ **Environment-Specific Config** using `.env`
+- ⚙️ **Environment-Specific Config** using `.env` and `.env.production`
 
 ---
 
