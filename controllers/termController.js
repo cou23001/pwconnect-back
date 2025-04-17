@@ -49,10 +49,14 @@ const mongoose = require("mongoose");
  */
 const getTerms = async (req, res) => {
   try {
+    // Fetch all terms from the database
     const terms = await Term.find();
+
+    // Check if terms exist
     if (terms.length === 0) {
       return res.status(404).send("Terms not found");
     }
+    // Return the terms
     res.json({ message: "Terms found", terms });
   } catch (error) {
     console.error(error);
@@ -112,26 +116,30 @@ const getTerms = async (req, res) => {
  */
 const createTerm = async (req, res) => {
   try {
-    const { error } = termSchema.validate(req.body);
+    // Validate request
+    const { error, value } = termSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const start = new Date(req.body.startDate);
-    const end = new Date(req.body.endDate);
+    // Create start and end date objects
+    const start = new Date(value.startDate);
+    const end = new Date(value.endDate);
 
+    // Check if start date is before end date
     if (start >= end) {
       return res
         .status(400)
         .json({ message: "Start date must be before end date" });
     }
 
+    // Check for duplicates in the database
     const existingTerm = await Term.findOne({
-      $or: [{ name: req.body.name }, { startDate: start }, { endDate: end }],
+      $or: [{ name: value.name }, { startDate: start }, { endDate: end }],
     });
 
     if (existingTerm) {
-      if (existingTerm.name === req.body.name) {
+      if (existingTerm.name === value.name) {
         return res.status(400).json({ message: "Term name already exists" });
       }
       if (existingTerm.startDate.toISOString() === start.toISOString()) {
@@ -142,7 +150,10 @@ const createTerm = async (req, res) => {
       }
     }
 
-    const term = await Term.create(req.body);
+    // Create a new term
+    const term = await Term.create(value);
+
+    // Return the created term
     res.status(201).json({ message: "Term created successfully", term });
   } catch (error) {
     console.error(error);
@@ -201,10 +212,15 @@ const getTermById = async (req, res) => {
       return res.status(400).send("Invalid ID format");
     }
 
+    // Fetch the term by ID
     const term = await Term.findById(id);
+
+    // Check if the term exists
     if (!term) {
       return res.status(404).send("Term not found");
     }
+
+    // Return the term
     res.json({ message: "Term found", term });
   } catch (error) {
     console.error(error);
@@ -249,14 +265,16 @@ const updateTerm = async (req, res) => {
       return res.status(400).json({ message: "Invalid ID format" });
     }
     // Validate request
-    const { error } = termUpdateSchema.validate(req.body);
+    const { error, value } = termUpdateSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
 
-    const start = new Date(req.body.startDate);
-    const end = new Date(req.body.endDate);
+    // Create start and end date objects
+    const start = new Date(value.startDate);
+    const end = new Date(value.endDate);
 
+    // Check if start date is before end date
     if (start >= end) {
       return res
         .status(400)
@@ -266,15 +284,11 @@ const updateTerm = async (req, res) => {
     // Check for duplicates in other terms (exclude current one)
     const existingTerm = await Term.findOne({
       _id: { $ne: id },
-      $or: [
-        { name: req.body.name },
-        { startDate: start },
-        { endDate: end },
-      ],
+      $or: [{ name: value.name }, { startDate: start }, { endDate: end }],
     });
 
     if (existingTerm) {
-      if (existingTerm.name === req.body.name) {
+      if (existingTerm.name === value.name) {
         return res.status(400).json({ message: "Term name already exists" });
       }
       if (existingTerm.startDate.toISOString() === start.toISOString()) {
@@ -285,22 +299,26 @@ const updateTerm = async (req, res) => {
       }
     }
 
-    const updatedTerm = await Term.findByIdAndUpdate(id, req.body, {
+    // Update the term
+    const updatedTerm = await Term.findByIdAndUpdate(id, value, {
       new: true,
       runValidators: true,
     });
 
+    // Check if the term was found and updated
     if (!updatedTerm) {
       return res.status(404).json({ message: "Term not found" });
     }
 
-    res.status(200).json({ message: "Term updated successfully", term: updatedTerm });
+    // Return the updated term
+    res
+      .status(200)
+      .json({ message: "Term updated successfully", term: updatedTerm });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
-
 
 /**
  * @swagger
@@ -355,11 +373,14 @@ const deleteTerm = async (req, res) => {
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).send({ error: "Invalid ID format" });
     }
+    
     // Check if the term exists and delete it
     const term = await Term.findByIdAndDelete(id);
     if (!term) {
       return res.status(404).send({ error: "Term not found" });
     }
+
+    // Return success message
     res.json({ message: "Term deleted successfully" });
   } catch (error) {
     console.error(error);

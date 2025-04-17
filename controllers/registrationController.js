@@ -56,10 +56,15 @@ const {
 // Get all registrations
 exports.getRegistrations = async (req, res) => {
   try {
+    // Find all registrations
     const registrations = await Registration.find();
+
+    // Check if any registrations were found
     if (registrations.length === 0) {
       return res.status(404).json({ message: "No registrations found" });
     }
+
+    // Populate the student and group fields
     res.status(200).json(registrations);
   } catch (error) {
     console.error(error);
@@ -194,6 +199,7 @@ exports.getStudentsByGroupId = async (req, res) => {
       return res.status(400).send({ error: "Invalid ID format" });
     }
 
+    // Find all registrations for the specified group
     const registrations = await Registration.find({
       groupId: groupId,
     }).populate({
@@ -207,6 +213,7 @@ exports.getStudentsByGroupId = async (req, res) => {
         .json({ message: "No registrations found for this group" });
     }
 
+    // Extract student IDs from the registrations
     const students = registrations.map(
       (registration) => registration.studentId
     );
@@ -299,8 +306,6 @@ exports.getStudentsByGroupId = async (req, res) => {
  *                 type: string
  *                 example: An error occurred
  */
-
-// Create a new registration
 exports.createRegistration = async (req, res) => {
   try {
     // Validate request body
@@ -309,6 +314,7 @@ exports.createRegistration = async (req, res) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
+    // Find the student and group by ID
     const student = await Student.findById(value.studentId);
     if (!student) {
       return res.status(404).json({ message: "Student not found" });

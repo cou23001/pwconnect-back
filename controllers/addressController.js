@@ -1,7 +1,10 @@
 // controllers/addressController.js
 const Address = require("../models/address");
 const mongoose = require("mongoose");
-const { addressSchema, partialAddressSchema } = require("../validators/address");
+const {
+  addressSchema,
+  partialAddressSchema,
+} = require("../validators/address");
 
 /**
  * @swagger
@@ -48,10 +51,14 @@ const { addressSchema, partialAddressSchema } = require("../validators/address")
  */
 const getAllAddresses = async (req, res) => {
   try {
+    // Fetch all addresses
     const addresses = await Address.find();
+
+    // Check if addresses exist
     if (addresses.length === 0) {
       return res.status(404).json({ message: "No addresses found" });
     }
+    // Return addresses
     res.status(200).json({ message: "Success", data: addresses });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -114,12 +121,15 @@ const getAddressById = async (req, res) => {
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({ message: "Invalid address ID" });
     }
-    
+
+    // Fetch address by ID
+    const address = await Address.findById(id);
+
     // Check if address exists
-    const address = await Address.findById(req.params.id);
     if (!address) {
       return res.status(404).json({ message: "Address not found" });
     }
+    // Return address
     res.status(200).json({ message: "Success", data: address });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -192,7 +202,11 @@ const createAddress = async (req, res) => {
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
+
+    // Create new address
     const newAddress = await Address.create(value);
+
+    // Return created address
     res.status(200).json({ message: "Success", data: newAddress });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -332,11 +346,16 @@ const updateAddress = async (req, res) => {
  */
 const deleteAddress = async (req, res) => {
   try {
-    const id = req.params.id;
+    // Validate ID format
+    const { id } = req.params;
     if (!mongoose.isValidObjectId(id)) {
-          return res.status(400).json({ message: "Invalid address ID" });
+      return res.status(400).json({ message: "Invalid address ID" });
     }
+
+    // Find address by ID and delete
     const address = await Address.findByIdAndDelete(id);
+
+    // Return deleted address
     res.status(200).json({ message: "Success", data: address });
   } catch (error) {
     res.status(500).json({ message: error.message });

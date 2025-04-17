@@ -1,7 +1,7 @@
 // controllers/wardControllers.js
-const Ward = require('../models/ward');
-const { wardSchema, wardUpdateSchema } = require('../validators/ward');
-const mongoose = require('mongoose');
+const Ward = require("../models/ward");
+const { wardSchema, wardUpdateSchema } = require("../validators/ward");
+const mongoose = require("mongoose");
 /**
  * @swagger
  * tags:
@@ -68,13 +68,14 @@ const mongoose = require('mongoose');
  */
 const getWards = async (req, res) => {
   try {
-    const wards = await Ward.find().populate('stakeId');
+    // Fetch all wards and populate the stakeId field
+    const wards = await Ward.find().populate("stakeId");
     // Check if wards exist
     if (wards.length === 0) {
-      return res.status(404).send('No wards found');
+      return res.status(404).send("No wards found");
     }
     // Return the wards
-    res.status(200).json({ message: 'Wards found', data: wards });
+    res.status(200).json({ message: "Wards found", data: wards });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -142,16 +143,16 @@ const getWardById = async (req, res) => {
     const { id } = req.params;
     // Check if the ID is a valid ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).send({ error: 'Invalid ID format' });
+      return res.status(400).send({ error: "Invalid ID format" });
     }
     // Find the ward by ID
-    const ward = await Ward.findById(id).populate('stakeId');
+    const ward = await Ward.findById(id).populate("stakeId");
     // Check if the ward exists
     if (!ward) {
-      return res.status(404).send({ error: 'Ward not found' });
+      return res.status(404).send({ error: "Ward not found" });
     }
     // Return the ward
-    res.status(200).json({ message: 'Ward found', ward });
+    res.status(200).json({ message: "Ward found", ward });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -229,9 +230,13 @@ const createWard = async (req, res) => {
     await ward.save();
 
     // Populate stake details
-    const populatedWard = await Ward.findById(ward._id).populate('stakeId').lean();
+    const populatedWard = await Ward.findById(ward._id)
+      .populate("stakeId")
+      .lean();
 
-    res.status(201).json({ message: 'Ward created successfully', populatedWard });
+    res
+      .status(201)
+      .json({ message: "Ward created successfully", populatedWard });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -328,9 +333,9 @@ const updateWard = async (req, res) => {
     // Check if the ID is a valid ObjectId
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).send({ error: 'Invalid ID format' });
+      return res.status(400).send({ error: "Invalid ID format" });
     }
-    
+
     const { name, location, stakeId } = req.body;
     // Validate the request body
     const { error } = wardUpdateSchema.validate(req.body);
@@ -339,26 +344,32 @@ const updateWard = async (req, res) => {
     }
 
     // Check if the ward exists
-    const ward = await Ward.findById(req.params.id).populate('stakeId');
+    const ward = await Ward.findById(req.params.id).populate("stakeId");
     if (!ward) {
-      return res.status(404).send({ error: 'Ward not found' });
+      return res.status(404).send({ error: "Ward not found" });
     }
 
     // Validate if changes were made
     if (!name && !location && !stakeId) {
-      return res.status(400).send({ error: 'No changes made' });
+      return res.status(400).send({ error: "No changes made" });
     }
 
     // Modify if there are changes
-    if (name) { ward.name = name;}
-    if (location) { ward.location = location; }
-    if (stakeId) { ward.stakeId = stakeId;}
-    
+    if (name) {
+      ward.name = name;
+    }
+    if (location) {
+      ward.location = location;
+    }
+    if (stakeId) {
+      ward.stakeId = stakeId;
+    }
+
     await ward.save();
-    res.status(200).json({ message: 'Ward updated successfully', ward });
+    res.status(200).json({ message: "Ward updated successfully", ward });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -419,12 +430,12 @@ const deleteWard = async (req, res) => {
     // Check if the ID is a valid ObjectId
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).send({ error: 'Invalid ID format' });
+      return res.status(400).send({ error: "Invalid ID format" });
     }
     // Check if the ward exists
     const ward = await Ward.findById(id);
     if (!ward) {
-      return res.status(404).send({ error: 'Ward not found' });
+      return res.status(404).send({ error: "Ward not found" });
     }
     // Delete the ward
     await ward.deleteOne();
