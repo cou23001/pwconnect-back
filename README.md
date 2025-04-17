@@ -7,6 +7,8 @@ The English Connect Backend Admin is a backend system built with **Node.js** and
 ## 🚀 Live Servers
 - Backend production server: https://pwconnect-back.onrender.com/api-docs
 - Frontend production server: https://english-connect-admin.onrender.com
+- Frontend GitHub: https://github.com/jacobsanchezbejarano/english_connect_admin
+- Backend GitHub: https://github.com/cou23001/pwconnect-back
 
 ---
 
